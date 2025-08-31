@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Internship/Project Finder - MERN Stack Application
 
 A comprehensive web application for connecting students with internship and project opportunities.
@@ -187,3 +188,6 @@ For detailed real-time implementation, see [REALTIME_FEATURES.md](./REALTIME_FEA
 ## License
 
 This project is licensed under the MIT License.
+=======
+# Internship-Project-Finder-Web-Application
+>>>>>>> 9ec34d3ad55006eff55afc122bfbd1278a50aa83
