@@ -1,0 +1,29 @@
+{
+  "name": "internship-finder",
+  "version": "1.0.0",
+  "description": "MERN stack application for internship and project finder",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "cd backend && npm run dev",
+    "client": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "install-server": "cd backend && npm install",
+    "install-client": "cd frontend && npm install",
+    "install-all": "n/pm run install-server && npm run install-client"
+  },
+  "keywords": [
+    "internship",
+    "project",
+    "finder",
+    "mern",
+    "react",
+    "nodejs"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "mongodb-memory-server": "^10.2.0"
+  }
+}
