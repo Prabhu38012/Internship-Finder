@@ -15,13 +15,22 @@ class SocketService {
       return this.socket
     }
 
+    // Don't attempt connection without a valid token
+    if (!token) {
+      return null
+    }
+
     const serverUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000'
     
     this.socket = io(serverUrl, {
       auth: {
         token: token
       },
-      transports: ['websocket', 'polling']
+      transports: ['websocket', 'polling'],
+      timeout: 5000,
+      reconnection: true,
+      reconnectionDelay: 2000,
+      reconnectionAttempts: 3
     })
 
     this.setupEventListeners()
@@ -43,7 +52,7 @@ class SocketService {
     })
 
     this.socket.on('connect_error', (error) => {
-      console.error('Connection error:', error)
+      // Silently handle connection errors to reduce console spam
       this.isConnected = false
     })
 

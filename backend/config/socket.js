@@ -12,7 +12,11 @@ class SocketManager {
   initialize(server) {
     this.io = new Server(server, {
       cors: {
-        origin: process.env.CLIENT_URL || "http://localhost:3000",
+        origin: [
+          "http://localhost:5173",
+          "http://localhost:5175", 
+          process.env.CLIENT_URL
+        ].filter(Boolean),
         methods: ["GET", "POST"],
         credentials: true
       },
@@ -47,7 +51,7 @@ class SocketManager {
         socket.user = user
         next()
       } catch (error) {
-        console.error('Socket authentication error:', error)
+        // Silently handle auth errors to reduce console spam
         next(new Error('Authentication error'))
       }
     })

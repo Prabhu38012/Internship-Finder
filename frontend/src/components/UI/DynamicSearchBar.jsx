@@ -37,14 +37,19 @@ const DynamicSearchBar = ({ placeholder = "Search internships, companies, skills
   const { searchHistory, trendingSearches } = useSelector((state) => state.ui)
   const { filters, suggestions, isLoadingSuggestions } = useSelector((state) => state.internships)
   
-  const [searchValue, setSearchValue] = useState(filters.search || '')
+  const [searchValue, setSearchValue] = useState('')
   const [debouncedSearchValue] = useDebounce(searchValue, 300)
   const [open, setOpen] = useState(false)
   const [focused, setFocused] = useState(false)
+  const [isInitialized, setIsInitialized] = useState(false)
 
+  // Initialize search value once from filters
   useEffect(() => {
-    setSearchValue(filters.search || '')
-  }, [filters.search])
+    if (!isInitialized) {
+      setSearchValue(filters.search || '')
+      setIsInitialized(true)
+    }
+  }, [filters.search, isInitialized])
 
   // Fetch suggestions when debounced value changes
   useEffect(() => {
@@ -89,7 +94,10 @@ const DynamicSearchBar = ({ placeholder = "Search internships, companies, skills
   const handleSearch = (value) => {
     if (value?.trim()) {
       dispatch(addToSearchHistory(value.trim()))
-      dispatch(setFilters({ search: value.trim() }))
+      // Don't update filters if it's the same value to prevent loops
+      if (filters.search !== value.trim()) {
+        dispatch(setFilters({ search: value.trim() }))
+      }
       
       if (location.pathname !== '/internships') {
         navigate('/internships')
@@ -105,7 +113,10 @@ const DynamicSearchBar = ({ placeholder = "Search internships, companies, skills
 
   const handleClear = () => {
     setSearchValue('')
-    dispatch(setFilters({ search: '' }))
+    // Only update filters if not already empty to prevent loops
+    if (filters.search !== '') {
+      dispatch(setFilters({ search: '' }))
+    }
   }
 
   const handleOptionSelect = (event, value) => {

@@ -1,5 +1,4 @@
 {
-<<<<<<< HEAD
   "name": "internship-finder",
   "version": "1.0.0",
   "description": "MERN stack application for internship and project finder",
@@ -11,7 +10,7 @@
     "build": "cd frontend && npm run build",
     "install-server": "cd backend && npm install",
     "install-client": "cd frontend && npm install",
-    "install-all": "n/pm run install-server && npm run install-client"
+    "install-all": "npm run install-server && npm run install-client"
   },
   "keywords": [
     "internship",
@@ -23,12 +22,11 @@
   ],
   "author": "Your Name",
   "license": "MIT",
+  "dependencies": {
+    "react-router-dom": "^7.8.0"
+  },
   "devDependencies": {
     "concurrently": "^8.2.2",
     "mongodb-memory-server": "^10.2.0"
-=======
-  "dependencies": {
-    "react-router-dom": "^7.8.0"
->>>>>>> 9ec34d3ad55006eff55afc122bfbd1278a50aa83
   }
 }
