@@ -73,11 +73,11 @@ const DynamicDashboard = ({ data }) => {
       { month: 'Jun', internships: 195, applications: 73 }
     ],
     topCompanies: [
-      { name: 'Google', logo: '/api/placeholder/40/40', openings: 25, growth: 15 },
-      { name: 'Microsoft', logo: '/api/placeholder/40/40', openings: 22, growth: 12 },
-      { name: 'Amazon', logo: '/api/placeholder/40/40', openings: 18, growth: -5 },
-      { name: 'Meta', logo: '/api/placeholder/40/40', openings: 16, growth: 8 },
-      { name: 'Netflix', logo: '/api/placeholder/40/40', openings: 12, growth: 20 }
+      { name: 'Google', logo: 'https://logo.clearbit.com/google.com', openings: 25, growth: 15 },
+      { name: 'Microsoft', logo: 'https://logo.clearbit.com/microsoft.com', openings: 22, growth: 12 },
+      { name: 'Amazon', logo: 'https://logo.clearbit.com/amazon.com', openings: 18, growth: -5 },
+      { name: 'Meta', logo: 'https://logo.clearbit.com/meta.com', openings: 16, growth: 8 },
+      { name: 'Netflix', logo: 'https://logo.clearbit.com/netflix.com', openings: 12, growth: 20 }
     ],
     locationData: [
       { city: 'Bangalore', count: 245, percentage: 35 },
