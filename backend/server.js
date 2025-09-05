@@ -20,6 +20,7 @@ const applicationRoutes = require('./routes/applications');
 const adminRoutes = require('./routes/admin');
 const notificationRoutes = require('./routes/notifications');
 const analyticsRoutes = require('./routes/analytics');
+const wishlistRoutes = require('./routes/wishlist');
 
 const app = express();
 const server = createServer(app);
@@ -124,6 +125,7 @@ app.use('/api/applications', applicationRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/wishlist', wishlistRoutes);
 
 // Enhanced placeholder image endpoint
 app.get('/api/placeholder/:width/:height', (req, res) => {
@@ -237,8 +239,12 @@ process.on('uncaughtException', (error) => {
   gracefulShutdown();
 });
 
+// Initialize notification service
+const notificationService = require('./services/notificationService');
+
 // Start server
 server.listen(PORT, () => {
   console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
   console.log('Press Ctrl+C to stop the server');
+  console.log('Notification service initialized');
 });

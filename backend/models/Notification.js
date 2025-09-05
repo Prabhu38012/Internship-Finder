@@ -22,7 +22,13 @@ const notificationSchema = new mongoose.Schema({
       'message',
       'system_update',
       'company_verification',
-      'review_request'
+      'review_request',
+      'wishlist_reminder',
+      'wishlist_internship_updated',
+      'wishlist_deadline_approaching',
+      'new_similar_internship',
+      'saved_internship_closing_soon',
+      'wishlist_internship_expired'
     ],
     required: true
   },
@@ -45,8 +51,13 @@ const notificationSchema = new mongoose.Schema({
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Application'
     },
+    wishlistId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Wishlist'
+    },
     url: String,
-    actionRequired: Boolean
+    actionRequired: Boolean,
+    metadata: mongoose.Schema.Types.Mixed
   },
   read: {
     type: Boolean,
@@ -70,7 +81,35 @@ notificationSchema.index({ type: 1, createdAt: -1 });
 notificationSchema.statics.createNotification = async function(data) {
   const notification = new this(data);
   await notification.save();
-  return notification.populate('sender', 'name avatar');
+  return notification.populate([
+    { path: 'sender', select: 'name avatar' },
+    { path: 'data.internshipId', select: 'title companyName' },
+    { path: 'data.wishlistId', select: 'notes priority category' }
+  ]);
+};
+
+// Static method to get unread count
+notificationSchema.statics.getUnreadCount = function(userId) {
+  return this.countDocuments({ recipient: userId, read: false });
+};
+
+// Static method to mark all as read
+notificationSchema.statics.markAllAsRead = function(userId) {
+  return this.updateMany(
+    { recipient: userId, read: false },
+    { read: true, readAt: new Date() }
+  );
+};
+
+// Static method to create wishlist notification
+notificationSchema.statics.createWishlistNotification = async function(type, recipient, data) {
+  const notificationData = {
+    recipient,
+    type,
+    ...data
+  };
+  
+  return this.createNotification(notificationData);
 };
 
 // Method to mark as read

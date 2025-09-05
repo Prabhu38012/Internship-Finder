@@ -22,12 +22,14 @@ import {
   MenuOutlined,
   WorkOutline,
   DashboardOutlined,
-  LogoutOutlined
+  LogoutOutlined,
+  FavoriteOutlined
 } from '@mui/icons-material'
 import { logout } from '../../store/slices/authSlice'
 import { setSidebarOpen } from '../../store/slices/uiSlice'
 import DynamicSearchBar from '../UI/DynamicSearchBar'
-import NotificationCenter from '../UI/NotificationCenter'
+import NotificationCenter from '../Notifications/NotificationCenter'
+import NotificationBell from '../Notifications/NotificationBell'
 
 const Header = () => {
   const theme = useTheme()
@@ -41,6 +43,7 @@ const Header = () => {
   
   const [anchorEl, setAnchorEl] = useState(null)
   const [notificationAnchor, setNotificationAnchor] = useState(null)
+  const [notificationCenterOpen, setNotificationCenterOpen] = useState(false)
 
   const handleProfileMenuOpen = (event) => {
     setAnchorEl(event.currentTarget)
@@ -170,6 +173,19 @@ const Header = () => {
                     >
                       Dashboard
                     </Button>
+                    {user.role === 'student' && (
+                      <Button
+                        color="inherit"
+                        component={Link}
+                        to="/wishlist"
+                        sx={{ 
+                          color: isActive('/wishlist') ? 'primary.main' : 'text.primary',
+                          fontWeight: isActive('/wishlist') ? 600 : 400
+                        }}
+                      >
+                        Wishlist
+                      </Button>
+                    )}
                     {user.role === 'company' && (
                       <Button
                         color="inherit"
@@ -185,7 +201,10 @@ const Header = () => {
                 )}
 
                 {/* Notifications */}
-                <NotificationCenter />
+                <NotificationBell 
+                  onOpenCenter={() => setNotificationCenterOpen(true)}
+                  onNavigate={navigate}
+                />
 
                 {/* Profile Menu */}
                 <IconButton
@@ -228,6 +247,12 @@ const Header = () => {
                     <DashboardOutlined sx={{ mr: 2 }} />
                     Dashboard
                   </MenuItem>
+                  {user.role === 'student' && (
+                    <MenuItem onClick={() => handleNavigation('/wishlist')}>
+                      <FavoriteOutlined sx={{ mr: 2 }} />
+                      Wishlist
+                    </MenuItem>
+                  )}
                   {user.role === 'company' && (
                     <MenuItem onClick={() => handleNavigation('/company')}>
                       <WorkOutline sx={{ mr: 2 }} />
@@ -245,6 +270,13 @@ const Header = () => {
           </Box>
         </Toolbar>
       </Container>
+
+      {/* Notification Center Drawer */}
+      <NotificationCenter
+        open={notificationCenterOpen}
+        onClose={() => setNotificationCenterOpen(false)}
+        onNavigate={navigate}
+      />
     </AppBar>
   )
 }

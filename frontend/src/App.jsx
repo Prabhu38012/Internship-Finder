@@ -23,6 +23,7 @@ import EditInternship from './pages/Internships/EditInternship'
 import CompanyDashboard from './pages/Company/CompanyDashboard'
 import AdminDashboard from './pages/Admin/AdminDashboard'
 import NotFound from './pages/NotFound/NotFound'
+import WishlistPage from './components/Wishlist/WishlistPage'
 
 // Redux actions
 import { getMe, setInitialized, clearAuth } from './store/slices/authSlice'
@@ -92,7 +93,7 @@ function App() {
 
             {/* Student Routes */}
             <Route element={<ProtectedRoute allowedRoles={['student']} />}>
-              {/* Student specific routes can go here */}
+              <Route path="wishlist" element={<WishlistPage />} />
             </Route>
 
             {/* Company Routes */}
