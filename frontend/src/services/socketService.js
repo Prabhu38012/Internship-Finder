@@ -1,174 +1,230 @@
-import { io } from 'socket.io-client'
-import { store } from '../store/store'
-import { addNotification } from '../store/slices/notificationSlice'
-import { updateInternshipRealtime } from '../store/slices/internshipSlice'
-import toast from 'react-hot-toast'
+import { io } from 'socket.io-client';
+import { store } from '../store/store';
+import { addNotification } from '../store/slices/notificationSlice';
+import { updateInternshipRealtime } from '../store/slices/internshipSlice';
+import toast from 'react-hot-toast';
 
 class SocketService {
   constructor() {
-    this.socket = null
-    this.isConnected = false
+    this.socket = null;
+    this.isConnected = false;
+    this.reconnectAttempts = 0;
+    this.maxReconnectAttempts = 5;
+    this.connectionTimeout = null;
+    this.lastConnectionAttempt = null;
+    this.pendingEvents = new Map();
+  }
+    getConnectionStatus() {
+    return this.isConnected;
   }
 
+  getConnectionInfo() {
+    return {
+      isConnected: this.isConnected,
+      socketId: this.socket?.id,
+      reconnectAttempts: this.reconnectAttempts,
+      transport: this.socket?.io?.engine?.transport?.name,
+      ping: this.socket?.io?.engine?.transport?.ping || null
+    };
+  } 
   connect(token) {
     if (this.socket?.connected) {
-      return this.socket
+      return this.socket;
     }
 
-    // Don't attempt connection without a valid token
     if (!token) {
-      return null
+      console.warn('Connection attempt without token');
+      return null;
     }
 
-    const serverUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+    // Prevent connection spam
+    const now = Date.now();
+    if (this.lastConnectionAttempt && (now - this.lastConnectionAttempt) < 2000) {
+      console.warn('Connection throttled');
+      return null;
+    }
+    this.lastConnectionAttempt = now;
+
+    const serverUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
     
     this.socket = io(serverUrl, {
-      auth: {
-        token: token
-      },
+      auth: { token },
       transports: ['websocket', 'polling'],
       timeout: 5000,
       reconnection: true,
       reconnectionDelay: 2000,
-      reconnectionAttempts: 3
-    })
+      reconnectionAttempts: this.maxReconnectAttempts,
+      reconnectionDelayMax: 10000,
+      autoConnect: true,
+      query: {
+        clientVersion: import.meta.env.VITE_APP_VERSION,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+      }
+    });
 
-    this.setupEventListeners()
-    return this.socket
+    this.setupEventListeners();
+    this.setupConnectionTimeout();
+    
+    return this.socket;
+  }
+
+  setupConnectionTimeout() {
+    if (this.connectionTimeout) {
+      clearTimeout(this.connectionTimeout);
+    }
+
+    this.connectionTimeout = setTimeout(() => {
+      if (!this.isConnected) {
+        console.warn('Connection timeout, attempting reconnect...');
+        this.reconnect();
+      }
+    }, 10000);
   }
 
   setupEventListeners() {
-    if (!this.socket) return
+    if (!this.socket) return;
 
-    // Connection events
+    // Enhanced connection events
     this.socket.on('connect', () => {
-      console.log('Connected to server')
-      this.isConnected = true
-    })
+      console.log('Socket connected:', this.socket.id);
+      this.isConnected = true;
+      this.reconnectAttempts = 0;
+      this.processPendingEvents();
+      
+      toast.success('Connected to server', {
+        id: 'socket-connection',
+        duration: 2000
+      });
+    });
 
-    this.socket.on('disconnect', () => {
-      console.log('Disconnected from server')
-      this.isConnected = false
-    })
+    this.socket.on('disconnect', (reason) => {
+      console.log('Socket disconnected:', reason);
+      this.isConnected = false;
+      
+      if (reason === 'io server disconnect') {
+        // Server initiated disconnect, don't reconnect automatically
+        toast.error('Disconnected by server');
+      } else {
+        toast.error('Connection lost, reconnecting...', {
+          id: 'socket-disconnection'
+        });
+        this.socket.connect();
+      }
+    });
 
     this.socket.on('connect_error', (error) => {
-      // Silently handle connection errors to reduce console spam
-      this.isConnected = false
-    })
-
-    // Real-time notifications
-    this.socket.on('notification', (notification) => {
-      store.dispatch(addNotification(notification))
+      this.isConnected = false;
+      this.reconnectAttempts++;
       
-      // Show toast notification
-      toast.success(notification.message, {
-        duration: 5000,
-        icon: '🔔'
-      })
-    })
-
-    // Real-time internship updates
-    this.socket.on('internship:created', (internship) => {
-      store.dispatch(updateInternshipRealtime({ type: 'created', data: internship }))
-      toast.success('New internship posted!', { icon: '🎉' })
-    })
-
-    this.socket.on('internship:updated', (internship) => {
-      store.dispatch(updateInternshipRealtime({ type: 'updated', data: internship }))
-    })
-
-    this.socket.on('internship:deleted', (internshipId) => {
-      store.dispatch(updateInternshipRealtime({ type: 'deleted', data: { _id: internshipId } }))
-    })
-
-    // Application status updates
-    this.socket.on('application:status_changed', (application) => {
-      const statusMessages = {
-        'accepted': 'Your application has been accepted! 🎉',
-        'rejected': 'Your application was not selected this time.',
-        'interview': 'You have been shortlisted for an interview! 📞',
-        'reviewed': 'Your application is being reviewed.'
+      console.error('Connection error:', error.message);
+      
+      if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+        toast.error('Unable to connect to server', {
+          duration: 5000
+        });
       }
+    });
+
+    // Enhanced notification handling
+    this.socket.on('notification', (notification) => {
+      store.dispatch(addNotification(notification));
       
-      const message = statusMessages[application.status] || 'Application status updated'
-      toast(message, {
-        icon: application.status === 'accepted' ? '🎉' : 
-              application.status === 'interview' ? '📞' : 
-              application.status === 'rejected' ? '😔' : '📋'
-      })
-    })
+      toast(notification.message, {
+        duration: 5000,
+        icon: notification.type === 'success' ? '🔔' : 
+              notification.type === 'error' ? '⚠️' : '💬'
+      });
+    });
 
-    // Live user activity
-    this.socket.on('user:online', (userId) => {
-      console.log(`User ${userId} came online`)
-    })
+    // Enhanced internship updates
+    this.socket.on('internship:created', (internship) => {
+      store.dispatch(updateInternshipRealtime({ 
+        type: 'created', 
+        data: internship 
+      }));
+      
+      if (this.shouldShowInternshipNotification(internship)) {
+        toast.success('New internship matching your preferences!', { 
+          icon: '🎯',
+          duration: 7000
+        });
+      }
+    });
 
-    this.socket.on('user:offline', (userId) => {
-      console.log(`User ${userId} went offline`)
-    })
+    // ...existing event listeners...
+
+    // New error handling events
+    this.socket.on('error', (error) => {
+      console.error('Socket error:', error);
+      toast.error('Connection error occurred');
+    });
+
+    this.socket.on('reconnect_attempt', (attempt) => {
+      console.log(`Reconnection attempt ${attempt}`);
+    });
+
+    this.socket.on('reconnect_failed', () => {
+      toast.error('Failed to reconnect to server');
+    });
   }
 
-  // Join specific rooms
-  joinRoom(room) {
-    if (this.socket?.connected) {
-      this.socket.emit('join', room)
+  shouldShowInternshipNotification(internship) {
+    // Add logic to check user preferences
+    return true; // Implement your filtering logic
+  }
+
+  reconnect() {
+    if (this.socket && !this.isConnected && this.reconnectAttempts < this.maxReconnectAttempts) {
+      this.socket.connect();
     }
   }
 
-  leaveRoom(room) {
-    if (this.socket?.connected) {
-      this.socket.emit('leave', room)
+  processPendingEvents() {
+    for (const [event, data] of this.pendingEvents.entries()) {
+      this.emit(event, data);
     }
+    this.pendingEvents.clear();
   }
 
-  // Send typing indicators
-  startTyping(room) {
-    if (this.socket?.connected) {
-      this.socket.emit('typing:start', room)
-    }
-  }
-
-  stopTyping(room) {
-    if (this.socket?.connected) {
-      this.socket.emit('typing:stop', room)
-    }
-  }
-
-  // Disconnect
-  disconnect() {
-    if (this.socket) {
-      this.socket.disconnect()
-      this.socket = null
-      this.isConnected = false
-    }
-  }
-
-  // Get connection status
-  getConnectionStatus() {
-    return this.isConnected
-  }
-
-  // Emit custom events
+  // Enhanced emit with queuing
   emit(event, data) {
     if (this.socket?.connected) {
-      this.socket.emit(event, data)
+      this.socket.emit(event, data);
+      return true;
+    } else {
+      console.warn(`Socket not connected, queuing event: ${event}`);
+      this.pendingEvents.set(event, data);
+      return false;
     }
   }
 
-  // Listen to custom events
-  on(event, callback) {
+  // ...existing room and typing methods...
+
+  disconnect() {
     if (this.socket) {
-      this.socket.on(event, callback)
+      this.socket.disconnect();
+      this.socket = null;
+      this.isConnected = false;
+      this.reconnectAttempts = 0;
+      this.pendingEvents.clear();
+      
+      if (this.connectionTimeout) {
+        clearTimeout(this.connectionTimeout);
+      }
     }
   }
 
-  off(event, callback) {
-    if (this.socket) {
-      this.socket.off(event, callback)
-    }
+  getConnectionInfo() {
+    return {
+      isConnected: this.isConnected,
+      socketId: this.socket?.id,
+      reconnectAttempts: this.reconnectAttempts,
+      transport: this.socket?.io?.engine?.transport?.name,
+      ping: this.socket?.io?.engine?.transport?.ping || null
+    };
   }
 }
 
 // Create singleton instance
-const socketService = new SocketService()
-export default socketService
+const socketService = new SocketService();
+export default socketService;

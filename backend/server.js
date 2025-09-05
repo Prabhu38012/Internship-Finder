@@ -24,47 +24,90 @@ const analyticsRoutes = require('./routes/analytics');
 const app = express();
 const server = createServer(app);
 
-// Initialize Socket.IO
-const io = socketManager.initialize(server);
+// Initialize Socket.IO with security options
+const io = socketManager.initialize(server, {
+  pingTimeout: 60000,
+  cors: {
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:5175",
+      process.env.CLIENT_URL
+    ].filter(Boolean),
+    credentials: true
+  }
+});
 
-// Security middleware
-app.use(helmet());
+// Enhanced security middleware
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "blob:"],
+      connectSrc: ["'self'", "ws:", "wss:"]
+    }
+  }
+}));
 app.use(compression());
 
-// Rate limiting
+// Advanced rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'Too many requests, please try again later.'
+  }
 });
 app.use('/api/', limiter);
 
-// CORS configuration
+// CORS with additional options
 app.use(cors({
   origin: [
     "http://localhost:5173",
     "http://localhost:5175",
     process.env.CLIENT_URL
   ].filter(Boolean),
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// Body parsing middleware
+// Enhanced body parsing
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Logging middleware
+// Conditional logging
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
+} else {
+  app.use(morgan('combined'));
 }
 
-// MongoDB connection
+// MongoDB connection with enhanced options
 mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 5000,
+  socketTimeoutMS: 45000,
 })
 .then(() => console.log('MongoDB connected successfully'))
-.catch(err => console.error('MongoDB connection error:', err));
+.catch(err => {
+  console.error('MongoDB connection error:', err);
+  process.exit(1);
+});
 
+// Handle MongoDB connection events
+mongoose.connection.on('error', err => {
+  console.error('MongoDB error:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.log('MongoDB disconnected');
+});
 
 // Make io and socketManager accessible to routes
 app.use((req, res, next) => {
@@ -82,9 +125,11 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/analytics', analyticsRoutes);
 
-// Placeholder image endpoint
+// Enhanced placeholder image endpoint
 app.get('/api/placeholder/:width/:height', (req, res) => {
-  const { width, height } = req.params;
+  const width = Math.min(parseInt(req.params.width), 2000);
+  const height = Math.min(parseInt(req.params.height), 2000);
+  
   const svg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
     <rect width="100%" height="100%" fill="#f0f0f0"/>
     <text x="50%" y="50%" font-family="Arial" font-size="16" fill="#999" text-anchor="middle" dy=".3em">
@@ -93,41 +138,107 @@ app.get('/api/placeholder/:width/:height', (req, res) => {
   </svg>`;
   
   res.setHeader('Content-Type', 'image/svg+xml');
+  res.setHeader('Cache-Control', 'public, max-age=86400');
   res.send(svg);
 });
 
-// Serve uploaded files
-app.use('/uploads', express.static('uploads'));
+// Secure file serving
+app.use('/uploads', express.static('uploads', {
+  maxAge: '1d',
+  etag: true
+}));
 
-// Health check endpoint
+// Enhanced health check endpoint
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     success: true,
     message: 'Server is running',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV,
+    mongoConnection: mongoose.connection.readyState === 1
   });
 });
 
-// Error handling middleware
+// Improved error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({
+  
+  const errorResponse = {
     success: false,
     message: 'Something went wrong!',
-    error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
-  });
+    error: process.env.NODE_ENV === 'development' ? {
+      message: err.message,
+      stack: err.stack
+    } : 'Internal server error',
+    requestId: req.id
+  };
+
+  res.status(err.status || 500).json(errorResponse);
 });
 
-// 404 handler
+// Enhanced 404 handler
 app.use('*', (req, res) => {
   res.status(404).json({
     success: false,
-    message: 'Route not found'
+    message: 'Route not found',
+    path: req.originalUrl
   });
 });
 
 const PORT = process.env.PORT || 5000;
 
+// Enhanced graceful shutdown handling
+const gracefulShutdown = async () => {
+  try {
+    console.log('Received shutdown signal');
+
+    // Close HTTP server first
+    await new Promise((resolve, reject) => {
+      server.close((err) => {
+        if (err) {
+          console.error('Error closing HTTP server:', err);
+          reject(err);
+        } else {
+          console.log('HTTP server closed successfully');
+          resolve();
+        }
+      });
+    });
+
+    // Close socket connections
+    io.close(() => {
+      console.log('WebSocket server closed successfully');
+    });
+
+    // Close MongoDB connection
+    await mongoose.connection.close();
+    console.log('MongoDB connection closed successfully');
+
+    // Exit process
+    console.log('Graceful shutdown completed');
+    process.exit(0);
+  } catch (error) {
+    console.error('Error during graceful shutdown:', error);
+    process.exit(1);
+  }
+};
+
+// Handle shutdown signals
+process.on('SIGTERM', gracefulShutdown);
+process.on('SIGINT', gracefulShutdown);
+
+// Unhandled rejections and exceptions
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  gracefulShutdown();
+});
+
+// Start server
 server.listen(PORT, () => {
   console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+  console.log('Press Ctrl+C to stop the server');
 });

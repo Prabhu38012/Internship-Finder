@@ -1,44 +1,37 @@
-import { useEffect, useRef } from 'react'
-import { useSelector } from 'react-redux'
-import socketService from '../services/socketService'
+import { useState, useEffect } from 'react';
+import socketService from '../services/socketService';
 
-export const useSocket = () => {
-  const { token, user } = useSelector((state) => state.auth)
-  const isConnectedRef = useRef(false)
+export const useSocket = (token) => {
+  const [isConnected, setIsConnected] = useState(socketService.getConnectionStatus());
+  const [connectionInfo, setConnectionInfo] = useState(socketService.getConnectionInfo());
 
   useEffect(() => {
-    if (token && user && !isConnectedRef.current) {
-      socketService.connect(token)
-      isConnectedRef.current = true
+    if (token) {
+      const socket = socketService.connect(token);
+      
+      if (socket) {
+        socket.on('connect', () => {
+          setIsConnected(true);
+          setConnectionInfo(socketService.getConnectionInfo());
+        });
 
-      // Join user-specific room for notifications
-      if (user._id) {
-        socketService.joinRoom(`user:${user._id}`)
-      }
-
-      // Join role-specific rooms
-      if (user.role) {
-        socketService.joinRoom(`role:${user.role}`)
+        socket.on('disconnect', () => {
+          setIsConnected(false);
+          setConnectionInfo(socketService.getConnectionInfo());
+        });
       }
     }
 
     return () => {
-      if (isConnectedRef.current) {
-        socketService.disconnect()
-        isConnectedRef.current = false
-      }
-    }
-  }, [token, user])
+      socketService.disconnect();
+    };
+  }, [token]);
 
   return {
-    socket: socketService.socket,
-    isConnected: socketService.getConnectionStatus(),
-    emit: socketService.emit.bind(socketService),
-    on: socketService.on.bind(socketService),
-    off: socketService.off.bind(socketService),
-    joinRoom: socketService.joinRoom.bind(socketService),
-    leaveRoom: socketService.leaveRoom.bind(socketService)
-  }
-}
+    isConnected,
+    connectionInfo,
+    socket: socketService.socket
+  };
+};
 
 export default useSocket

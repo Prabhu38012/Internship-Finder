@@ -1,16 +1,18 @@
-const { Server } = require('socket.io')
-const jwt = require('jsonwebtoken')
-const User = require('../models/User')
+const { Server } = require('socket.io');
+const jwt = require('jsonwebtoken');
+const User = require('../models/User');
 
 class SocketManager {
   constructor() {
-    this.io = null
-    this.connectedUsers = new Map() // userId -> socketId mapping
-    this.userSockets = new Map() // socketId -> user data mapping
+    this.io = null;
+    this.connectedUsers = new Map(); // userId -> socketId mapping
+    this.userSockets = new Map(); // socketId -> user data mapping
+    this.rooms = new Set(); // Track active rooms
+    this.connectionAttempts = new Map(); // Track connection attempts
   }
 
-  initialize(server) {
-    this.io = new Server(server, {
+  initialize(server, options = {}) {
+    const defaultOptions = {
       cors: {
         origin: [
           "http://localhost:5173",
@@ -20,174 +22,179 @@ class SocketManager {
         methods: ["GET", "POST"],
         credentials: true
       },
-      transports: ['websocket', 'polling']
-    })
+      transports: ['websocket', 'polling'],
+      pingTimeout: 60000,
+      pingInterval: 25000,
+      maxHttpBufferSize: 1e6, // 1MB
+      connectTimeout: 45000,
+      allowEIO3: true,
+      upgradeTimeout: 30000,
+      cookie: {
+        name: 'io',
+        path: '/',
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production'
+      }
+    };
 
-    this.setupMiddleware()
-    this.setupEventHandlers()
+    this.io = new Server(server, { ...defaultOptions, ...options });
+
+    this.setupMiddleware();
+    this.setupEventHandlers();
     
-    console.log('Socket.IO server initialized')
-    return this.io
+    console.log('Socket.IO server initialized');
+    return this.io;
   }
 
   setupMiddleware() {
-    // Authentication middleware
     this.io.use(async (socket, next) => {
       try {
-        const token = socket.handshake.auth.token
+        const token = socket.handshake.auth.token;
         
         if (!token) {
-          return next(new Error('Authentication error: No token provided'))
+          return next(new Error('Authentication error: No token provided'));
         }
 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET)
-        const user = await User.findById(decoded.id).select('-password')
+        // Rate limiting for connection attempts
+        const clientIp = socket.handshake.address;
+        if (this.isRateLimited(clientIp)) {
+          return next(new Error('Too many connection attempts'));
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findById(decoded.id)
+          .select('-password')
+          .lean()
+          .cache(30); // Cache user data for 30 seconds
         
         if (!user) {
-          return next(new Error('Authentication error: User not found'))
+          return next(new Error('Authentication error: User not found'));
         }
 
-        socket.userId = user._id.toString()
-        socket.user = user
-        next()
+        // Add user data and metadata to socket
+        socket.userId = user._id.toString();
+        socket.user = user;
+        socket.connectionTime = new Date();
+        socket.metadata = {
+          userAgent: socket.handshake.headers['user-agent'],
+          ip: clientIp,
+          lastActivity: new Date()
+        };
+
+        next();
       } catch (error) {
-        // Silently handle auth errors to reduce console spam
-        next(new Error('Authentication error'))
+        console.error('Socket authentication error:', error);
+        next(new Error('Authentication failed'));
       }
-    })
+    });
   }
 
   setupEventHandlers() {
     this.io.on('connection', (socket) => {
-      console.log(`User ${socket.user.name} connected (${socket.id})`)
-      
-      // Store user connection
-      this.connectedUsers.set(socket.userId, socket.id)
-      this.userSockets.set(socket.id, {
-        userId: socket.userId,
-        user: socket.user,
-        joinedAt: new Date()
-      })
+      this.handleNewConnection(socket);
+      this.setupSocketEventHandlers(socket);
+    });
 
-      // Join user-specific room
-      socket.join(`user:${socket.userId}`)
-      
-      // Join role-specific room
-      socket.join(`role:${socket.user.role}`)
-
-      // Notify others that user is online
-      socket.broadcast.emit('user:online', {
-        userId: socket.userId,
-        name: socket.user.name,
-        role: socket.user.role
-      })
-
-      // Handle room joining
-      socket.on('join', (room) => {
-        socket.join(room)
-        console.log(`User ${socket.user.name} joined room: ${room}`)
-      })
-
-      // Handle room leaving
-      socket.on('leave', (room) => {
-        socket.leave(room)
-        console.log(`User ${socket.user.name} left room: ${room}`)
-      })
-
-      // Handle typing indicators
-      socket.on('typing:start', (room) => {
-        socket.to(room).emit('typing:start', {
-          userId: socket.userId,
-          name: socket.user.name
-        })
-      })
-
-      socket.on('typing:stop', (room) => {
-        socket.to(room).emit('typing:stop', {
-          userId: socket.userId
-        })
-      })
-
-      // Handle notification read status
-      socket.on('notification:read', (notificationId) => {
-        console.log(`User ${socket.user.name} read notification: ${notificationId}`)
-      })
-
-      socket.on('notifications:mark_all_read', () => {
-        console.log(`User ${socket.user.name} marked all notifications as read`)
-      })
-
-      socket.on('notifications:clear_all', () => {
-        console.log(`User ${socket.user.name} cleared all notifications`)
-      })
-
-      // Handle real-time analytics requests
-      socket.on('analytics:subscribe', () => {
-        socket.join('analytics')
-        console.log(`User ${socket.user.name} subscribed to analytics updates`)
-      })
-
-      socket.on('analytics:unsubscribe', () => {
-        socket.leave('analytics')
-        console.log(`User ${socket.user.name} unsubscribed from analytics updates`)
-      })
-
-      // Handle disconnection
-      socket.on('disconnect', (reason) => {
-        console.log(`User ${socket.user.name} disconnected: ${reason}`)
-        
-        // Remove user from tracking
-        this.connectedUsers.delete(socket.userId)
-        this.userSockets.delete(socket.id)
-
-        // Notify others that user is offline
-        socket.broadcast.emit('user:offline', {
-          userId: socket.userId,
-          name: socket.user.name
-        })
-      })
-
-      // Handle errors
-      socket.on('error', (error) => {
-        console.error(`Socket error for user ${socket.user.name}:`, error)
-      })
-    })
+    // Global error handler
+    this.io.engine.on('connection_error', (err) => {
+      console.error('Connection error:', err);
+    });
   }
 
-  // Utility methods for emitting events
-  emitToUser(userId, event, data) {
-    const socketId = this.connectedUsers.get(userId.toString())
-    if (socketId) {
-      this.io.to(socketId).emit(event, data)
-      return true
+  handleNewConnection(socket) {
+    console.log(`User ${socket.user.name} connected (${socket.id})`);
+    
+    // Store user connection with metadata
+    this.connectedUsers.set(socket.userId, socket.id);
+    this.userSockets.set(socket.id, {
+      userId: socket.userId,
+      user: socket.user,
+      joinedAt: new Date(),
+      metadata: socket.metadata
+    });
+
+    // Join default rooms
+    socket.join(`user:${socket.userId}`);
+    socket.join(`role:${socket.user.role}`);
+
+    // Emit online status
+    this.emitUserStatus(socket, true);
+    
+    // Send initial state
+    socket.emit('connection:established', {
+      userId: socket.userId,
+      timestamp: new Date(),
+      activeUsers: this.getActiveUsersCount()
+    });
+  }
+
+  setupSocketEventHandlers(socket) {
+    // Room management
+    socket.on('join', (room) => this.handleRoomJoin(socket, room));
+    socket.on('leave', (room) => this.handleRoomLeave(socket, room));
+
+    // Typing indicators
+    socket.on('typing:start', (room) => this.handleTyping(socket, room, true));
+    socket.on('typing:stop', (room) => this.handleTyping(socket, room, false));
+
+    // Notifications
+    socket.on('notification:read', (notificationId) => {
+      this.handleNotificationRead(socket, notificationId);
+    });
+
+    // Analytics
+    socket.on('analytics:subscribe', () => this.handleAnalyticsSubscription(socket, true));
+    socket.on('analytics:unsubscribe', () => this.handleAnalyticsSubscription(socket, false));
+
+    // Disconnect handling
+    socket.on('disconnect', (reason) => this.handleDisconnect(socket, reason));
+    
+    // Error handling
+    socket.on('error', (error) => this.handleSocketError(socket, error));
+  }
+
+  // Rate limiting helper
+  isRateLimited(clientIp) {
+    const attempts = this.connectionAttempts.get(clientIp) || 0;
+    if (attempts > 100) return true; // 100 attempts per IP
+    this.connectionAttempts.set(clientIp, attempts + 1);
+    return false;
+  }
+
+  // Status management
+  emitUserStatus(socket, isOnline) {
+    const statusEvent = isOnline ? 'user:online' : 'user:offline';
+    socket.broadcast.emit(statusEvent, {
+      userId: socket.userId,
+      name: socket.user.name,
+      role: socket.user.role,
+      timestamp: new Date()
+    });
+  }
+
+  // Clean up helpers
+  cleanupUserConnection(socket) {
+    this.connectedUsers.delete(socket.userId);
+    this.userSockets.delete(socket.id);
+    this.emitUserStatus(socket, false);
+  }
+
+  // Enhanced utility methods
+  getActiveUsersCount() {
+    return this.connectedUsers.size;
+  }
+
+  getRoomMembers(room) {
+    return Array.from(this.io.sockets.adapter.rooms.get(room) || []);
+  }
+
+  broadcastToRoom(room, event, data, exceptSocket = null) {
+    if (exceptSocket) {
+      exceptSocket.to(room).emit(event, data);
+    } else {
+      this.io.to(room).emit(event, data);
     }
-    return false
-  }
-
-  emitToRole(role, event, data) {
-    this.io.to(`role:${role}`).emit(event, data)
-  }
-
-  emitToRoom(room, event, data) {
-    this.io.to(room).emit(event, data)
-  }
-
-  emitToAll(event, data) {
-    this.io.emit(event, data)
-  }
-
-  getConnectedUsers() {
-    return Array.from(this.userSockets.values())
-  }
-
-  isUserOnline(userId) {
-    return this.connectedUsers.has(userId.toString())
-  }
-
-  getUserSocketData(userId) {
-    const socketId = this.connectedUsers.get(userId.toString())
-    return socketId ? this.userSockets.get(socketId) : null
   }
 }
 
-module.exports = new SocketManager()
+module.exports = new SocketManager();
