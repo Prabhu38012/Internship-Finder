@@ -120,7 +120,7 @@ class RealtimeService {
 
       // Notify the applicant
       await this.sendNotificationToUser(application.applicant, {
-        type: 'application',
+        type: 'application_status_update',
         title: 'Application Status Update',
         message: statusMessages[newStatus] || `Application status changed to ${newStatus}`,
         data: { 
@@ -147,7 +147,7 @@ class RealtimeService {
     try {
       // Notify company about new application
       await this.sendNotificationToUser(application.internship.company, {
-        type: 'application',
+        type: 'application_received',
         title: 'New Application Received',
         message: `${application.applicant.name} applied for ${application.internship.title}`,
         data: { 

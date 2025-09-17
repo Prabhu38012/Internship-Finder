@@ -130,7 +130,7 @@ const Dashboard = () => {
   return (
     <>
       <Helmet>
-        <title>Dashboard - Internship Finder</title>
+        <title>Dashboard - InternQuest</title>
         <meta name="description" content="Your personal dashboard to manage applications, internships, and profile." />
       </Helmet>
 

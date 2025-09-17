@@ -6,12 +6,15 @@ import {
   Toolbar,
   Typography,
   Button,
+  Box,
   IconButton,
-  Avatar,
   Menu,
   MenuItem,
+  Avatar,
   Badge,
-  Box,
+  Divider,
+  ListItemIcon,
+  ListItemText,
   Container,
   useTheme,
   useMediaQuery
@@ -23,7 +26,9 @@ import {
   WorkOutline,
   DashboardOutlined,
   LogoutOutlined,
-  FavoriteOutlined
+  FavoriteOutlined,
+  SmartToy,
+  MessageOutlined
 } from '@mui/icons-material'
 import { logout } from '../../store/slices/authSlice'
 import { setSidebarOpen } from '../../store/slices/uiSlice'
@@ -103,7 +108,7 @@ const Header = () => {
                   display: { xs: 'none', sm: 'block' }
                 }}
               >
-                Internship Finder
+                InternQuest
               </Typography>
             </Link>
           </Box>
@@ -174,18 +179,43 @@ const Header = () => {
                       Dashboard
                     </Button>
                     {user.role === 'student' && (
-                      <Button
-                        color="inherit"
-                        component={Link}
-                        to="/wishlist"
-                        sx={{ 
-                          color: isActive('/wishlist') ? 'primary.main' : 'text.primary',
-                          fontWeight: isActive('/wishlist') ? 600 : 400
-                        }}
-                      >
-                        Wishlist
-                      </Button>
+                      <>
+                        <Button
+                          color="inherit"
+                          component={Link}
+                          to="/wishlist"
+                          sx={{ 
+                            color: isActive('/wishlist') ? 'primary.main' : 'text.primary',
+                            fontWeight: isActive('/wishlist') ? 600 : 400
+                          }}
+                        >
+                          Wishlist
+                        </Button>
+                        <Button
+                          color="inherit"
+                          component={Link}
+                          to="/ai"
+                          sx={{ 
+                            color: isActive('/ai') ? 'primary.main' : 'text.primary',
+                            fontWeight: isActive('/ai') ? 600 : 400
+                          }}
+                        >
+                          AI Assistant
+                        </Button>
+                      </>
                     )}
+                    
+                    {/* Messages Button - Available to all authenticated users */}
+                    <IconButton
+                      color="inherit"
+                      component={Link}
+                      to="/messages"
+                      sx={{ 
+                        color: isActive('/messages') ? 'primary.main' : 'text.primary'
+                      }}
+                    >
+                      <MessageOutlined />
+                    </IconButton>
                     {user.role === 'company' && (
                       <Button
                         color="inherit"
@@ -247,11 +277,21 @@ const Header = () => {
                     <DashboardOutlined sx={{ mr: 2 }} />
                     Dashboard
                   </MenuItem>
+                  <MenuItem onClick={() => handleNavigation('/messages')}>
+                    <MessageOutlined sx={{ mr: 2 }} />
+                    Messages
+                  </MenuItem>
                   {user.role === 'student' && (
-                    <MenuItem onClick={() => handleNavigation('/wishlist')}>
-                      <FavoriteOutlined sx={{ mr: 2 }} />
-                      Wishlist
-                    </MenuItem>
+                    <>
+                      <MenuItem onClick={() => handleNavigation('/wishlist')}>
+                        <FavoriteOutlined sx={{ mr: 2 }} />
+                        Wishlist
+                      </MenuItem>
+                      <MenuItem onClick={() => handleNavigation('/ai')}>
+                        <SmartToy sx={{ mr: 2 }} />
+                        AI Assistant
+                      </MenuItem>
+                    </>
                   )}
                   {user.role === 'company' && (
                     <MenuItem onClick={() => handleNavigation('/company')}>

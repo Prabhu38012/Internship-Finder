@@ -1,5 +1,5 @@
 @echo off
-echo Setting up MongoDB for Internship Finder...
+echo Setting up MongoDB for InternQuest...
 echo.
 
 echo Option 1: Install MongoDB Community Server

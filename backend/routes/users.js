@@ -92,6 +92,43 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// @desc    Search users for messaging
+// @route   GET /api/users/search
+// @access  Private
+router.get('/search', protect, async (req, res) => {
+  try {
+    const { query, limit = 20 } = req.query;
+    
+    let searchFilter = {
+      _id: { $ne: req.user.id }, // Exclude current user
+      isActive: true
+    };
+
+    if (query) {
+      searchFilter.$or = [
+        { name: { $regex: query, $options: 'i' } },
+        { email: { $regex: query, $options: 'i' } }
+      ];
+    }
+
+    const users = await User.find(searchFilter)
+      .select('name email role profilePicture')
+      .limit(parseInt(limit))
+      .sort({ name: 1 });
+
+    res.json({
+      success: true,
+      data: users
+    });
+  } catch (error) {
+    console.error('Error searching users:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+});
+
 // @desc    Update user profile
 // @route   PUT /api/users/profile
 // @access  Private
@@ -152,9 +189,19 @@ router.put('/profile', protect, upload.single('avatar'), handleMulterError, asyn
 
 // @desc    Upload resume
 // @route   POST /api/users/resume
-// @access  Private (Student only)
-router.post('/resume', protect, authorize('student'), upload.single('resume'), handleMulterError, async (req, res) => {
+// @access  Private
+router.post('/resume', protect, upload.single('resume'), handleMulterError, async (req, res) => {
   try {
+    console.log('Resume upload attempt:', {
+      user: req.user?.email,
+      role: req.user?.role,
+      file: req.file ? {
+        originalname: req.file.originalname,
+        mimetype: req.file.mimetype,
+        size: req.file.size
+      } : null
+    });
+
     if (!req.file) {
       return res.status(400).json({
         success: false,
@@ -167,10 +214,11 @@ router.post('/resume', protect, authorize('student'), upload.single('resume'), h
       // Fallback: store file locally and return local URL
       const localUrl = `/uploads/${req.file.filename}`;
       
-      // Update user profile with local file path
+      // Update user profile with local file path based on role
+      const updateField = req.user.role === 'student' ? 'studentProfile.resume' : 'companyProfile.documents';
       const user = await User.findByIdAndUpdate(
         req.user._id,
-        { 'studentProfile.resume': localUrl },
+        { [updateField]: localUrl },
         { new: true }
       );
 
@@ -190,10 +238,11 @@ router.post('/resume', protect, authorize('student'), upload.single('resume'), h
         resource_type: 'auto'
       });
 
-      // Update user profile
+      // Update user profile based on role
+      const updateField = req.user.role === 'student' ? 'studentProfile.resume' : 'companyProfile.documents';
       const user = await User.findByIdAndUpdate(
         req.user._id,
-        { 'studentProfile.resume': result.secure_url },
+        { [updateField]: result.secure_url },
         { new: true }
       );
 

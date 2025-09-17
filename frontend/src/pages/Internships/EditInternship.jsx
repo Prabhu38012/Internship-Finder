@@ -246,7 +246,7 @@ const EditInternship = () => {
   return (
     <>
       <Helmet>
-        <title>Edit Internship - Internship Finder</title>
+        <title>Edit Internship - InternQuest</title>
         <meta name="description" content="Edit your internship posting details." />
       </Helmet>
 

@@ -3,6 +3,10 @@ const User = require('./models/User');
 const Internship = require('./models/Internship');
 require('dotenv').config();
 
+// PRODUCTION MODE: Demo data seeding is disabled
+// To enable demo data for development, set ENABLE_DEMO_DATA=true in .env
+const DEMO_DATA_ENABLED = process.env.ENABLE_DEMO_DATA === 'true';
+
 const sampleUsers = [
   {
     name: 'Tech Corp',
@@ -1117,6 +1121,15 @@ async function seedDatabase() {
     // Connect to MongoDB
     await mongoose.connect(process.env.MONGODB_URI);
     console.log('Connected to MongoDB');
+
+    if (!DEMO_DATA_ENABLED) {
+      console.log('🚫 Demo data seeding is disabled in production mode');
+      console.log('💡 To enable demo data for development, set ENABLE_DEMO_DATA=true in .env');
+      console.log('✅ Database connection verified - ready for real users!');
+      process.exit(0);
+    }
+
+    console.log('⚠️  DEVELOPMENT MODE: Seeding demo data...');
 
     // Clear existing data
     await User.deleteMany({});

@@ -146,6 +146,27 @@ router.post('/', protect, authorize('student'), [
     // Update internship saves count
     await Internship.findByIdAndUpdate(internshipId, { $inc: { saves: 1 } });
 
+    // Emit real-time update
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`user_${req.user._id}`).emit('wishlist_updated', {
+        action: 'added',
+        item: wishlistItem
+      });
+    }
+
+    // Create notification
+    const notificationService = req.app.get('notificationService');
+    if (notificationService) {
+      await notificationService.createNotification({
+        userId: req.user._id,
+        type: 'wishlist_added',
+        title: 'Added to Wishlist',
+        message: `${internship.title} has been added to your wishlist`,
+        data: { internshipId, wishlistItemId: wishlistItem._id }
+      });
+    }
+
     res.status(201).json({
       success: true,
       data: wishlistItem,
@@ -231,9 +252,8 @@ router.delete('/:id', protect, authorize('student'), async (req, res) => {
   try {
     const wishlistItem = await Wishlist.findOne({
       _id: req.params.id,
-      user: req.user._id,
-      isActive: true
-    });
+      user: req.user._id
+    }).populate('internship', 'title');
 
     if (!wishlistItem) {
       return res.status(404).json({
@@ -242,12 +262,34 @@ router.delete('/:id', protect, authorize('student'), async (req, res) => {
       });
     }
 
-    // Soft delete
+    // Soft delete - mark as inactive
     wishlistItem.isActive = false;
     await wishlistItem.save();
 
     // Update internship saves count
-    await Internship.findByIdAndUpdate(wishlistItem.internship, { $inc: { saves: -1 } });
+    await Internship.findByIdAndUpdate(wishlistItem.internship._id, { $inc: { saves: -1 } });
+
+    // Emit real-time update
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`user_${req.user._id}`).emit('wishlist_updated', {
+        action: 'removed',
+        itemId: wishlistItem._id,
+        internshipId: wishlistItem.internship._id
+      });
+    }
+
+    // Create notification
+    const notificationService = req.app.get('notificationService');
+    if (notificationService) {
+      await notificationService.createNotification({
+        userId: req.user._id,
+        type: 'wishlist_removed',
+        title: 'Removed from Wishlist',
+        message: `${wishlistItem.internship.title} has been removed from your wishlist`,
+        data: { internshipId: wishlistItem.internship._id }
+      });
+    }
 
     res.status(200).json({
       success: true,

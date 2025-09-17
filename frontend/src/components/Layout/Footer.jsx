@@ -18,7 +18,7 @@ const Footer = () => {
         <Grid container spacing={4}>
           <Grid item xs={12} sm={6} md={3}>
             <Typography variant="h6" gutterBottom>
-              Internship Finder
+              InternQuest
             </Typography>
             <Typography variant="body2" color="grey.400">
               Connect with top companies and find amazing internship opportunities. 
@@ -95,7 +95,7 @@ const Footer = () => {
           }}
         >
           <Typography variant="body2" color="grey.400">
-            © 2024 Internship Finder. All rights reserved.
+            © 2024 InternQuest. All rights reserved.
           </Typography>
           
           <Box sx={{ display: 'flex', gap: 1 }}>

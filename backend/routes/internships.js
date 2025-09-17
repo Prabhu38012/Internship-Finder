@@ -209,20 +209,16 @@ router.get('/:id', optionalAuth, async (req, res) => {
   }
 });
 
-// @desc    Create new internship
+// @desc    Create new internship (Real-time posting)
 // @route   POST /api/internships
 // @access  Private (Company only)
-router.post('/', protect, authorize('company'), trackInternshipCreated, [
-  body('title').trim().isLength({ min: 5, max: 100 }).withMessage('Title must be between 5 and 100 characters'),
-  body('description').trim().isLength({ min: 50, max: 2000 }).withMessage('Description must be between 50 and 2000 characters'),
-  body('category').isIn([
-    'Software Development', 'Data Science', 'Machine Learning', 'Web Development',
-    'Mobile Development', 'UI/UX Design', 'Digital Marketing', 'Business Development',
-    'Finance', 'Human Resources', 'Content Writing', 'Graphic Design', 'Sales',
-    'Operations', 'Research', 'Other'
-  ]).withMessage('Invalid category'),
-  body('type').isIn(['internship', 'project', 'full-time', 'part-time']).withMessage('Invalid type'),
-  body('duration').trim().isLength({ min: 1 }).withMessage('Duration is required'),
+router.post('/', protect, authorize('company'), [
+  body('title').notEmpty().withMessage('Title is required'),
+  body('description').notEmpty().withMessage('Description is required'),
+  body('category').notEmpty().withMessage('Category is required'),
+  body('location.city').notEmpty().withMessage('City is required'),
+  body('location.state').notEmpty().withMessage('State is required'),
+  body('duration').notEmpty().withMessage('Duration is required'),
   body('applicationDeadline').isISO8601().withMessage('Valid application deadline is required'),
   body('startDate').isISO8601().withMessage('Valid start date is required')
 ], async (req, res) => {
@@ -239,19 +235,67 @@ router.post('/', protect, authorize('company'), trackInternshipCreated, [
       });
     }
 
+    // Check if company can post more internships
+    const Company = require('../models/Company');
+    const company = await Company.findById(req.user.id);
+    
+    if (!company) {
+      return res.status(404).json({
+        success: false,
+        message: 'Company not found'
+      });
+    }
+
+    if (!company.canPostInternship()) {
+      return res.status(403).json({
+        success: false,
+        message: `You have reached your posting limit of ${company.subscription.maxInternshipPosts} internships. Upgrade your plan to post more.`
+      });
+    }
+
     const internshipData = {
       ...req.body,
-      company: req.user._id,
-      companyName: req.user.companyProfile?.companyName || req.user.name
+      company: req.user.id,
+      companyName: company.companyName
     };
 
     const internship = await Internship.create(internshipData);
-
-    // Send real-time notification about new internship
-    RealtimeService.notifyInternshipCreated(internship);
     
-    // Update analytics
-    AnalyticsService.onInternshipCreated();
+    // Update company internship count
+    await company.incrementInternshipCount();
+
+    // Emit real-time notification to all students
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('new_internship_posted', {
+        internship: {
+          _id: internship._id,
+          title: internship.title,
+          companyName: internship.companyName,
+          category: internship.category,
+          location: internship.location,
+          stipend: internship.stipend,
+          applicationDeadline: internship.applicationDeadline,
+          postedAt: new Date()
+        }
+      });
+    }
+
+    // Create notification for interested students
+    const notificationService = req.app.get('notificationService');
+    if (notificationService) {
+      await notificationService.createBulkNotification({
+        type: 'new_internship',
+        title: 'New Internship Posted',
+        message: `${company.companyName} posted a new ${internship.category} internship: ${internship.title}`,
+        data: { internshipId: internship._id },
+        targetAudience: 'students',
+        filters: {
+          interestedCategories: [internship.category],
+          location: internship.location.city
+        }
+      });
+    }
 
     res.status(201).json({
       success: true,

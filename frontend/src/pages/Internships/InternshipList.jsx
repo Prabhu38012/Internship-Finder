@@ -44,6 +44,7 @@ import DynamicFilters from '../../components/UI/DynamicFilters'
 import AnimatedCard from '../../components/UI/AnimatedCard'
 import InfiniteScrollList from '../../components/UI/InfiniteScrollList'
 import useSocket from '../../hooks/useSocket'
+import WishlistButton from '../../components/Wishlist/WishlistButton'
 
 const categories = [
   'Software Development',
@@ -287,7 +288,7 @@ const InternshipList = () => {
   return (
     <>
       <Helmet>
-        <title>Browse Internships - Internship Finder</title>
+        <title>Browse Internships - InternQuest</title>
         <meta name="description" content="Browse and search through thousands of internship opportunities from top companies." />
       </Helmet>
 
@@ -407,14 +408,23 @@ const InternshipList = () => {
                           </Box>
                         </Box>
                         
-                        {user && user.role === 'student' && !internship.isExternal && (
-                          <IconButton
-                            onClick={() => handleSaveInternship(internship._id)}
-                            color={internship.isSaved ? 'primary' : 'default'}
-                          >
-                            {internship.isSaved ? <Bookmark /> : <BookmarkBorder />}
-                          </IconButton>
-                        )}
+                        <Box sx={{ display: 'flex', gap: 1 }}>
+                          {user && user.role === 'student' && (
+                            <WishlistButton 
+                              internship={internship}
+                              size="small"
+                            />
+                          )}
+                          {user && user.role === 'student' && !internship.isExternal && (
+                            <IconButton
+                              onClick={() => handleSaveInternship(internship._id)}
+                              color={internship.isSaved ? 'primary' : 'default'}
+                              size="small"
+                            >
+                              {internship.isSaved ? <Bookmark /> : <BookmarkBorder />}
+                            </IconButton>
+                          )}
+                        </Box>
                       </Box>
 
                       {/* Details */}
@@ -471,6 +481,7 @@ const InternshipList = () => {
                         </Typography>
                         {internship.isExternal ? (
                           <Button
+                            component="a"
                             href={internship.applyUrl}
                             target="_blank"
                             rel="noopener noreferrer"

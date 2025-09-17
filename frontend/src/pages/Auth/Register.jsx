@@ -64,7 +64,7 @@ const Register = () => {
     }
 
     if (isSuccess || user) {
-      toast.success('Registration successful! Welcome to Internship Finder.')
+      toast.success('Registration successful! Welcome to InternQuest.')
       navigate('/dashboard')
     }
 
@@ -79,15 +79,15 @@ const Register = () => {
   return (
     <>
       <Helmet>
-        <title>Sign Up - Internship Finder</title>
-        <meta name="description" content="Create your Internship Finder account and start your journey to find amazing internship opportunities." />
+        <title>Sign Up - InternQuest</title>
+        <meta name="description" content="Create your InternQuest account and start your journey to find amazing internship opportunities." />
       </Helmet>
 
       <Container component="main" maxWidth="md" sx={{ py: 8 }}>
         <Paper elevation={3} sx={{ p: 4 }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <Typography component="h1" variant="h4" gutterBottom>
-              Join Internship Finder
+              Join InternQuest
             </Typography>
             <Typography variant="body1" color="text.secondary" sx={{ mb: 3, textAlign: 'center' }}>
               Create your account and start connecting with amazing opportunities

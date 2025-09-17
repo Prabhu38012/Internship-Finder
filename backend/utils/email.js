@@ -33,7 +33,7 @@ const sendEmail = async (options) => {
   }
 
   const message = {
-    from: `${process.env.FROM_NAME || 'Internship Finder'} <${process.env.EMAIL_USER}>`,
+    from: `${process.env.FROM_NAME || 'InternQuest'} <${process.env.EMAIL_USER}>`,
     to: options.email,
     subject: options.subject,
     text: options.message,
@@ -53,10 +53,10 @@ const sendEmail = async (options) => {
 // Email templates
 const emailTemplates = {
   welcome: (name) => ({
-    subject: 'Welcome to Internship Finder!',
+    subject: 'Welcome to InternQuest!',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h1 style="color: #2563eb;">Welcome to Internship Finder!</h1>
+        <h1 style="color: #2563eb;">Welcome to InternQuest!</h1>
         <p>Hi ${name},</p>
         <p>Thank you for joining our platform. We're excited to help you find amazing internship opportunities!</p>
         <p>Get started by:</p>
@@ -65,7 +65,7 @@ const emailTemplates = {
           <li>Uploading your resume</li>
           <li>Browsing available internships</li>
         </ul>
-        <p>Best regards,<br>The Internship Finder Team</p>
+        <p>Best regards,<br>The InternQuest Team</p>
       </div>
     `
   }),
@@ -78,7 +78,7 @@ const emailTemplates = {
         <p>You have received a new application for <strong>${internshipTitle}</strong></p>
         <p>Applicant: <strong>${applicantName}</strong></p>
         <p>Please log in to your dashboard to review the application.</p>
-        <p>Best regards,<br>The Internship Finder Team</p>
+        <p>Best regards,<br>The InternQuest Team</p>
       </div>
     `
   }),
@@ -92,7 +92,7 @@ const emailTemplates = {
         <p>Your application for <strong>${internshipTitle}</strong> has been updated.</p>
         <p>New Status: <strong style="color: #059669;">${status.toUpperCase()}</strong></p>
         <p>Please log in to your dashboard for more details.</p>
-        <p>Best regards,<br>The Internship Finder Team</p>
+        <p>Best regards,<br>The InternQuest Team</p>
       </div>
     `
   }),
@@ -107,7 +107,7 @@ const emailTemplates = {
         <p><strong>Date:</strong> ${date}</p>
         <p><strong>Time:</strong> ${time}</p>
         <p>Please log in to your dashboard for more details and preparation materials.</p>
-        <p>Best regards,<br>The Internship Finder Team</p>
+        <p>Best regards,<br>The InternQuest Team</p>
       </div>
     `
   }),
@@ -121,7 +121,7 @@ const emailTemplates = {
         <p>This is a reminder that the application deadline for <strong>${internshipTitle}</strong> is approaching.</p>
         <p><strong>Deadline:</strong> ${deadline}</p>
         <p>Don't miss out on this opportunity!</p>
-        <p>Best regards,<br>The Internship Finder Team</p>
+        <p>Best regards,<br>The InternQuest Team</p>
       </div>
     `
   })

@@ -1,7 +1,7 @@
 {
-  "name": "internship-finder",
+  "name": "internquest",
   "version": "1.0.0",
-  "description": "MERN stack application for internship and project finder",
+  "description": "MERN stack application for InternQuest - internship and project finder",
   "main": "index.js",
   "scripts": {
     "dev": "concurrently \"npm run server\" \"npm run client\"",

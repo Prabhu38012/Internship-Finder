@@ -43,6 +43,8 @@ import toast from 'react-hot-toast'
 import { getMyInternships, deleteInternship } from '../../store/slices/internshipSlice'
 import { getCompanyApplications } from '../../store/slices/applicationSlice'
 import LoadingSpinner from '../../components/UI/LoadingSpinner'
+import { companyAPI, internshipAPI } from '../../services/api'
+import { useSocket } from '../../hooks/useSocket'
 
 const CompanyDashboard = () => {
   const dispatch = useDispatch()
@@ -54,11 +56,55 @@ const CompanyDashboard = () => {
   
   const [anchorEl, setAnchorEl] = useState(null)
   const [selectedInternship, setSelectedInternship] = useState(null)
+  const [dashboardData, setDashboardData] = useState(null)
+  const [realTimeStats, setRealTimeStats] = useState({})
+
+  const socket = useSocket()
 
   useEffect(() => {
     dispatch(getMyInternships())
     dispatch(getCompanyApplications({ limit: 10 }))
+    loadDashboardData()
   }, [dispatch])
+
+  useEffect(() => {
+    if (socket) {
+      // Listen for real-time application updates
+      socket.on('new_application', (data) => {
+        if (data.companyId === user?.id) {
+          toast.success(`New application received for ${data.internshipTitle}`)
+          setRealTimeStats(prev => ({
+            ...prev,
+            totalApplications: (prev.totalApplications || 0) + 1,
+            pendingApplications: (prev.pendingApplications || 0) + 1
+          }))
+          // Refresh applications
+          dispatch(getCompanyApplications({ limit: 10 }))
+        }
+      })
+
+      // Listen for application status updates
+      socket.on('application_status_updated', (data) => {
+        if (data.companyId === user?.id) {
+          dispatch(getCompanyApplications({ limit: 10 }))
+        }
+      })
+
+      return () => {
+        socket.off('new_application')
+        socket.off('application_status_updated')
+      }
+    }
+  }, [socket, user?.id, dispatch])
+
+  const loadDashboardData = async () => {
+    try {
+      const response = await companyAPI.getDashboard()
+      setDashboardData(response.data)
+    } catch (error) {
+      console.error('Failed to load dashboard data:', error)
+    }
+  }
 
   const handleMenuOpen = (event, internship) => {
     setAnchorEl(event.currentTarget)
@@ -133,13 +179,14 @@ const CompanyDashboard = () => {
   }
 
   const activeInternships = myInternships?.filter(i => i.status === 'active') || []
-  const totalApplications = myInternships?.reduce((sum, i) => sum + (i.applicationsCount || 0), 0) || 0
-  const pendingApplications = companyApplications?.filter(a => a.status === 'pending').length || 0
+  const totalApplications = realTimeStats.totalApplications ?? (myInternships?.reduce((sum, i) => sum + (i.applicationsCount || 0), 0) || 0)
+  const pendingApplications = realTimeStats.pendingApplications ?? (companyApplications?.filter(a => a.status === 'pending').length || 0)
+  const totalViews = dashboardData?.totalViews ?? (myInternships?.reduce((sum, i) => sum + (i.views || 0), 0) || 0)
 
   return (
     <>
       <Helmet>
-        <title>Company Dashboard - Internship Finder</title>
+        <title>Company Dashboard - InternQuest</title>
         <meta name="description" content="Manage your company's internship postings and applications." />
       </Helmet>
 
@@ -194,7 +241,7 @@ const CompanyDashboard = () => {
           <Grid item xs={12} sm={6} md={3}>
             <StatCard
               title="Total Views"
-              value={myInternships?.reduce((sum, i) => sum + (i.views || 0), 0) || 0}
+              value={totalViews}
               icon={<TrendingUp />}
               color="success"
             />
@@ -326,7 +373,7 @@ const CompanyDashboard = () => {
                   </Typography>
                   <Button
                     component={Link}
-                    to="/applications"
+                    to="/company/applications"
                     size="small"
                   >
                     View All
@@ -403,7 +450,7 @@ const CompanyDashboard = () => {
                     variant="outlined"
                     startIcon={<People />}
                     component={Link}
-                    to="/applications"
+                    to="/company/applications"
                     fullWidth
                   >
                     Review Applications

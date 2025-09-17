@@ -21,9 +21,14 @@ import ApplicationDetail from './pages/Applications/ApplicationDetail'
 import CreateInternship from './pages/Internships/CreateInternship'
 import EditInternship from './pages/Internships/EditInternship'
 import CompanyDashboard from './pages/Company/CompanyDashboard'
+import ApplicationManagement from './pages/Company/ApplicationManagement'
+import CompanyRegistration from './pages/Company/CompanyRegistration'
+import PostInternship from './pages/Company/PostInternship'
 import AdminDashboard from './pages/Admin/AdminDashboard'
 import NotFound from './pages/NotFound/NotFound'
 import WishlistPage from './components/Wishlist/WishlistPage'
+import AIDashboard from './pages/AI/AIDashboard'
+import Messages from './pages/Messages/Messages'
 
 // Redux actions
 import { getMe, setInitialized, clearAuth } from './store/slices/authSlice'
@@ -62,8 +67,8 @@ function App() {
   return (
     <>
       <Helmet>
-        <title>Internship Finder - Find Your Dream Internship</title>
-        <meta name="description" content="Connect with top companies and find amazing internship opportunities. Build your career with Internship Finder." />
+        <title>InternQuest - Find Your Dream Internship</title>
+        <meta name="description" content="Connect with top companies and find amazing internship opportunities. Build your career with InternQuest." />
       </Helmet>
 
       <Routes>
@@ -94,12 +99,18 @@ function App() {
             {/* Student Routes */}
             <Route element={<ProtectedRoute allowedRoles={['student']} />}>
               <Route path="wishlist" element={<WishlistPage />} />
+              <Route path="ai" element={<AIDashboard />} />
             </Route>
+
+            {/* Messages Routes (accessible to all authenticated users) */}
+            <Route path="messages" element={<Messages />} />
 
             {/* Company Routes */}
             <Route element={<ProtectedRoute allowedRoles={['company']} />}>
-              <Route path="company" element={<CompanyDashboard />} />
-              <Route path="internships/create" element={<CreateInternship />} />
+              <Route path="company/dashboard" element={<CompanyDashboard />} />
+              <Route path="company/applications" element={<ApplicationManagement />} />
+              <Route path="company/register" element={<CompanyRegistration />} />
+              <Route path="internships/create" element={<PostInternship />} />
               <Route path="internships/edit/:id" element={<EditInternship />} />
             </Route>
 

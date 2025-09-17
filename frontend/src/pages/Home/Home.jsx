@@ -68,8 +68,8 @@ const Home = () => {
   return (
     <>
       <Helmet>
-        <title>Internship Finder - Find Your Dream Internship</title>
-        <meta name="description" content="Connect with top companies and find amazing internship opportunities. Build your career with Internship Finder." />
+        <title>InternQuest - Find Your Dream Internship</title>
+        <meta name="description" content="Connect with top companies and find amazing internship opportunities. Build your career with InternQuest." />
       </Helmet>
 
       {/* Hero Section */}
@@ -256,7 +256,7 @@ const Home = () => {
             gutterBottom
             sx={{ mb: 6, fontWeight: 'bold' }}
           >
-            Why Choose Internship Finder?
+            Why Choose InternQuest?
           </Typography>
 
           <Grid container spacing={4}>

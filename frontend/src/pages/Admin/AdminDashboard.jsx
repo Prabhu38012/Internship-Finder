@@ -200,7 +200,7 @@ const AdminDashboard = () => {
   return (
     <>
       <Helmet>
-        <title>Admin Dashboard - Internship Finder</title>
+        <title>Admin Dashboard - InternQuest</title>
         <meta name="description" content="Admin panel for managing users, companies, and internships." />
       </Helmet>
 

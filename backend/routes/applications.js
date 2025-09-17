@@ -135,6 +135,19 @@ router.post('/', protect, authorize('student'), trackApplicationSubmitted, uploa
     });
 
     // Send real-time notification about new application
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('new_application', {
+        applicationId: application._id,
+        companyId: internship.company._id,
+        applicantId: req.user._id,
+        applicantName: req.user.name,
+        internshipId: internship._id,
+        internshipTitle: internship.title,
+        timestamp: new Date()
+      });
+    }
+
     await RealtimeService.notifyNewApplication({
       _id: application._id,
       applicant: req.user,
@@ -371,6 +384,29 @@ router.put('/:id/status', protect, authorize('company'), trackApplicationStatusU
     });
 
     // Send real-time notification about status change
+    const io = req.app.get('io');
+    if (io) {
+      // Notify the applicant
+      io.to(application.applicant._id.toString()).emit('application_status_updated', {
+        applicationId: application._id,
+        status,
+        internshipTitle: application.internship.title,
+        companyName: req.user.companyProfile?.companyName || req.user.name,
+        timestamp: new Date()
+      });
+
+      // Notify the company dashboard for real-time updates
+      io.emit('application_status_updated', {
+        applicationId: application._id,
+        companyId: req.user._id,
+        applicantId: application.applicant._id,
+        status,
+        oldStatus,
+        internshipTitle: application.internship.title,
+        timestamp: new Date()
+      });
+    }
+
     await RealtimeService.notifyApplicationStatusChanged(application, oldStatus, status);
 
     // Update analytics
@@ -390,15 +426,6 @@ router.put('/:id/status', protect, authorize('company'), trackApplicationStatusU
       });
     } catch (emailError) {
       console.error('Status update email failed:', emailError);
-    }
-
-    // Emit real-time notification
-    if (req.io) {
-      req.io.to(application.applicant._id.toString()).emit('statusUpdate', {
-        applicationId: application._id,
-        status,
-        internshipTitle: application.internship.title
-      });
     }
 
     res.status(200).json({
@@ -450,6 +477,24 @@ router.put('/:id/withdraw', protect, authorize('student'), [
     application.status = 'withdrawn';
     application.withdrawalReason = req.body.reason;
     await application.save();
+
+    // Populate internship and company data for real-time notification
+    await application.populate('internship', 'title company');
+    
+    // Send real-time notification about withdrawal
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('application_withdrawn', {
+        applicationId: application._id,
+        companyId: application.internship.company,
+        applicantId: req.user._id,
+        applicantName: req.user.name,
+        internshipId: application.internship._id,
+        internshipTitle: application.internship.title,
+        reason: req.body.reason,
+        timestamp: new Date()
+      });
+    }
 
     res.status(200).json({
       success: true,

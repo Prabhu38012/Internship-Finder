@@ -106,7 +106,7 @@ const Applications = () => {
   return (
     <>
       <Helmet>
-        <title>Applications - Internship Finder</title>
+        <title>Applications - InternQuest</title>
         <meta name="description" content="Manage your internship applications and track their status." />
       </Helmet>
 

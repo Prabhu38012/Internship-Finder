@@ -115,6 +115,16 @@ export const authSlice = createSlice({
       localStorage.removeItem('user')
       localStorage.removeItem('token')
     },
+    setCredentials: (state, action) => {
+      const { user, token } = action.payload
+      state.user = user
+      state.token = token
+      state.isSuccess = true
+      state.isError = false
+      state.message = ''
+      localStorage.setItem('token', token)
+      localStorage.setItem('user', JSON.stringify(user))
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -192,5 +202,5 @@ export const authSlice = createSlice({
   },
 })
 
-export const { reset, clearError, setInitialized, clearAuth } = authSlice.actions
+export const { reset, clearError, setInitialized, clearAuth, setCredentials } = authSlice.actions
 export default authSlice.reducer

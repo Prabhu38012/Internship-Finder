@@ -1,5 +1,5 @@
 <<<<<<< HEAD
-# Internship/Project Finder - MERN Stack Application
+# InternQuest - MERN Stack Application
 
 A comprehensive web application for connecting students with internship and project opportunities.
 
@@ -45,7 +45,7 @@ A comprehensive web application for connecting students with internship and proj
 ## Project Structure
 
 ```
-internship-finder/
+internquest/
 ├── backend/
 │   ├── config/
 │   ├── controllers/
@@ -89,7 +89,7 @@ Create a `.env` file in the backend directory:
 ```env
 NODE_ENV=development
 PORT=5000
-MONGODB_URI=mongodb://localhost:27017/internship-finder
+MONGODB_URI=mongodb://localhost:27017/internquest
 JWT_SECRET=your-jwt-secret-key
 JWT_EXPIRE=30d
 CLOUDINARY_CLOUD_NAME=your-cloudinary-name

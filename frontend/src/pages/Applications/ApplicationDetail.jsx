@@ -120,7 +120,7 @@ const ApplicationDetail = () => {
   return (
     <>
       <Helmet>
-        <title>Application Details - Internship Finder</title>
+        <title>Application Details - InternQuest</title>
         <meta name="description" content="View detailed information about the internship application." />
       </Helmet>
 

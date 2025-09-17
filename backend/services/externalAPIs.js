@@ -206,7 +206,7 @@ class LinkedInAPI {
               type: 'internship',
               duration: 'Not specified',
               stipend: { amount: 0, currency: 'USD', period: 'month' },
-              applyUrl: link ? `https://www.linkedin.com${link}` : 'https://www.linkedin.com/jobs',
+              applyUrl: link ? (link.startsWith('http') ? link : `https://www.linkedin.com${link}`) : 'https://www.linkedin.com/jobs',
               source: 'LinkedIn',
               postedDate: new Date()
             });

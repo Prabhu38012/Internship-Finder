@@ -64,8 +64,8 @@ const Login = () => {
   return (
     <>
       <Helmet>
-        <title>Login - Internship Finder</title>
-        <meta name="description" content="Login to your Internship Finder account to access your dashboard and apply for internships." />
+        <title>Login - InternQuest</title>
+        <meta name="description" content="Login to your InternQuest account to access your dashboard and apply for internships." />
       </Helmet>
 
       <Container component="main" maxWidth="sm" sx={{ py: 8 }}>

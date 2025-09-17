@@ -164,12 +164,11 @@ const Profile = () => {
   }
 
   const handleResumeUpload = async (file) => {
-    const formDataUpload = new FormData()
-    formDataUpload.append('resume', file)
-
+    const token = localStorage.getItem('token')
+    
     try {
       setUploading(true)
-      await userService.uploadResume(formDataUpload)
+      await userService.uploadResume(file, token)
       toast.success('Resume uploaded successfully')
       // Refresh user data
       dispatch(updateProfile({}))
@@ -201,7 +200,7 @@ const Profile = () => {
   return (
     <>
       <Helmet>
-        <title>Profile - Internship Finder</title>
+        <title>Profile - InternQuest</title>
         <meta name="description" content="Manage your profile information and preferences." />
       </Helmet>
 

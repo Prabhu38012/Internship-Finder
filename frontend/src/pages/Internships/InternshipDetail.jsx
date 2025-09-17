@@ -140,7 +140,7 @@ const InternshipDetail = () => {
   return (
     <>
       <Helmet>
-        <title>{internship.title} at {internship.companyName} - Internship Finder</title>
+        <title>{internship.title} at {internship.companyName} - InternQuest</title>
         <meta name="description" content={internship.description.substring(0, 160)} />
       </Helmet>
 

@@ -220,7 +220,7 @@ const CreateInternship = () => {
   return (
     <>
       <Helmet>
-        <title>Create Internship - Internship Finder</title>
+        <title>Create Internship - InternQuest</title>
         <meta name="description" content="Post a new internship opportunity for students." />
       </Helmet>
 

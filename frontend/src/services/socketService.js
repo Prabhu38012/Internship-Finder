@@ -198,7 +198,41 @@ class SocketService {
     }
   }
 
-  // ...existing room and typing methods...
+  // Add event listener method
+  on(event, callback) {
+    if (this.socket) {
+      this.socket.on(event, callback);
+    } else {
+      console.warn(`Socket not available for event: ${event}`);
+    }
+  }
+
+  // Remove event listener method
+  off(event, callback) {
+    if (this.socket) {
+      this.socket.off(event, callback);
+    }
+  }
+
+  // Join conversation room
+  joinConversation(conversationId) {
+    this.emit('join_conversation', conversationId);
+  }
+
+  // Leave conversation room
+  leaveConversation(conversationId) {
+    this.emit('leave_conversation', conversationId);
+  }
+
+  // Send typing indicator
+  sendTyping(conversationId, isTyping) {
+    this.emit('typing', { conversationId, isTyping });
+  }
+
+  // Mark message as read
+  markMessageRead(conversationId, messageId) {
+    this.emit('message_read', { conversationId, messageId });
+  }
 
   disconnect() {
     if (this.socket) {

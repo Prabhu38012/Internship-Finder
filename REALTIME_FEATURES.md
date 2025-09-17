@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Internship Finder application has been transformed into a fully real-time application using Socket.IO. This document outlines all the real-time features implemented across both backend and frontend.
+The InternQuest application has been transformed into a fully real-time application using Socket.IO. This document outlines all the real-time features implemented across both backend and frontend.
 
 ## Backend Real-time Implementation
 
@@ -288,4 +288,4 @@ socketService.emit('test_notification', { message: 'Test' })
 
 ## Conclusion
 
-The real-time implementation transforms the Internship Finder into a dynamic, interactive platform with instant updates, live notifications, and real-time analytics. The modular architecture ensures scalability and maintainability while providing an exceptional user experience.
+The real-time implementation transforms the InternQuest into a dynamic, interactive platform with instant updates, live notifications, and real-time analytics. The modular architecture ensures scalability and maintainability while providing an exceptional user experience.

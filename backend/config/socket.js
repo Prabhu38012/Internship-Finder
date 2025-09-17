@@ -52,26 +52,16 @@ class SocketManager {
         const token = socket.handshake.auth.token;
         
         if (!token) {
-          return next(new Error('Authentication error: No token provided'));
-        }
-
-        // Rate limiting for connection attempts
-        const clientIp = socket.handshake.address;
-        if (this.isRateLimited(clientIp)) {
-          return next(new Error('Too many connection attempts'));
+          return next(new Error('Authentication error'));
         }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const user = await User.findById(decoded.id)
-          .select('-password')
-          .lean()
-          .cache(30); // Cache user data for 30 seconds
+        const user = await User.findById(decoded.id).select('-password');
         
-        if (!user) {
-          return next(new Error('Authentication error: User not found'));
+        if (!user || !user.isActive) {
+          return next(new Error('Authentication error'));
         }
 
-        // Add user data and metadata to socket
         socket.userId = user._id.toString();
         socket.user = user;
         socket.connectionTime = new Date();
@@ -91,40 +81,60 @@ class SocketManager {
 
   setupEventHandlers() {
     this.io.on('connection', (socket) => {
-      this.handleNewConnection(socket);
-      this.setupSocketEventHandlers(socket);
-    });
-
-    // Global error handler
-    this.io.engine.on('connection_error', (err) => {
-      console.error('Connection error:', err);
-    });
-  }
-
-  handleNewConnection(socket) {
-    console.log(`User ${socket.user.name} connected (${socket.id})`);
-    
-    // Store user connection with metadata
-    this.connectedUsers.set(socket.userId, socket.id);
-    this.userSockets.set(socket.id, {
-      userId: socket.userId,
-      user: socket.user,
-      joinedAt: new Date(),
-      metadata: socket.metadata
-    });
-
-    // Join default rooms
-    socket.join(`user:${socket.userId}`);
-    socket.join(`role:${socket.user.role}`);
-
-    // Emit online status
-    this.emitUserStatus(socket, true);
-    
-    // Send initial state
-    socket.emit('connection:established', {
-      userId: socket.userId,
-      timestamp: new Date(),
-      activeUsers: this.getActiveUsersCount()
+      console.log(`User ${socket.user.name} connected (${socket.userId})`);
+      
+      // Join user to their personal room
+      socket.join(`user_${socket.userId}`);
+      
+      // Update user's online status
+      this.updateUserStatus(socket.userId, true);
+      
+      // Handle disconnection
+      socket.on('disconnect', () => {
+        console.log(`User ${socket.user.name} disconnected (${socket.userId})`);
+        this.updateUserStatus(socket.userId, false);
+      });
+      
+      // Handle typing indicators for messaging
+      socket.on('typing', (data) => {
+        socket.to(`conversation_${data.conversationId}`).emit('user_typing', {
+          userId: socket.userId,
+          userName: socket.user.name,
+          conversationId: data.conversationId,
+          isTyping: data.isTyping
+        });
+      });
+      
+      // Handle joining conversation rooms
+      socket.on('join_conversation', (conversationId) => {
+        socket.join(`conversation_${conversationId}`);
+        console.log(`User ${socket.userId} joined conversation ${conversationId}`);
+      });
+      
+      // Handle leaving conversation rooms
+      socket.on('leave_conversation', (conversationId) => {
+        socket.leave(`conversation_${conversationId}`);
+        console.log(`User ${socket.userId} left conversation ${conversationId}`);
+      });
+      
+      // Handle joining rooms (for notifications)
+      socket.on('join_room', (room) => {
+        socket.join(room);
+      });
+      
+      // Handle leaving rooms
+      socket.on('leave_room', (room) => {
+        socket.leave(room);
+      });
+      
+      // Handle message read receipts
+      socket.on('message_read', (data) => {
+        socket.to(`conversation_${data.conversationId}`).emit('message_read_receipt', {
+          userId: socket.userId,
+          messageId: data.messageId,
+          conversationId: data.conversationId
+        });
+      });
     });
   }
 
@@ -194,6 +204,80 @@ class SocketManager {
     } else {
       this.io.to(room).emit(event, data);
     }
+  }
+
+  // Method to emit to users with specific role
+  emitToRole(role, event, data) {
+    if (this.io) {
+      this.io.to(`role:${role}`).emit(event, data);
+    }
+  }
+
+  // Method to emit to specific room
+  emitToRoom(room, event, data) {
+    if (this.io) {
+      this.io.to(room).emit(event, data);
+    }
+  }
+
+  // Method to emit to specific user
+  emitToUser(userId, event, data) {
+    if (this.io) {
+      this.io.to(`user:${userId}`).emit(event, data);
+    }
+  }
+
+  // Handle room join
+  handleRoomJoin(socket, room) {
+    socket.join(room);
+    this.rooms.add(room);
+    console.log(`User ${socket.user.name} joined room: ${room}`);
+  }
+
+  // Handle room leave
+  handleRoomLeave(socket, room) {
+    socket.leave(room);
+    console.log(`User ${socket.user.name} left room: ${room}`);
+  }
+
+  // Handle typing indicators
+  handleTyping(socket, room, isTyping) {
+    socket.to(room).emit('typing', {
+      userId: socket.userId,
+      name: socket.user.name,
+      isTyping,
+      timestamp: new Date()
+    });
+  }
+
+  // Handle notification read
+  handleNotificationRead(socket, notificationId) {
+    socket.emit('notification:read:confirmed', { notificationId });
+  }
+
+  // Handle analytics subscription
+  handleAnalyticsSubscription(socket, subscribe) {
+    if (subscribe) {
+      socket.join('analytics');
+    } else {
+      socket.leave('analytics');
+    }
+  }
+
+  // Handle disconnect
+  handleDisconnect(socket, reason) {
+    console.log(`User ${socket.user?.name || 'Unknown'} disconnected: ${reason}`);
+    this.cleanupUserConnection(socket);
+  }
+
+  // Handle socket errors
+  handleSocketError(socket, error) {
+    console.error(`Socket error for user ${socket.user?.name || 'Unknown'}:`, error);
+  }
+
+  // Get socket instance
+  getIO() {
+    return this.io;
   }
 }
 

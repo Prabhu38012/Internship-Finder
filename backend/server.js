@@ -6,6 +6,7 @@ const helmet = require('helmet');
 const compression = require('compression');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const path = require('path');
 const { createServer } = require('http');
 const socketManager = require('./config/socket');
 
@@ -21,9 +22,15 @@ const adminRoutes = require('./routes/admin');
 const notificationRoutes = require('./routes/notifications');
 const analyticsRoutes = require('./routes/analytics');
 const wishlistRoutes = require('./routes/wishlist');
+const companyRoutes = require('./routes/company');
+const aiRoutes = require('./routes/ai');
+const messageRoutes = require('./routes/messages');
 
 const app = express();
 const server = createServer(app);
+
+// Make io available to routes
+app.set('io', null);
 
 // Initialize Socket.IO with security options
 const io = socketManager.initialize(server, {
@@ -37,6 +44,9 @@ const io = socketManager.initialize(server, {
     credentials: true
   }
 });
+
+// Set io instance for routes
+app.set('io', io);
 
 // Enhanced security middleware
 app.use(helmet({
@@ -55,7 +65,7 @@ app.use(compression());
 // Advanced rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 1000,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -73,13 +83,18 @@ app.use(cors({
     process.env.CLIENT_URL
   ].filter(Boolean),
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  preflightContinue: false,
+  optionsSuccessStatus: 200
 }));
 
 // Enhanced body parsing
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Conditional logging
 if (process.env.NODE_ENV === 'development') {
@@ -126,6 +141,9 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/wishlist', wishlistRoutes);
+app.use('/api/company', companyRoutes);
+app.use('/api/ai', aiRoutes);
+app.use('/api/messages', messageRoutes);
 
 // Enhanced placeholder image endpoint
 app.get('/api/placeholder/:width/:height', (req, res) => {
