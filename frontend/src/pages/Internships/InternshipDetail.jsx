@@ -136,6 +136,14 @@ const InternshipDetail = () => {
 
   const isExpired = new Date(internship.applicationDeadline) < new Date()
   const canApply = user && user.role === 'student' && !internship.hasApplied && !isExpired
+  
+  const getApplyButtonText = () => {
+    if (!user) return 'Login to Apply'
+    if (user.role === 'company') return 'Companies Cannot Apply'
+    if (internship.hasApplied) return 'Already Applied'
+    if (isExpired) return 'Application Deadline Passed'
+    return 'Apply Now'
+  }
 
   return (
     <>
@@ -342,7 +350,7 @@ const InternshipDetail = () => {
                     onClick={handleApply}
                     disabled={!canApply}
                   >
-                    {internship.hasApplied ? 'Already Applied' : 'Apply Now'}
+                    {getApplyButtonText()}
                   </Button>
                   
                   {user && user.role === 'student' && (

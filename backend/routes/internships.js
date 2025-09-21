@@ -209,6 +209,11 @@ router.get('/:id', optionalAuth, async (req, res) => {
   }
 });
 
+// Test route to verify routing works
+router.post('/test', (req, res) => {
+  res.json({ success: true, message: 'Internship route is working!' });
+});
+
 // @desc    Create new internship (Real-time posting)
 // @route   POST /api/internships
 // @access  Private (Company only)
@@ -236,33 +241,63 @@ router.post('/', protect, authorize('company'), [
     }
 
     // Check if company can post more internships
-    const Company = require('../models/Company');
-    const company = await Company.findById(req.user.id);
+    console.log('Looking for company with user ID:', req.user._id);
+    console.log('User object keys:', Object.keys(req.user));
+    console.log('User role:', req.user.role);
+    console.log('Company name:', req.user.companyName);
+    console.log('Company object:', req.user.toObject ? req.user.toObject() : req.user);
     
-    if (!company) {
+    // For Company model, the user is already the company object
+    let company = req.user;
+    
+    // Check if this is a valid company object
+    if (!company || !company._id) {
+      console.log('No company object found');
       return res.status(404).json({
         success: false,
-        message: 'Company not found'
+        message: 'Company authentication failed'
+      });
+    }
+    
+    // For Company model, companyName should exist, but let's be flexible
+    if (!company.companyName && !company.name) {
+      console.log('Company object missing name field');
+      console.log('Available company properties:', Object.getOwnPropertyNames(company));
+      return res.status(404).json({
+        success: false,
+        message: 'Company profile incomplete'
       });
     }
 
-    if (!company.canPostInternship()) {
+    // Check posting limits manually since canPostInternship might not be available
+    const maxPosts = company.subscription?.maxInternshipPosts || 5;
+    const currentPosts = company.subscription?.currentInternshipPosts || 0;
+    
+    if (currentPosts >= maxPosts) {
       return res.status(403).json({
         success: false,
-        message: `You have reached your posting limit of ${company.subscription.maxInternshipPosts} internships. Upgrade your plan to post more.`
+        message: `You have reached your posting limit of ${maxPosts} internships. Upgrade your plan to post more.`
       });
     }
 
     const internshipData = {
       ...req.body,
-      company: req.user.id,
-      companyName: company.companyName
+      company: company._id,
+      companyName: company.companyName || company.name || 'Unknown Company'
     };
 
     const internship = await Internship.create(internshipData);
     
-    // Update company internship count
-    await company.incrementInternshipCount();
+    // Update company internship count manually
+    try {
+      const Company = require('../models/Company');
+      await Company.findByIdAndUpdate(company._id, {
+        $inc: { 'subscription.currentInternshipPosts': 1 }
+      });
+      console.log('✅ Company internship count updated');
+    } catch (updateError) {
+      console.error('Error updating company count:', updateError);
+    }
 
     // Emit real-time notification to all students
     const io = req.app.get('io');

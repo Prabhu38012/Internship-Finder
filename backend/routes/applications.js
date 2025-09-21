@@ -24,7 +24,10 @@ router.post('/', protect, authorize('student'), trackApplicationSubmitted, uploa
 ], async (req, res) => {
   try {
     console.log('Application request - User:', req.user ? req.user.email : 'No user');
+    console.log('Application request - User ID:', req.user ? req.user._id : 'No user ID');
+    console.log('Application request - User Role:', req.user ? req.user.role : 'No role');
     console.log('Application request - Body:', req.body);
+    console.log('Application request - Files:', req.files);
     
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -39,15 +42,23 @@ router.post('/', protect, authorize('student'), trackApplicationSubmitted, uploa
     const { internshipId, coverLetter, answers } = req.body;
 
     // Check if internship exists and is active
+    console.log('Looking for internship with ID:', internshipId);
     const internship = await Internship.findById(internshipId).populate('company');
     if (!internship) {
+      console.log('Internship not found');
       return res.status(404).json({
         success: false,
         message: 'Internship not found'
       });
     }
 
+    console.log('Internship found:', internship.title);
+    console.log('Internship status:', internship.status);
+    console.log('Application deadline:', internship.applicationDeadline);
+    console.log('Current date:', new Date());
+
     if (internship.status !== 'active' || internship.applicationDeadline < new Date()) {
+      console.log('Internship not accepting applications - Status:', internship.status, 'Deadline passed:', internship.applicationDeadline < new Date());
       return res.status(400).json({
         success: false,
         message: 'This internship is no longer accepting applications'
@@ -55,12 +66,14 @@ router.post('/', protect, authorize('student'), trackApplicationSubmitted, uploa
     }
 
     // Check if user already applied
+    console.log('Checking for existing application...');
     const existingApplication = await Application.findOne({
       internship: internshipId,
       applicant: req.user._id
     });
 
     if (existingApplication) {
+      console.log('User already applied for this internship');
       return res.status(400).json({
         success: false,
         message: 'You have already applied for this internship'
@@ -68,7 +81,9 @@ router.post('/', protect, authorize('student'), trackApplicationSubmitted, uploa
     }
 
     // Check if max applications reached
-    if (internship.applicationsCount >= internship.maxApplications) {
+    console.log('Checking application limits - Current:', internship.applicationsCount, 'Max:', internship.maxApplications);
+    if (internship.maxApplications && internship.applicationsCount >= internship.maxApplications) {
+      console.log('Maximum applications limit reached');
       return res.status(400).json({
         success: false,
         message: 'Maximum applications limit reached for this internship'

@@ -59,7 +59,7 @@ const CompanyDashboard = () => {
   const [dashboardData, setDashboardData] = useState(null)
   const [realTimeStats, setRealTimeStats] = useState({})
 
-  const socket = useSocket()
+  const { socket } = useSocket()
 
   useEffect(() => {
     dispatch(getMyInternships())

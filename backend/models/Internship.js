@@ -74,8 +74,8 @@ const internshipSchema = new mongoose.Schema({
     },
     period: {
       type: String,
-      enum: ['monthly', 'weekly', 'total', 'hourly'],
-      default: 'monthly'
+      enum: ['month', 'monthly', 'week', 'weekly', 'total', 'hourly'],
+      default: 'month'
     }
   },
   requirements: {

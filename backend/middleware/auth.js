@@ -22,22 +22,53 @@ const protect = async (req, res, next) => {
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Get user from token
-    req.user = await User.findById(decoded.id).select('-password');
-    
-    if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        message: 'User not found'
-      });
-    }
+    // Check if this is a company token
+    if (decoded.type === 'company') {
+      const Company = require('../models/Company');
+      console.log('Looking for company with ID:', decoded.id);
+      req.user = await Company.findById(decoded.id).select('-password');
+      
+      if (!req.user) {
+        console.log('Company not found in database for ID:', decoded.id);
+        return res.status(401).json({
+          success: false,
+          message: 'Company not found'
+        });
+      }
+      
+      console.log('Company found:', req.user.companyName);
+      console.log('Company ID:', req.user._id);
+      console.log('Company Email:', req.user.companyEmail);
+      console.log('Account Status:', req.user.accountStatus);
 
-    // Check if user is active
-    if (!req.user.isActive) {
-      return res.status(401).json({
-        success: false,
-        message: 'Account has been deactivated'
-      });
+      // Check if company account is active
+      if (req.user.accountStatus === 'suspended' || req.user.accountStatus === 'inactive') {
+        return res.status(401).json({
+          success: false,
+          message: 'Account has been deactivated'
+        });
+      }
+
+      // Set role for authorization middleware
+      req.user.role = 'company';
+    } else {
+      // Regular user token
+      req.user = await User.findById(decoded.id).select('-password');
+      
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          message: 'User not found'
+        });
+      }
+
+      // Check if user is active
+      if (!req.user.isActive) {
+        return res.status(401).json({
+          success: false,
+          message: 'Account has been deactivated'
+        });
+      }
     }
 
     next();
@@ -52,6 +83,15 @@ const protect = async (req, res, next) => {
 // Grant access to specific roles
 const authorize = (...roles) => {
   return (req, res, next) => {
+    console.log('Authorization check - User role:', req.user?.role, 'Required roles:', roles);
+    
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'User not authenticated'
+      });
+    }
+    
     if (!roles.includes(req.user.role)) {
       return res.status(403).json({
         success: false,

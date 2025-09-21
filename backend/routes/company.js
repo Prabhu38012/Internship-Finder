@@ -367,7 +367,7 @@ router.post('/upload-logo', protect, authorize('company'), upload.single('logo')
 // @access  Private (Company)
 router.get('/dashboard', protect, authorize('company'), async (req, res) => {
   try {
-    const company = await Company.findById(req.user.id);
+    const company = await Company.findById(req.user._id);
     if (!company) {
       return res.status(404).json({
         success: false,
@@ -376,10 +376,10 @@ router.get('/dashboard', protect, authorize('company'), async (req, res) => {
     }
 
     // Get detailed statistics
-    const stats = await Company.getCompanyStats(req.user.id);
+    const stats = await Company.getCompanyStats(req.user._id);
     
     // Get recent internships
-    const recentInternships = await Internship.find({ company: req.user.id })
+    const recentInternships = await Internship.find({ company: req.user._id })
       .sort({ createdAt: -1 })
       .limit(5)
       .populate('applications', 'status createdAt');
@@ -388,7 +388,7 @@ router.get('/dashboard', protect, authorize('company'), async (req, res) => {
     const recentApplications = await Application.find()
       .populate({
         path: 'internship',
-        match: { company: req.user.id },
+        match: { company: req.user._id },
         select: 'title'
       })
       .populate('student', 'name email')

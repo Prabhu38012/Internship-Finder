@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear Authentication - InternQuest</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .button {
+            background-color: #ff4444;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 0;
+            display: block;
+            width: 100%;
+        }
+        .button:hover {
+            background-color: #cc3333;
+        }
+        .success {
+            background-color: #4CAF50;
+        }
+        .success:hover {
+            background-color: #45a049;
+        }
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .error {
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+        .success-msg {
+            background-color: #e8f5e8;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+        }
+        .info {
+            background-color: #e3f2fd;
+            color: #1565c0;
+            border: 1px solid #bbdefb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Fix InternQuest Authentication</h1>
+        
+        <div id="status" class="status info">
+            Ready to clear authentication data
+        </div>
+        
+        <h3>Current Authentication Status:</h3>
+        <div id="current-auth">
+            <p><strong>Token:</strong> <span id="token-status">Checking...</span></p>
+            <p><strong>User:</strong> <span id="user-status">Checking...</span></p>
+        </div>
+        
+        <button class="button" onclick="clearAuth()">
+            🗑️ Clear Authentication Data
+        </button>
+        
+        <button class="button success" onclick="goToLogin()" id="login-btn" style="display:none;">
+            🔑 Go to Login Page
+        </button>
+        
+        <h3>Steps:</h3>
+        <ol>
+            <li>Click "Clear Authentication Data" button above</li>
+            <li>Click "Go to Login Page" when it appears</li>
+            <li>Login with your company credentials:
+                <ul>
+                    <li><strong>Email:</strong> prabhuchennimalai@gmail.com</li>
+                    <li><strong>Password:</strong> (your registration password)</li>
+                </ul>
+            </li>
+            <li>Try posting internship again</li>
+        </ol>
+    </div>
+
+    <script>
+        function checkCurrentAuth() {
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            
+            document.getElementById('token-status').textContent = token ? 'Present (OLD - NEEDS CLEARING)' : 'None';
+            document.getElementById('user-status').textContent = user ? 'Present (OLD - NEEDS CLEARING)' : 'None';
+            
+            if (token || user) {
+                document.getElementById('status').className = 'status error';
+                document.getElementById('status').textContent = '❌ Old authentication data found - needs clearing';
+            } else {
+                document.getElementById('status').className = 'status success-msg';
+                document.getElementById('status').textContent = '✅ Authentication data cleared - ready for fresh login';
+                document.getElementById('login-btn').style.display = 'block';
+            }
+        }
+        
+        function clearAuth() {
+            try {
+                // Clear all storage
+                localStorage.clear();
+                sessionStorage.clear();
+                
+                // Clear any cookies
+                document.cookie.split(";").forEach(function(c) { 
+                    document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+                });
+                
+                document.getElementById('status').className = 'status success-msg';
+                document.getElementById('status').textContent = '✅ Authentication data cleared successfully!';
+                
+                // Update display
+                checkCurrentAuth();
+                
+                alert('✅ Authentication cleared! Now click "Go to Login Page" and login fresh.');
+                
+            } catch (error) {
+                document.getElementById('status').className = 'status error';
+                document.getElementById('status').textContent = '❌ Error clearing data: ' + error.message;
+            }
+        }
+        
+        function goToLogin() {
+            window.location.href = '/login';
+        }
+        
+        // Check current status on page load
+        checkCurrentAuth();
+    </script>
+</body>
+</html>
