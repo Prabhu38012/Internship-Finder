@@ -40,7 +40,7 @@ function App() {
   const { user, token, isLoading, isInitialized } = useSelector((state) => state.auth)
   
   // Initialize socket connection
-  useSocket()
+  useSocket(token)
 
   useEffect(() => {
     // Initialize auth state on app load

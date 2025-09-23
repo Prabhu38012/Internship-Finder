@@ -61,9 +61,13 @@ const Messages = () => {
   const [newConversationOpen, setNewConversationOpen] = useState(false);
   const [availableUsers, setAvailableUsers] = useState([]);
   const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [typingUsers, setTypingUsers] = useState({});
+  const [onlineUsers, setOnlineUsers] = useState(new Set());
+  const [isTyping, setIsTyping] = useState(false);
 
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
 
   useEffect(() => {
     fetchConversations();
@@ -72,10 +76,16 @@ const Messages = () => {
     // Setup socket listeners
     socketService.on('new_message', handleNewMessage);
     socketService.on('message_deleted', handleMessageDeleted);
+    socketService.on('user_typing', handleUserTyping);
+    socketService.on('user_status_change', handleUserStatusChange);
+    socketService.on('application_notification', handleApplicationNotification);
     
     return () => {
       socketService.off('new_message', handleNewMessage);
       socketService.off('message_deleted', handleMessageDeleted);
+      socketService.off('user_typing', handleUserTyping);
+      socketService.off('user_status_change', handleUserStatusChange);
+      socketService.off('application_notification', handleApplicationNotification);
     };
   }, []);
 
@@ -104,9 +114,16 @@ const Messages = () => {
           'Content-Type': 'application/json'
         }
       });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
       if (data.success) {
         setAvailableUsers(data.data.filter(u => u._id !== user.id));
+      } else {
+        throw new Error(data.message || 'Failed to fetch users');
       }
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -116,7 +133,7 @@ const Messages = () => {
 
   const handleCreateConversation = async (selectedUser) => {
     try {
-      const response = await messageService.createConversation([user.id, selectedUser._id]);
+      const response = await messageService.createConversation(selectedUser._id);
       const newConversation = response.data;
       setConversations(prev => [newConversation, ...prev]);
       setSelectedConversation(newConversation);
@@ -142,9 +159,18 @@ const Messages = () => {
   };
 
   const handleConversationSelect = (conversation) => {
+    // Leave previous conversation room
+    if (selectedConversation) {
+      socketService.leaveConversation(selectedConversation._id);
+    }
+    
     setSelectedConversation(conversation);
     setMessages([]);
+    setTypingUsers({});
     fetchMessages(conversation._id);
+    
+    // Join new conversation room
+    socketService.joinConversation(conversation._id);
   };
 
   const handleSendMessage = async () => {
@@ -203,6 +229,70 @@ const Messages = () => {
     }
   };
 
+  const handleUserTyping = (data) => {
+    if (data.conversationId === selectedConversation?._id && data.userId !== user.id) {
+      setTypingUsers(prev => ({
+        ...prev,
+        [data.userId]: {
+          userName: data.userName,
+          isTyping: data.isTyping
+        }
+      }));
+
+      // Clear typing indicator after 3 seconds
+      if (data.isTyping) {
+        setTimeout(() => {
+          setTypingUsers(prev => {
+            const updated = { ...prev };
+            delete updated[data.userId];
+            return updated;
+          });
+        }, 3000);
+      }
+    }
+  };
+
+  const handleUserStatusChange = (data) => {
+    setOnlineUsers(prev => {
+      const updated = new Set(prev);
+      if (data.isOnline) {
+        updated.add(data.userId);
+      } else {
+        updated.delete(data.userId);
+      }
+      return updated;
+    });
+  };
+
+  const handleApplicationNotification = (data) => {
+    // Create automatic message for application events
+    const automaticMessage = {
+      _id: `auto_${Date.now()}`,
+      content: data.message,
+      messageType: 'system',
+      sender: { _id: 'system', name: 'System' },
+      createdAt: new Date(),
+      isSystemMessage: true,
+      applicationData: data.applicationData
+    };
+
+    if (data.conversationId === selectedConversation?._id) {
+      setMessages(prev => [...prev, automaticMessage]);
+    }
+
+    // Update conversations list
+    setConversations(prev => 
+      prev.map(conv => 
+        conv._id === data.conversationId
+          ? { ...conv, lastMessage: automaticMessage, lastActivity: new Date() }
+          : conv
+      )
+    );
+
+    // Show toast notification
+    toast.success(data.message, { icon: '📨' });
+  };
+
   const handleDeleteMessage = async () => {
     if (!selectedMessage) return;
 
@@ -230,6 +320,31 @@ const Messages = () => {
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleTyping = (value) => {
+    setNewMessage(value);
+    
+    if (selectedConversation && value.trim()) {
+      if (!isTyping) {
+        setIsTyping(true);
+        socketService.sendTyping(selectedConversation._id, true);
+      }
+      
+      // Clear existing timeout
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+      
+      // Set new timeout to stop typing indicator
+      typingTimeoutRef.current = setTimeout(() => {
+        setIsTyping(false);
+        socketService.sendTyping(selectedConversation._id, false);
+      }, 1000);
+    } else if (isTyping) {
+      setIsTyping(false);
+      socketService.sendTyping(selectedConversation._id, false);
+    }
   };
 
   const filteredConversations = conversations.filter(conv => {
@@ -310,9 +425,43 @@ const Messages = () => {
                       color="error"
                       invisible={!conversation.unreadCount}
                     >
-                      <Avatar src={otherParticipant?.avatar}>
-                        {otherParticipant?.name?.charAt(0)}
-                      </Avatar>
+                      <Badge
+                        variant="dot"
+                        color="success"
+                        invisible={!onlineUsers.has(otherParticipant?._id)}
+                        sx={{
+                          '& .MuiBadge-badge': {
+                            backgroundColor: '#44b700',
+                            color: '#44b700',
+                            boxShadow: `0 0 0 2px white`,
+                            '&::after': {
+                              position: 'absolute',
+                              top: 0,
+                              left: 0,
+                              width: '100%',
+                              height: '100%',
+                              borderRadius: '50%',
+                              animation: onlineUsers.has(otherParticipant?._id) ? 'ripple 1.2s infinite ease-in-out' : 'none',
+                              border: '1px solid currentColor',
+                              content: '""',
+                            },
+                          },
+                          '@keyframes ripple': {
+                            '0%': {
+                              transform: 'scale(.8)',
+                              opacity: 1,
+                            },
+                            '100%': {
+                              transform: 'scale(2.4)',
+                              opacity: 0,
+                            },
+                          },
+                        }}
+                      >
+                        <Avatar src={otherParticipant?.avatar}>
+                          {otherParticipant?.name?.charAt(0)}
+                        </Avatar>
+                      </Badge>
                     </Badge>
                   </ListItemAvatar>
                   <ListItemText
@@ -329,11 +478,7 @@ const Messages = () => {
                         />
                       </Box>
                     }
-                    secondary={
-                      <Typography variant="body2" color="text.secondary" noWrap>
-                        {conversation.lastMessage?.content || 'No messages yet'}
-                      </Typography>
-                    }
+                    secondary={conversation.lastMessage?.content || 'No messages yet'}
                   />
                   <Typography variant="caption" color="text.secondary">
                     {conversation.lastActivity && formatMessageTime(conversation.lastActivity)}
@@ -376,7 +521,56 @@ const Messages = () => {
               {/* Messages */}
               <Box sx={{ flex: 1, overflow: 'auto', p: 1 }}>
                 {messages.map((message) => {
-                  const isOwn = message.sender._id === user.id;
+                  const isOwn = message.sender._id === user.id || message.sender._id === user._id;
+                  const isSystemMessage = message.isSystemMessage || message.messageType === 'system';
+                  
+                  // Debug logging
+                  console.log('Message:', {
+                    content: message.content,
+                    senderId: message.sender._id,
+                    userId: user.id,
+                    userIdAlt: user._id,
+                    isOwn,
+                    senderName: message.sender.name
+                  });
+                  
+                  if (isSystemMessage) {
+                    return (
+                      <Box
+                        key={message._id}
+                        sx={{
+                          display: 'flex',
+                          justifyContent: 'center',
+                          mb: 2
+                        }}
+                      >
+                        <Paper
+                          sx={{
+                            p: 2,
+                            maxWidth: '80%',
+                            bgcolor: 'info.light',
+                            color: 'info.contrastText',
+                            textAlign: 'center',
+                            borderRadius: 3
+                          }}
+                        >
+                          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                            📨 {message.content}
+                          </Typography>
+                          {message.applicationData && (
+                            <Box sx={{ mt: 1, p: 1, bgcolor: 'rgba(255,255,255,0.1)', borderRadius: 1 }}>
+                              <Typography variant="caption">
+                                Application: {message.applicationData.internshipTitle}
+                              </Typography>
+                            </Box>
+                          )}
+                          <Typography variant="caption" sx={{ display: 'block', mt: 0.5, opacity: 0.8 }}>
+                            {formatMessageTime(message.createdAt)}
+                          </Typography>
+                        </Paper>
+                      </Box>
+                    );
+                  }
                   
                   return (
                     <Box
@@ -384,7 +578,8 @@ const Messages = () => {
                       sx={{
                         display: 'flex',
                         justifyContent: isOwn ? 'flex-end' : 'flex-start',
-                        mb: 1
+                        mb: 1,
+                        mx: 1
                       }}
                     >
                       <Paper
@@ -393,7 +588,9 @@ const Messages = () => {
                           maxWidth: '70%',
                           bgcolor: isOwn ? 'primary.main' : 'grey.100',
                           color: isOwn ? 'white' : 'text.primary',
-                          position: 'relative'
+                          position: 'relative',
+                          borderRadius: isOwn ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+                          boxShadow: 1
                         }}
                       >
                         {message.replyTo && (
@@ -413,6 +610,16 @@ const Messages = () => {
                           </Box>
                         )}
                         
+                        {!isOwn && (
+                          <Typography variant="caption" sx={{ 
+                            display: 'block', 
+                            mb: 0.5, 
+                            fontWeight: 500,
+                            opacity: 0.8 
+                          }}>
+                            {message.sender.name}
+                          </Typography>
+                        )}
                         <Typography variant="body1">
                           {message.content}
                         </Typography>
@@ -453,6 +660,21 @@ const Messages = () => {
                     </Box>
                   );
                 })}
+                
+                {/* Typing Indicators */}
+                {Object.values(typingUsers).some(user => user.isTyping) && (
+                  <Box sx={{ display: 'flex', justifyContent: 'flex-start', mb: 1 }}>
+                    <Paper sx={{ p: 1, bgcolor: 'grey.100', borderRadius: 2 }}>
+                      <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                        {Object.values(typingUsers)
+                          .filter(user => user.isTyping)
+                          .map(user => user.userName)
+                          .join(', ')} {Object.values(typingUsers).filter(user => user.isTyping).length === 1 ? 'is' : 'are'} typing...
+                      </Typography>
+                    </Paper>
+                  </Box>
+                )}
+                
                 <div ref={messagesEndRef} />
               </Box>
 
@@ -514,7 +736,7 @@ const Messages = () => {
                     maxRows={4}
                     placeholder="Type a message..."
                     value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
+                    onChange={(e) => handleTyping(e.target.value)}
                     onKeyPress={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault();
@@ -654,17 +876,17 @@ const Messages = () => {
                     <ListItemText
                       primary={user.name}
                       secondary={
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Typography variant="body2" color="text.secondary">
-                            {user.email}
-                          </Typography>
-                          <Chip
-                            label={user.role}
-                            size="small"
-                            color={user.role === 'student' ? 'primary' : 'secondary'}
-                          />
-                        </Box>
-                      }
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <span style={{ fontSize: '0.875rem', color: 'rgba(0, 0, 0, 0.6)' }}>
+                          {user.email}
+                        </span>
+                        <Chip
+                          label={user.role}
+                          size="small"
+                          color={user.role === 'student' ? 'primary' : 'secondary'}
+                        />
+                      </Box>
+                    }
                     />
                   </ListItem>
                 ))}

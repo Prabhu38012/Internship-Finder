@@ -57,41 +57,6 @@ router.get('/', protect, authorize('admin'), async (req, res) => {
   }
 });
 
-// @desc    Get user profile
-// @route   GET /api/users/:id
-// @access  Public
-router.get('/:id', async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id).select('-password -preferences');
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
-    }
-
-    // Check if profile is private
-    if (user.preferences?.profileVisibility === 'private') {
-      return res.status(403).json({
-        success: false,
-        message: 'Profile is private'
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      data: user.getPublicProfile()
-    });
-  } catch (error) {
-    console.error('Get user profile error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error'
-    });
-  }
-});
-
 // @desc    Search users for messaging
 // @route   GET /api/users/search
 // @access  Private
@@ -122,6 +87,41 @@ router.get('/search', protect, async (req, res) => {
     });
   } catch (error) {
     console.error('Error searching users:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+});
+
+// @desc    Get user profile
+// @route   GET /api/users/:id
+// @access  Public
+router.get('/:id', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select('-password -preferences');
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Check if profile is private
+    if (user.preferences?.profileVisibility === 'private') {
+      return res.status(403).json({
+        success: false,
+        message: 'Profile is private'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: user.getPublicProfile()
+    });
+  } catch (error) {
+    console.error('Get user profile error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error'

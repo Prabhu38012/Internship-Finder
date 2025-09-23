@@ -2,10 +2,14 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 
-// Suppress React Router v7 deprecation warnings
+// Suppress React Router v7 deprecation warnings and socket warnings during development
 const originalWarn = console.warn
 console.warn = (...args) => {
   if (args[0]?.includes?.('React Router Future Flag Warning')) {
+    return
+  }
+  // Suppress socket warnings during development when server might not be ready
+  if (args[0]?.includes?.('Socket not available for event:')) {
     return
   }
   originalWarn.apply(console, args)

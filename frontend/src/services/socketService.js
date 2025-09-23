@@ -57,7 +57,7 @@ class SocketService {
       reconnectionDelayMax: 10000,
       autoConnect: true,
       query: {
-        clientVersion: import.meta.env.VITE_APP_VERSION,
+        clientVersion: import.meta.env.VITE_APP_VERSION || '1.0.0',
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
       }
     });

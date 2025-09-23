@@ -65,6 +65,13 @@ class SocketManager {
         socket.userId = user._id.toString();
         socket.user = user;
         socket.connectionTime = new Date();
+        
+        // Get client IP address
+        const clientIp = socket.handshake.address || 
+                        socket.handshake.headers['x-forwarded-for'] || 
+                        socket.handshake.headers['x-real-ip'] || 
+                        'unknown';
+        
         socket.metadata = {
           userAgent: socket.handshake.headers['user-agent'],
           ip: clientIp,
@@ -273,6 +280,27 @@ class SocketManager {
   // Handle socket errors
   handleSocketError(socket, error) {
     console.error(`Socket error for user ${socket.user?.name || 'Unknown'}:`, error);
+  }
+
+  // Update user online status
+  async updateUserStatus(userId, isOnline) {
+    try {
+      await User.findByIdAndUpdate(userId, { 
+        isOnline,
+        lastSeen: isOnline ? new Date() : new Date()
+      });
+      
+      // Broadcast status change to all connected users
+      if (this.io) {
+        this.io.emit('user_status_change', {
+          userId,
+          isOnline,
+          timestamp: new Date()
+        });
+      }
+    } catch (error) {
+      console.error('Error updating user status:', error);
+    }
   }
 
   // Get socket instance

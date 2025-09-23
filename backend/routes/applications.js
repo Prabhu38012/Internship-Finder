@@ -163,6 +163,50 @@ router.post('/', protect, authorize('student'), trackApplicationSubmitted, uploa
       });
     }
 
+    // Create or find conversation between applicant and company
+    const Conversation = require('../models/Conversation');
+    const Message = require('../models/Message');
+    
+    let conversation = await Conversation.findOne({
+      participants: { $all: [req.user._id, internship.company._id] },
+      type: 'direct'
+    });
+
+    if (!conversation) {
+      conversation = await Conversation.create({
+        participants: [req.user._id, internship.company._id],
+        type: 'direct',
+        createdBy: req.user._id
+      });
+    }
+
+    // Send automatic message about application
+    const automaticMessage = await Message.create({
+      conversation: conversation._id,
+      sender: req.user._id,
+      content: `I have applied for the position: ${internship.title}. Looking forward to hearing from you!`,
+      messageType: 'application',
+      applicationData: {
+        applicationId: application._id,
+        internshipId: internship._id,
+        internshipTitle: internship.title,
+        status: 'applied'
+      }
+    });
+
+    // Send real-time message notification
+    if (io) {
+      io.to(`user_${internship.company._id}`).emit('application_notification', {
+        conversationId: conversation._id,
+        message: `New application received for ${internship.title}`,
+        applicationData: {
+          applicationId: application._id,
+          internshipTitle: internship.title,
+          applicantName: req.user.name
+        }
+      });
+    }
+
     await RealtimeService.notifyNewApplication({
       _id: application._id,
       applicant: req.user,
@@ -398,6 +442,64 @@ router.put('/:id/status', protect, authorize('company'), trackApplicationStatusU
       }
     });
 
+    // Create or find conversation between applicant and company
+    const Conversation = require('../models/Conversation');
+    const Message = require('../models/Message');
+    
+    let conversation = await Conversation.findOne({
+      participants: { $all: [application.applicant._id, req.user._id] },
+      type: 'direct'
+    });
+
+    if (!conversation) {
+      conversation = await Conversation.create({
+        participants: [application.applicant._id, req.user._id],
+        type: 'direct',
+        createdBy: req.user._id
+      });
+    }
+
+    // Create automatic message based on status
+    let messageContent = '';
+    let messageIcon = '';
+    
+    switch (status) {
+      case 'accepted':
+        messageContent = `🎉 Congratulations! Your application for ${application.internship.title} has been accepted. ${note ? `Note: ${note}` : ''}`;
+        messageIcon = '🎉';
+        break;
+      case 'rejected':
+        messageContent = `Thank you for your interest in ${application.internship.title}. Unfortunately, we have decided to move forward with other candidates. ${note ? `Feedback: ${note}` : ''}`;
+        messageIcon = '📝';
+        break;
+      case 'shortlisted':
+        messageContent = `Great news! You have been shortlisted for ${application.internship.title}. We will be in touch soon. ${note ? `Note: ${note}` : ''}`;
+        messageIcon = '⭐';
+        break;
+      case 'interviewed':
+        messageContent = `Thank you for the interview for ${application.internship.title}. We are reviewing your application and will get back to you soon. ${note ? `Note: ${note}` : ''}`;
+        messageIcon = '💼';
+        break;
+      default:
+        messageContent = `Your application status for ${application.internship.title} has been updated to: ${status}. ${note ? `Note: ${note}` : ''}`;
+        messageIcon = '📋';
+    }
+
+    // Send automatic message about status change
+    const automaticMessage = await Message.create({
+      conversation: conversation._id,
+      sender: req.user._id,
+      content: messageContent,
+      messageType: 'system',
+      applicationData: {
+        applicationId: application._id,
+        internshipId: application.internship._id,
+        internshipTitle: application.internship.title,
+        status: status,
+        previousStatus: oldStatus
+      }
+    });
+
     // Send real-time notification about status change
     const io = req.app.get('io');
     if (io) {
@@ -408,6 +510,18 @@ router.put('/:id/status', protect, authorize('company'), trackApplicationStatusU
         internshipTitle: application.internship.title,
         companyName: req.user.companyProfile?.companyName || req.user.name,
         timestamp: new Date()
+      });
+
+      // Send message notification to applicant
+      io.to(`user_${application.applicant._id}`).emit('application_notification', {
+        conversationId: conversation._id,
+        message: `${messageIcon} ${messageContent}`,
+        applicationData: {
+          applicationId: application._id,
+          internshipTitle: application.internship.title,
+          status: status,
+          companyName: req.user.companyProfile?.companyName || req.user.name
+        }
       });
 
       // Notify the company dashboard for real-time updates
