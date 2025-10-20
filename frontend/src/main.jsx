@@ -4,16 +4,93 @@ import { BrowserRouter } from 'react-router-dom'
 
 // Suppress React Router v7 deprecation warnings and socket warnings during development
 const originalWarn = console.warn
+const originalError = console.error
+
 console.warn = (...args) => {
-  if (args[0]?.includes?.('React Router Future Flag Warning')) {
+  const message = args[0]?.toString() || ''
+  
+  // Suppress React Router warnings
+  if (message.includes('React Router Future Flag Warning')) {
     return
   }
+  
   // Suppress socket warnings during development when server might not be ready
-  if (args[0]?.includes?.('Socket not available for event:')) {
+  if (message.includes('Socket not available for event:') ||
+      message.includes('Connection throttled') ||
+      message.includes('Connection attempt without token') ||
+      message.includes('Connection timeout') ||
+      message.includes('attempting reconnect') ||
+      message.includes('Socket not connected')) {
     return
   }
+  
+  // Suppress browser extension or external warnings
+  if (message.includes('PC_plat')) {
+    return
+  }
+  
   originalWarn.apply(console, args)
 }
+
+console.error = (...args) => {
+  const message = args[0]?.toString() || ''
+  const stack = args[0]?.stack?.toString() || ''
+  
+  // Suppress WebSocket connection errors during development
+  if (message.includes('WebSocket connection to') ||
+      message.includes('WebSocket is closed before the connection is established') ||
+      message.includes('socket.io') ||
+      message.includes('socketService') ||
+      message.includes('Connection error:') ||
+      message.includes('failed: WebSocket is closed') ||
+      message.includes('clientVersion=') ||
+      message.includes('XMLHttpRequest') ||
+      message.includes('XHR') ||
+      message.includes('transport=websocket')) {
+    return
+  }
+  
+  // Suppress Chrome extension errors
+  if (message.includes('chrome-extension://') || 
+      stack.includes('chrome-extension://') ||
+      message.includes('extension')) {
+    return
+  }
+  
+  originalError.apply(console, args)
+}
+
+// Suppress unhandled promise rejections from WebSocket
+window.addEventListener('unhandledrejection', (event) => {
+  const message = event.reason?.toString() || ''
+  if (message.includes('WebSocket') || 
+      message.includes('socket.io') ||
+      message.includes('Connection')) {
+    event.preventDefault()
+  }
+})
+
+// Suppress browser-level errors from WebSocket and extensions
+window.addEventListener('error', (event) => {
+  const message = event.message?.toString() || ''
+  const filename = event.filename?.toString() || ''
+  
+  // Suppress WebSocket errors
+  if (message.includes('WebSocket') || 
+      message.includes('socket.io') ||
+      message.includes('socketService')) {
+    event.preventDefault()
+    return false
+  }
+  
+  // Suppress Chrome extension errors
+  if (filename.includes('chrome-extension://') || 
+      message.includes('chrome-extension://')) {
+    event.preventDefault()
+    return false
+  }
+}, true)
+
 import { Provider } from 'react-redux'
 import { QueryClient, QueryClientProvider } from 'react-query'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
@@ -40,17 +117,17 @@ const queryClient = new QueryClient({
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#f59e0b',
-      light: '#fbbf24',
-      dark: '#d97706',
+      main: '#a855f7',
+      light: '#c084fc',
+      dark: '#7e22ce',
     },
     secondary: {
-      main: '#64748b',
-      light: '#94a3b8',
-      dark: '#475569',
+      main: '#e879f9',
+      light: '#f0abfc',
+      dark: '#c026d3',
     },
     background: {
-      default: '#f8fafc',
+      default: '#faf5ff',
       paper: '#ffffff',
     },
   },

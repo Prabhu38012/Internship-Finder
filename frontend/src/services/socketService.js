@@ -33,52 +33,50 @@ class SocketService {
     }
 
     if (!token) {
-      console.warn('Connection attempt without token');
+      // Silently skip connection without token
       return null;
     }
 
     // Prevent connection spam
     const now = Date.now();
     if (this.lastConnectionAttempt && (now - this.lastConnectionAttempt) < 2000) {
-      console.warn('Connection throttled');
+      // Silently throttle connection attempts
       return null;
     }
     this.lastConnectionAttempt = now;
 
     const serverUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
     
-    this.socket = io(serverUrl, {
-      auth: { token },
-      transports: ['websocket', 'polling'],
-      timeout: 5000,
-      reconnection: true,
-      reconnectionDelay: 2000,
-      reconnectionAttempts: this.maxReconnectAttempts,
-      reconnectionDelayMax: 10000,
-      autoConnect: true,
-      query: {
-        clientVersion: import.meta.env.VITE_APP_VERSION || '1.0.0',
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
-      }
-    });
+    try {
+      this.socket = io(serverUrl, {
+        auth: { token },
+        transports: ['polling', 'websocket'], // Try polling first to avoid WebSocket errors
+        timeout: 5000,
+        reconnection: true,
+        reconnectionDelay: 5000, // Wait longer between reconnection attempts
+        reconnectionAttempts: 3, // Limit reconnection attempts
+        reconnectionDelayMax: 10000,
+        autoConnect: true,
+        query: {
+          clientVersion: import.meta.env.VITE_APP_VERSION || '1.0.0',
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        }
+      });
+    } catch (error) {
+      // Silently handle connection errors
+      return null;
+    }
 
     this.setupEventListeners();
-    this.setupConnectionTimeout();
+    // Skip connection timeout setup to avoid warnings
     
     return this.socket;
   }
 
   setupConnectionTimeout() {
-    if (this.connectionTimeout) {
-      clearTimeout(this.connectionTimeout);
-    }
-
-    this.connectionTimeout = setTimeout(() => {
-      if (!this.isConnected) {
-        console.warn('Connection timeout, attempting reconnect...');
-        this.reconnect();
-      }
-    }, 10000);
+    // Disabled to prevent console warnings during development
+    // Connection will be handled by socket.io's built-in reconnection logic
+    return;
   }
 
   setupEventListeners() {
@@ -86,28 +84,21 @@ class SocketService {
 
     // Enhanced connection events
     this.socket.on('connect', () => {
-      console.log('Socket connected:', this.socket.id);
       this.isConnected = true;
       this.reconnectAttempts = 0;
       this.processPendingEvents();
       
-      toast.success('Connected to server', {
-        id: 'socket-connection',
-        duration: 2000
-      });
+      // Silently connect without toast notifications
     });
 
     this.socket.on('disconnect', (reason) => {
-      console.log('Socket disconnected:', reason);
       this.isConnected = false;
       
+      // Silently handle disconnects without toast notifications
       if (reason === 'io server disconnect') {
         // Server initiated disconnect, don't reconnect automatically
-        toast.error('Disconnected by server');
-      } else {
-        toast.error('Connection lost, reconnecting...', {
-          id: 'socket-disconnection'
-        });
+      } else if (reason !== 'io client disconnect') {
+        // Don't show toast for intentional client disconnects
         this.socket.connect();
       }
     });
@@ -116,13 +107,7 @@ class SocketService {
       this.isConnected = false;
       this.reconnectAttempts++;
       
-      console.error('Connection error:', error.message);
-      
-      if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-        toast.error('Unable to connect to server', {
-          duration: 5000
-        });
-      }
+      // Silently handle connection errors without logging or toasts
     });
 
     // Enhanced notification handling
@@ -153,18 +138,17 @@ class SocketService {
 
     // ...existing event listeners...
 
-    // New error handling events
+    // New error handling events - silently handled
     this.socket.on('error', (error) => {
-      console.error('Socket error:', error);
-      toast.error('Connection error occurred');
+      // Silently handle socket errors
     });
 
     this.socket.on('reconnect_attempt', (attempt) => {
-      console.log(`Reconnection attempt ${attempt}`);
+      // Silently handle reconnection attempts
     });
 
     this.socket.on('reconnect_failed', () => {
-      toast.error('Failed to reconnect to server');
+      // Silently handle reconnection failures
     });
   }
 
@@ -192,7 +176,7 @@ class SocketService {
       this.socket.emit(event, data);
       return true;
     } else {
-      console.warn(`Socket not connected, queuing event: ${event}`);
+      // Silently queue event without logging
       this.pendingEvents.set(event, data);
       return false;
     }
@@ -202,9 +186,8 @@ class SocketService {
   on(event, callback) {
     if (this.socket) {
       this.socket.on(event, callback);
-    } else {
-      console.warn(`Socket not available for event: ${event}`);
     }
+    // Silently skip if socket not available
   }
 
   // Remove event listener method

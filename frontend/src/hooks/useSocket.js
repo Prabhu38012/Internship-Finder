@@ -2,11 +2,17 @@ import { useState, useEffect } from 'react';
 import socketService from '../services/socketService';
 
 export const useSocket = (token) => {
-  const [isConnected, setIsConnected] = useState(socketService.getConnectionStatus());
-  const [connectionInfo, setConnectionInfo] = useState(socketService.getConnectionInfo());
+  const [isConnected, setIsConnected] = useState(false);
+  const [connectionInfo, setConnectionInfo] = useState(null);
 
   useEffect(() => {
-    if (token) {
+    // Only attempt connection if we have a valid token
+    if (!token || token === 'null' || token === 'undefined') {
+      return;
+    }
+
+    // Add a small delay to avoid connection spam on initial load
+    const connectionTimer = setTimeout(() => {
       const socket = socketService.connect(token);
       
       if (socket) {
@@ -20,10 +26,13 @@ export const useSocket = (token) => {
           setConnectionInfo(socketService.getConnectionInfo());
         });
       }
-    }
+    }, 1000); // Wait 1 second before connecting
 
     return () => {
-      socketService.disconnect();
+      clearTimeout(connectionTimer);
+      if (token) {
+        socketService.disconnect();
+      }
     };
   }, [token]);
 

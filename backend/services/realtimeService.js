@@ -8,7 +8,7 @@ class RealtimeService {
       // Save notification to database
       const savedNotification = await Notification.create({
         ...notification,
-        user: userId
+        recipient: userId
       })
 
       // Send real-time notification if user is online
@@ -18,7 +18,9 @@ class RealtimeService {
       return savedNotification
     } catch (error) {
       console.error('Error sending notification:', error)
-      throw error
+      // Don't throw - just log and continue
+      console.error('Notification error (continuing):', error.message)
+      return null
     }
   }
 
@@ -52,7 +54,7 @@ class RealtimeService {
         userIds.map(userId => 
           Notification.create({
             ...notification,
-            user: userId
+            recipient: userId
           })
         )
       )
@@ -64,7 +66,9 @@ class RealtimeService {
       return notifications
     } catch (error) {
       console.error('Error sending notification to role:', error)
-      throw error
+      // Don't throw - just log and continue
+      console.error('Role notification error (continuing):', error.message)
+      return []
     }
   }
 

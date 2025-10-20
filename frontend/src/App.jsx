@@ -95,11 +95,11 @@ function App() {
             <Route path="profile" element={<Profile />} />
             <Route path="applications" element={<Applications />} />
             <Route path="applications/:id" element={<ApplicationDetail />} />
+            <Route path="ai" element={<AIDashboard />} />
 
             {/* Student Routes */}
             <Route element={<ProtectedRoute allowedRoles={['student']} />}>
               <Route path="wishlist" element={<WishlistPage />} />
-              <Route path="ai" element={<AIDashboard />} />
             </Route>
 
             {/* Messages Routes (accessible to all authenticated users) */}

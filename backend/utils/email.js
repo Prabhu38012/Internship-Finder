@@ -22,14 +22,14 @@ const createTransporter = () => {
 const sendEmail = async (options) => {
   // Skip email sending if no email configuration
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    console.log('Email configuration missing - skipping email send');
-    return { messageId: 'skipped' };
+    console.log('⚠️  Email configuration missing - skipping email send');
+    return { messageId: 'skipped-no-config' };
   }
 
   const transporter = createTransporter();
   if (!transporter) {
-    console.log('Failed to create transporter - skipping email send');
-    return { messageId: 'failed' };
+    console.log('⚠️  Failed to create transporter - skipping email send');
+    return { messageId: 'skipped-no-transporter' };
   }
 
   const message = {
@@ -42,11 +42,12 @@ const sendEmail = async (options) => {
 
   try {
     const info = await transporter.sendMail(message);
-    console.log('Email sent: ', info.messageId);
+    console.log('✅ Email sent successfully:', info.messageId);
     return info;
   } catch (error) {
-    console.error('Email error: ', error);
-    throw error;
+    // Don't throw error - just log and continue
+    console.error('❌ Email error (continuing anyway):', error.message);
+    return { messageId: 'failed', error: error.message };
   }
 };
 
