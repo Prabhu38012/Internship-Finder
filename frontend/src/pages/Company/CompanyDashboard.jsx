@@ -431,42 +431,44 @@ const CompanyDashboard = () => {
             </Card>
 
             {/* Quick Actions */}
-            <Card sx={{ mt: 3 }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Quick Actions
-                </Typography>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  <Button
-                    variant="contained"
-                    startIcon={<Add />}
-                    component={Link}
-                    to="/internships/create"
-                    fullWidth
-                  >
-                    Post New Internship
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    startIcon={<People />}
-                    component={Link}
-                    to="/company/applications"
-                    fullWidth
-                  >
-                    Review Applications
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    startIcon={<Business />}
-                    component={Link}
-                    to="/profile"
-                    fullWidth
-                  >
-                    Update Company Profile
-                  </Button>
-                </Box>
-              </CardContent>
-            </Card>
+            {false && (
+              <Card sx={{ mt: 3 }}>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Quick Actions
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <Button
+                      variant="contained"
+                      startIcon={<Add />}
+                      component={Link}
+                      to="/internships/create"
+                      fullWidth
+                    >
+                      Post New Internship
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      startIcon={<People />}
+                      component={Link}
+                      to="/company/applications"
+                      fullWidth
+                    >
+                      Review Applications
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      startIcon={<Business />}
+                      component={Link}
+                      to="/profile"
+                      fullWidth
+                    >
+                      Update Company Profile
+                    </Button>
+                  </Box>
+                </CardContent>
+              </Card>
+            )}
           </Grid>
         </Grid>
 
