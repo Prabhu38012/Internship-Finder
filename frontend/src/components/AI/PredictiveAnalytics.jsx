@@ -13,7 +13,8 @@ import {
   List,
   ListItem,
   ListItemIcon,
-  ListItemText
+  ListItemText,
+  TextField
 } from '@mui/material';
 import {
   TrendingUp,
@@ -22,40 +23,43 @@ import {
   Assessment,
   Psychology
 } from '@mui/icons-material';
+import aiService from '../../services/aiService';
 
 const PredictiveAnalytics = () => {
   const [prediction, setPrediction] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [internshipId, setInternshipId] = useState('');
 
   const fetchPrediction = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      // Simulate API call with mock data since we don't have a specific internship ID
-      setTimeout(() => {
-        const mockPrediction = {
-          probability: 0.75,
-          confidence: 0.82,
-          dataPoints: 150,
-          factors: {
-            skillMatch: 0.85,
-            experience: 0.65,
-            education: 0.90,
-            timing: 0.70,
-            competition: 0.55
-          },
-          recommendations: [
-            "Highlight your relevant project experience in your application",
-            "Consider applying early as timing affects success rate",
-            "Emphasize your educational background which is a strong match",
-            "Build more hands-on experience in the required technologies"
-          ]
-        };
-        setPrediction(mockPrediction);
+      const trimmedId = internshipId.trim();
+      if (!trimmedId) {
         setLoading(false);
-      }, 2000);
+        setError('Please enter an internship ID to analyze your chances.');
+        return;
+      }
+
+      const response = await aiService.predictSuccess(trimmedId);
+
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to predict success rate');
+      }
+
+      const data = response.data;
+      const mappedPrediction = {
+        probability: data.successProbability,
+        confidence: data.confidence,
+        factors: data.factors || {},
+        recommendations: data.recommendations || [],
+        dataPoints: data.dataPoints
+      };
+
+      setPrediction(mappedPrediction);
+      setLoading(false);
     } catch (err) {
       setError(err.message || 'Failed to predict success rate');
       setLoading(false);
@@ -121,15 +125,33 @@ const PredictiveAnalytics = () => {
           </Box>
 
           {!prediction && !loading && (
-            <Button
-              variant="contained"
-              startIcon={<Assessment />}
-              onClick={fetchPrediction}
-              size="large"
-              sx={{ mt: 2 }}
+            <Box
+              sx={{
+                mt: 2,
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row' },
+                alignItems: { xs: 'stretch', sm: 'center' },
+                gap: 2
+              }}
             >
-              Analyze My Chances
-            </Button>
+              <TextField
+                label="Internship ID"
+                variant="outlined"
+                size="small"
+                value={internshipId}
+                onChange={(e) => setInternshipId(e.target.value)}
+                placeholder="Enter internship ID"
+                sx={{ minWidth: 260 }}
+              />
+              <Button
+                variant="contained"
+                startIcon={<Assessment />}
+                onClick={fetchPrediction}
+                size="large"
+              >
+                Analyze My Chances
+              </Button>
+            </Box>
           )}
 
           {loading && (
