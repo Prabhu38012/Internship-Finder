@@ -145,6 +145,9 @@ app.use('/api/company', companyRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/messages', messageRoutes);
 
+// Health check route
+app.use('/api/health', require('./routes/health'));
+
 // Enhanced placeholder image endpoint
 app.get('/api/placeholder/:width/:height', (req, res) => {
   const width = Math.min(parseInt(req.params.width), 2000);
