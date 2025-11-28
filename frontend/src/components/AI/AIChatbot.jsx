@@ -15,7 +15,7 @@ import {
 } from '@mui/material';
 import {
   Send,
-  SmartToy,
+  Chat,
   Person,
   Close,
   Minimize,
@@ -150,7 +150,7 @@ const AIChatbot = ({ isOpen, onClose, isMinimized, onToggleMinimize }) => {
           }}
         >
           <Box display="flex" alignItems="center">
-            <SmartToy sx={{ mr: 1 }} />
+            <Chat sx={{ mr: 1 }} />
             <Typography variant="h6">AI Assistant</Typography>
           </Box>
           <Box>
@@ -202,7 +202,7 @@ const AIChatbot = ({ isOpen, onClose, isMinimized, onToggleMinimize }) => {
                         bgcolor: message.sender === 'user' ? 'primary.main' : 'secondary.main'
                       }}
                     >
-                      {message.sender === 'user' ? <Person /> : <SmartToy />}
+                      {message.sender === 'user' ? <Person /> : <Chat />}
                     </Avatar>
                     
                     <Box>
@@ -249,7 +249,7 @@ const AIChatbot = ({ isOpen, onClose, isMinimized, onToggleMinimize }) => {
                 <Box display="flex" justifyContent="flex-start" mb={2}>
                   <Box display="flex" alignItems="center">
                     <Avatar sx={{ width: 32, height: 32, mr: 1, bgcolor: 'secondary.main' }}>
-                      <SmartToy />
+                      <Chat />
                     </Avatar>
                     <Paper elevation={1} sx={{ p: 1.5, borderRadius: 2 }}>
                       <Box display="flex" alignItems="center">

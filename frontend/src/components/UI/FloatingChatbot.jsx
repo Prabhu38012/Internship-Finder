@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useSelector } from 'react-redux'
-import { Sparkles } from 'lucide-react'
+import { MessageCircle } from 'lucide-react'
 import AIChatbot from '../AI/AIChatbot'
 
 const FloatingChatbot = () => {
@@ -22,7 +22,7 @@ const FloatingChatbot = () => {
             onClick={() => setIsOpen(true)}
             className="w-16 h-16 bg-gradient-purple rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform duration-300 group relative animate-bounce"
           >
-            <Sparkles className="w-8 h-8 text-white" />
+            <MessageCircle className="w-8 h-8 text-white" />
             
             {/* Pulse animation */}
             <span className="absolute inset-0 rounded-full bg-purple-400 animate-ping opacity-75"></span>

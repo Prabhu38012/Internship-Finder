@@ -27,7 +27,7 @@ import {
   DashboardOutlined,
   LogoutOutlined,
   FavoriteOutlined,
-  SmartToy,
+  AutoAwesome,
   MessageOutlined
 } from '@mui/icons-material'
 import { logout } from '../../store/slices/authSlice'
@@ -288,7 +288,7 @@ const Header = () => {
                         Wishlist
                       </MenuItem>
                       <MenuItem onClick={() => handleNavigation('/ai')}>
-                        <SmartToy sx={{ mr: 2 }} />
+                        <AutoAwesome sx={{ mr: 2 }} />
                         AI Assistant
                       </MenuItem>
                     </>
