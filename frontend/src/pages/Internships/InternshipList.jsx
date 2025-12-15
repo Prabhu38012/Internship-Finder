@@ -37,7 +37,7 @@ import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
 import { format } from 'date-fns'
 
-import { getInternships, getInternshipsWithExternal, setFilters, toggleSaveInternship } from '../../store/slices/internshipSlice'
+import { getInternships, getInternshipsWithExternal, setFilters, setPagination, toggleSaveInternship } from '../../store/slices/internshipSlice'
 import LoadingSpinner from '../../components/UI/LoadingSpinner'
 import DynamicSearchBar from '../../components/UI/DynamicSearchBar'
 import DynamicFilters from '../../components/UI/DynamicFilters'
@@ -70,16 +70,16 @@ const InternshipList = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
   const dispatch = useDispatch()
   const [searchParams, setSearchParams] = useSearchParams()
-  
+
   const { internships, filters, pagination, isLoading } = useSelector((state) => state.internships)
   const { user } = useSelector((state) => state.auth)
-  
+
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [localFilters, setLocalFilters] = useState(filters)
   const [includeExternal, setIncludeExternal] = useState(false)
   const [hasNextPage, setHasNextPage] = useState(true)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
-  
+
   // Initialize socket connection for real-time updates
   const { socket } = useSocket()
 
@@ -94,7 +94,7 @@ const InternshipList = () => {
       stipendMin: searchParams.get('stipendMin') || '',
       stipendMax: searchParams.get('stipendMax') || '',
     }
-    
+
     dispatch(setFilters(urlFilters))
     setLocalFilters(urlFilters)
   }, [searchParams, dispatch])
@@ -106,7 +106,7 @@ const InternshipList = () => {
       page: pagination.page,
       limit: pagination.limit
     }
-    
+
     if (includeExternal) {
       dispatch(getInternshipsWithExternal(params))
     } else {
@@ -121,7 +121,7 @@ const InternshipList = () => {
 
   const applyFilters = () => {
     dispatch(setFilters(localFilters))
-    
+
     // Update URL params
     const params = new URLSearchParams()
     Object.entries(localFilters).forEach(([key, value]) => {
@@ -130,7 +130,7 @@ const InternshipList = () => {
       }
     })
     setSearchParams(params)
-    
+
     setFiltersOpen(false)
   }
 
@@ -150,12 +150,12 @@ const InternshipList = () => {
   }
 
   const handlePageChange = (event, page) => {
-    dispatch(setFilters({ ...filters, page }))
+    dispatch(setPagination({ page }))
   }
 
   const loadMoreInternships = async () => {
     if (isLoadingMore || !hasNextPage) return
-    
+
     setIsLoadingMore(true)
     try {
       const nextPage = pagination.page + 1
@@ -164,13 +164,13 @@ const InternshipList = () => {
         page: nextPage,
         limit: pagination.limit
       }
-      
+
       if (includeExternal) {
         await dispatch(getInternshipsWithExternal(params))
       } else {
         await dispatch(getInternships(params))
       }
-      
+
       setHasNextPage(nextPage < pagination.pages)
     } catch (error) {
       console.error('Error loading more internships:', error)
@@ -298,7 +298,7 @@ const InternshipList = () => {
           <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
             Find Your Perfect Internship
           </Typography>
-          
+
           {/* Search and Filter Bar */}
           <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 3, flexWrap: 'wrap' }}>
             <Box sx={{ flex: 1, maxWidth: 600 }}>
@@ -349,9 +349,9 @@ const InternshipList = () => {
               {pagination.total} internships found
             </Typography>
             {includeExternal && internships.length > 0 && (
-              <Typography variant="caption" color="primary" sx={{ 
-                display: 'flex', 
-                alignItems: 'center', 
+              <Typography variant="caption" color="primary" sx={{
+                display: 'flex',
+                alignItems: 'center',
                 gap: 0.5,
                 bgcolor: 'primary.light',
                 color: 'primary.contrastText',
@@ -389,10 +389,10 @@ const InternshipList = () => {
                               {internship.title}
                             </Typography>
                             {internship.isExternal && (
-                              <Chip 
-                                label={internship.source} 
-                                size="small" 
-                                color="secondary" 
+                              <Chip
+                                label={internship.source}
+                                size="small"
+                                color="secondary"
                                 icon={<Language fontSize="small" />}
                               />
                             )}
@@ -407,10 +407,10 @@ const InternshipList = () => {
                             )}
                           </Box>
                         </Box>
-                        
+
                         <Box sx={{ display: 'flex', gap: 1 }}>
                           {user && user.role === 'student' && (
-                            <WishlistButton 
+                            <WishlistButton
                               internship={internship}
                               size="small"
                             />
@@ -432,18 +432,18 @@ const InternshipList = () => {
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <LocationOn fontSize="small" color="action" />
                           <Typography variant="body2">
-                            {internship.location.type === 'remote' ? 'Remote' : 
-                             `${internship.location.city}, ${internship.location.state}`}
+                            {internship.location.type === 'remote' ? 'Remote' :
+                              `${internship.location.city}, ${internship.location.state}`}
                           </Typography>
                         </Box>
-                        
+
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <Schedule fontSize="small" color="action" />
                           <Typography variant="body2">
                             {internship.duration}
                           </Typography>
                         </Box>
-                        
+
                         {internship.stipend?.amount > 0 && (
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <AttachMoney fontSize="small" color="action" />
@@ -474,7 +474,7 @@ const InternshipList = () => {
                       {/* Footer */}
                       <Box sx={{ mt: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Typography variant="caption" color="text.secondary">
-                          {internship.applicationDeadline ? 
+                          {internship.applicationDeadline ?
                             `Deadline: ${format(new Date(internship.applicationDeadline), 'MMM dd, yyyy')}` :
                             `Posted: ${internship.postedDate ? format(new Date(internship.postedDate), 'MMM dd, yyyy') : 'Recently'}`
                           }
