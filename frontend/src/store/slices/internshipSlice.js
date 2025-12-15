@@ -141,19 +141,6 @@ export const getInternshipsWithExternal = createAsyncThunk(
   }
 )
 
-// Search external internships
-export const searchExternalInternships = createAsyncThunk(
-  'internships/searchExternal',
-  async (params, thunkAPI) => {
-    try {
-      return await internshipService.searchExternalInternships(params)
-    } catch (error) {
-      const message = error.response?.data?.message || error.message || error.toString()
-      return thunkAPI.rejectWithValue(message)
-    }
-  }
-)
-
 // Search suggestions
 export const searchSuggestions = createAsyncThunk(
   'internships/searchSuggestions',
@@ -192,7 +179,7 @@ export const internshipSlice = createSlice({
     },
     updateInternshipRealtime: (state, action) => {
       const { type, data } = action.payload
-      
+
       switch (type) {
         case 'created':
           // Add new internship to the beginning of the list
@@ -299,7 +286,7 @@ export const internshipSlice = createSlice({
       .addCase(toggleSaveInternship.fulfilled, (state, action) => {
         const internshipId = action.meta.arg
         const isSaved = action.payload.saved
-        
+
         // Update internship in list
         const internshipIndex = state.internships.findIndex(
           (internship) => internship._id === internshipId
@@ -307,7 +294,7 @@ export const internshipSlice = createSlice({
         if (internshipIndex !== -1) {
           state.internships[internshipIndex].isSaved = isSaved
         }
-        
+
         // Update current internship
         if (state.internship && state.internship._id === internshipId) {
           state.internship.isSaved = isSaved
@@ -327,6 +314,17 @@ export const internshipSlice = createSlice({
         state.isError = true
         state.message = action.payload
       })
+      .addCase(searchSuggestions.pending, (state) => {
+        state.isLoadingSuggestions = true
+      })
+      .addCase(searchSuggestions.fulfilled, (state, action) => {
+        state.isLoadingSuggestions = false
+        state.suggestions = action.payload.data
+      })
+      .addCase(searchSuggestions.rejected, (state, action) => {
+        state.isLoadingSuggestions = false
+        state.suggestions = []
+      })
       .addCase(getInternshipsWithExternal.pending, (state) => {
         state.isLoading = true
       })
@@ -340,30 +338,6 @@ export const internshipSlice = createSlice({
         state.isLoading = false
         state.isError = true
         state.message = action.payload
-      })
-      .addCase(searchExternalInternships.pending, (state) => {
-        state.isLoading = true
-      })
-      .addCase(searchExternalInternships.fulfilled, (state, action) => {
-        state.isLoading = false
-        state.isSuccess = true
-        state.internships = action.payload.data
-      })
-      .addCase(searchExternalInternships.rejected, (state, action) => {
-        state.isLoading = false
-        state.isError = true
-        state.message = action.payload
-      })
-      .addCase(searchSuggestions.pending, (state) => {
-        state.isLoadingSuggestions = true
-      })
-      .addCase(searchSuggestions.fulfilled, (state, action) => {
-        state.isLoadingSuggestions = false
-        state.suggestions = action.payload.data
-      })
-      .addCase(searchSuggestions.rejected, (state, action) => {
-        state.isLoadingSuggestions = false
-        state.suggestions = []
       })
   },
 })

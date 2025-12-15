@@ -165,11 +165,7 @@ const InternshipList = () => {
         limit: pagination.limit
       }
 
-      if (includeExternal) {
-        await dispatch(getInternshipsWithExternal(params))
-      } else {
-        await dispatch(getInternships(params))
-      }
+      await dispatch(getInternships(params))
 
       setHasNextPage(nextPage < pagination.pages)
     } catch (error) {
@@ -308,10 +304,10 @@ const InternshipList = () => {
               variant={includeExternal ? "contained" : "outlined"}
               startIcon={<Language />}
               onClick={() => setIncludeExternal(!includeExternal)}
-              sx={{ minWidth: 140 }}
-              color={includeExternal ? "primary" : "inherit"}
+              sx={{ minWidth: 160 }}
+              color={includeExternal ? "secondary" : "inherit"}
             >
-              Include External
+              {includeExternal ? 'External ON' : 'Include External'}
             </Button>
             <Button
               variant="outlined"
@@ -348,20 +344,13 @@ const InternshipList = () => {
             <Typography variant="body2" color="text.secondary">
               {pagination.total} internships found
             </Typography>
-            {includeExternal && internships.length > 0 && (
-              <Typography variant="caption" color="primary" sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 0.5,
-                bgcolor: 'primary.light',
-                color: 'primary.contrastText',
-                px: 1,
-                py: 0.5,
-                borderRadius: 1
-              }}>
-                <Language fontSize="small" />
-                Including external sources
-              </Typography>
+            {includeExternal && (
+              <Chip
+                label="Including external sources"
+                size="small"
+                color="secondary"
+                icon={<Language fontSize="small" />}
+              />
             )}
           </Box>
         </Box>
@@ -379,24 +368,27 @@ const InternshipList = () => {
                     delay={index * 0.1}
                     direction="up"
                     hover={true}
+                    sx={{ height: 360, display: 'flex', flexDirection: 'column' }}
                   >
-                    <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                    <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                       {/* Header */}
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                         <Box sx={{ flex: 1 }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                            <Typography variant="h6" component="h3" gutterBottom sx={{ mb: 0 }}>
-                              {internship.title}
-                            </Typography>
-                            {internship.isExternal && (
-                              <Chip
-                                label={internship.source}
-                                size="small"
-                                color="secondary"
-                                icon={<Language fontSize="small" />}
-                              />
-                            )}
-                          </Box>
+                          <Typography
+                            variant="h6"
+                            component="h3"
+                            sx={{
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical',
+                              lineHeight: 1.3,
+                              minHeight: '2.6em'
+                            }}
+                          >
+                            {internship.title}
+                          </Typography>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                             <Business fontSize="small" color="action" />
                             <Typography variant="body2" color="text.secondary">
@@ -455,13 +447,34 @@ const InternshipList = () => {
                       </Box>
 
                       {/* Description */}
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                        {internship.description ? internship.description.substring(0, 150) + '...' : 'No description available'}
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{
+                          mb: 2,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          minHeight: '2.8em',
+                          flex: 1
+                        }}
+                      >
+                        {internship.description ? internship.description.substring(0, 120) : 'No description available'}
                       </Typography>
 
                       {/* Tags */}
                       <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
-                        <Chip label={internship.category} size="small" />
+                        {internship.isExternal && (
+                          <Chip
+                            label={internship.source}
+                            size="small"
+                            color="secondary"
+                            icon={<Language fontSize="small" />}
+                          />
+                        )}
+                        <Chip label={internship.category || 'Other'} size="small" />
                         <Chip label={internship.type} size="small" variant="outlined" />
                         {internship.urgent && (
                           <Chip label="Urgent" size="small" color="error" />
@@ -488,6 +501,7 @@ const InternshipList = () => {
                             variant="contained"
                             size="small"
                             endIcon={<OpenInNew />}
+                            color="secondary"
                           >
                             Apply
                           </Button>

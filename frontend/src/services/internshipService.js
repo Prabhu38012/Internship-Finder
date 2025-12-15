@@ -56,17 +56,23 @@ const internshipService = {
     return response.data
   },
 
-  // Search external internships
-  searchExternalInternships: async (params = {}) => {
-    const response = await api.get('/internships/external/search', { params })
-    return response.data
-  },
-
   // Get internships with external sources included
   getInternshipsWithExternal: async (params = {}, token) => {
     const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {}
     const enhancedParams = { ...params, includeExternal: 'true' }
     const response = await api.get('/internships', { ...config, params: enhancedParams })
+    return response.data
+  },
+
+  // Get external internships only
+  getExternalInternships: async (params = {}) => {
+    const response = await api.get('/internships/external', { params })
+    return response.data
+  },
+
+  // Get external internships stats
+  getExternalStats: async () => {
+    const response = await api.get('/internships/external/stats')
     return response.data
   },
 }

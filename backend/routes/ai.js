@@ -16,9 +16,9 @@ const upload = multer({
     fileSize: 5 * 1024 * 1024, // 5MB limit
   },
   fileFilter: (req, file, cb) => {
-    if (file.mimetype === 'application/pdf' || 
-        file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
-        file.mimetype === 'text/plain') {
+    if (file.mimetype === 'application/pdf' ||
+      file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+      file.mimetype === 'text/plain') {
       cb(null, true);
     } else {
       cb(new Error('Only PDF, DOCX, and TXT files are allowed'), false);
@@ -31,19 +31,19 @@ const upload = multer({
 // @access  Private
 router.get('/recommendations', auth, async (req, res) => {
   try {
-    const { limit = 10, includeExternal = false } = req.query;
+    const { limit = 10 } = req.query;
     const user = await User.findById(req.user.id);
-    
+
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
     // Get internships (you can add filters here)
     const internships = await Internship.find({ status: 'active' }).limit(100);
-    
+
     const recommendations = await aiService.getJobRecommendations(
-      user, 
-      internships, 
+      user,
+      internships,
       parseInt(limit)
     );
 
@@ -54,10 +54,10 @@ router.get('/recommendations', auth, async (req, res) => {
     });
   } catch (error) {
     console.error('Error getting recommendations:', error);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: 'Error generating recommendations',
-      error: error.message 
+      error: error.message
     });
   }
 });
@@ -104,7 +104,7 @@ router.post('/analyze-resume', auth, upload.single('resume'), async (req, res) =
         const allSkills = Object.values(analysis.skills).flat();
         const existingSkills = user.studentProfile.skills || [];
         const mergedSkills = [...new Set([...existingSkills, ...allSkills])];
-        
+
         user.studentProfile.skills = mergedSkills;
         await user.save();
       }
@@ -117,10 +117,10 @@ router.post('/analyze-resume', auth, upload.single('resume'), async (req, res) =
     });
   } catch (error) {
     console.error('Error analyzing resume:', error);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: 'Error analyzing resume',
-      error: error.message 
+      error: error.message
     });
   }
 });
@@ -152,10 +152,10 @@ router.post('/chatbot', auth, async (req, res) => {
     });
   } catch (error) {
     console.error('Error getting chatbot response:', error);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: 'Error processing chatbot request',
-      error: error.message 
+      error: error.message
     });
   }
 });
@@ -166,7 +166,7 @@ router.post('/chatbot', auth, async (req, res) => {
 router.post('/predict-success/:internshipId', auth, async (req, res) => {
   try {
     const { internshipId } = req.params;
-    
+
     const user = await User.findById(req.user.id);
     const internship = await Internship.findById(internshipId);
 
@@ -188,8 +188,8 @@ router.post('/predict-success/:internshipId', auth, async (req, res) => {
     }).select('status internshipDetails applicant').limit(100);
 
     const prediction = await aiService.predictApplicationSuccess(
-      user, 
-      internship, 
+      user,
+      internship,
       historicalData
     );
 
@@ -204,10 +204,10 @@ router.post('/predict-success/:internshipId', auth, async (req, res) => {
     });
   } catch (error) {
     console.error('Error predicting success:', error);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: 'Error predicting application success',
-      error: error.message 
+      error: error.message
     });
   }
 });
@@ -218,7 +218,7 @@ router.post('/predict-success/:internshipId', auth, async (req, res) => {
 router.post('/auto-tag/:internshipId', auth, async (req, res) => {
   try {
     const { internshipId } = req.params;
-    
+
     // Check if user is company or admin
     if (req.user.role !== 'company' && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Access denied' });
@@ -257,10 +257,10 @@ router.post('/auto-tag/:internshipId', auth, async (req, res) => {
     });
   } catch (error) {
     console.error('Error auto-tagging internship:', error);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: 'Error auto-tagging internship',
-      error: error.message 
+      error: error.message
     });
   }
 });
@@ -271,7 +271,7 @@ router.post('/auto-tag/:internshipId', auth, async (req, res) => {
 router.get('/skill-insights', auth, async (req, res) => {
   try {
     const { category, location } = req.query;
-    
+
     // Get recent internships to analyze skill trends
     const query = { status: 'active' };
     if (category) query.category = category;
@@ -363,10 +363,10 @@ router.get('/skill-insights', auth, async (req, res) => {
     });
   } catch (error) {
     console.error('Error getting skill insights:', error);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: 'Error analyzing skill insights',
-      error: error.message 
+      error: error.message
     });
   }
 });
@@ -383,7 +383,7 @@ router.post('/batch-tag', auth, async (req, res) => {
     const { limit = 50 } = req.body;
 
     // Get internships that haven't been auto-tagged yet
-    const internships = await Internship.find({ 
+    const internships = await Internship.find({
       aiTags: { $exists: false },
       status: 'active'
     }).limit(parseInt(limit));
@@ -393,7 +393,7 @@ router.post('/batch-tag', auth, async (req, res) => {
     for (const internship of internships) {
       try {
         const tags = await aiService.autoTagInternship(internship);
-        
+
         // Update internship with tags
         internship.aiTags = tags;
         internship.categories = tags.categories.map(cat => cat.category);
@@ -428,10 +428,10 @@ router.post('/batch-tag', auth, async (req, res) => {
     });
   } catch (error) {
     console.error('Error batch tagging:', error);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: 'Error batch tagging internships',
-      error: error.message 
+      error: error.message
     });
   }
 });
@@ -442,7 +442,7 @@ router.post('/batch-tag', auth, async (req, res) => {
 router.get('/user-insights', auth, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
-    
+
     if (!user || !user.studentProfile) {
       return res.status(404).json({ message: 'Student profile not found' });
     }
@@ -460,7 +460,7 @@ router.get('/user-insights', auth, async (req, res) => {
       pending: applications.filter(app => app.status === 'pending').length,
       accepted: applications.filter(app => app.status === 'accepted').length,
       rejected: applications.filter(app => app.status === 'rejected').length,
-      successRate: applications.length > 0 ? 
+      successRate: applications.length > 0 ?
         (applications.filter(app => app.status === 'accepted').length / applications.length) * 100 : 0
     };
 
@@ -480,7 +480,7 @@ router.get('/user-insights', auth, async (req, res) => {
 
     // Find skills user doesn't have but are in high demand
     const recommendedSkills = Object.entries(skillDemand)
-      .filter(([skill]) => !userSkills.some(userSkill => 
+      .filter(([skill]) => !userSkills.some(userSkill =>
         userSkill.toLowerCase().includes(skill) || skill.includes(userSkill.toLowerCase())
       ))
       .sort((a, b) => b[1] - a[1])
@@ -502,10 +502,10 @@ router.get('/user-insights', auth, async (req, res) => {
     });
   } catch (error) {
     console.error('Error getting user insights:', error);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: 'Error generating user insights',
-      error: error.message 
+      error: error.message
     });
   }
 });
@@ -526,16 +526,16 @@ router.suggestCareerPaths = (skills, interests) => {
   const suggestions = [];
 
   Object.entries(careerPaths).forEach(([career, requiredSkills]) => {
-    const matchingSkills = requiredSkills.filter(skill => 
+    const matchingSkills = requiredSkills.filter(skill =>
       skillsLower.some(userSkill => userSkill.includes(skill) || skill.includes(userSkill))
     );
-    
+
     if (matchingSkills.length > 0) {
       const matchPercentage = (matchingSkills.length / requiredSkills.length) * 100;
-      const missingSkills = requiredSkills.filter(skill => 
+      const missingSkills = requiredSkills.filter(skill =>
         !skillsLower.some(userSkill => userSkill.includes(skill) || skill.includes(userSkill))
       );
-      
+
       suggestions.push({
         career,
         matchPercentage: Math.round(matchPercentage),
@@ -551,35 +551,35 @@ router.suggestCareerPaths = (skills, interests) => {
 
 router.calculateProfileCompleteness = (profile) => {
   const fields = ['skills', 'interests', 'bio', 'university', 'degree', 'graduationYear'];
-  const completedFields = fields.filter(field => profile[field] && 
+  const completedFields = fields.filter(field => profile[field] &&
     (Array.isArray(profile[field]) ? profile[field].length > 0 : profile[field].toString().trim() !== '')
   );
-  
+
   return Math.round((completedFields.length / fields.length) * 100);
 };
 
 router.generateNextSteps = (profile, applicationStats) => {
   const steps = [];
-  
+
   if (!profile.skills || profile.skills.length < 3) {
     steps.push('Add more skills to your profile to improve job matching');
   }
-  
+
   if (!profile.bio || profile.bio.length < 50) {
     steps.push('Write a compelling bio to stand out to employers');
   }
-  
+
   if (applicationStats.successRate < 20 && applicationStats.total > 5) {
     steps.push('Consider improving your application strategy or targeting different roles');
   }
-  
+
   if (applicationStats.total === 0) {
     steps.push('Start applying to internships that match your skills and interests');
   }
-  
+
   steps.push('Upload your resume for AI-powered analysis and suggestions');
   steps.push('Use the chatbot to get personalized career advice');
-  
+
   return steps.slice(0, 5);
 };
 

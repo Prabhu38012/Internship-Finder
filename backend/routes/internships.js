@@ -3,13 +3,12 @@ const { body, query, validationResult } = require('express-validator');
 const Internship = require('../models/Internship');
 const Application = require('../models/Application');
 const { protect, authorize, optionalAuth } = require('../middleware/auth');
-const ExternalAPIService = require('../services/externalAPIs');
 const RealtimeService = require('../services/realtimeService');
 const AnalyticsService = require('../services/analyticsService');
 const { trackInternshipCreated, trackInternshipViewed, trackSearchPerformed } = require('../middleware/activityTracker');
+const jobAggregatorService = require('../services/jobAggregatorService');
 
 const router = express.Router();
-const externalAPIService = new ExternalAPIService();
 
 // @desc    Get all internships with filtering, sorting, and pagination
 // @route   GET /api/internships
@@ -104,7 +103,7 @@ router.get('/', [
     if (req.user) {
       for (let internship of internships) {
         internship._doc.isSaved = req.user.savedInternships.includes(internship._id);
-        
+
         // Check if user has applied
         const application = await Application.findOne({
           internship: internship._id,
@@ -118,26 +117,29 @@ router.get('/', [
     let allInternships = [...internships];
     let totalCount = total;
 
-    // Fetch external internships if requested
+    // Include external internships if requested
     if (req.query.includeExternal === 'true' || req.query.includeExternal === true) {
       try {
         const externalFilters = {
-          location: req.query.location,
           category: req.query.category,
-          remote: req.query.remote === 'true'
+          location: req.query.location,
+          search: req.query.search,
+          remote: req.query.remote
         };
-        
-        const externalInternships = await externalAPIService.searchAllPlatforms(
-          req.query.search || 'internship',
-          externalFilters
+
+        const externalResult = await jobAggregatorService.getExternalJobs(
+          externalFilters,
+          page,
+          limit
         );
-        
-        // Add external internships to results
-        allInternships = [...allInternships, ...externalInternships.slice(0, limit)];
-        totalCount += externalInternships.length;
+
+        if (externalResult.data && externalResult.data.length > 0) {
+          allInternships = [...allInternships, ...externalResult.data];
+          totalCount += externalResult.pagination.total;
+        }
       } catch (error) {
-        console.error('External API error:', error);
-        // Continue with local results only
+        console.error('Error fetching external jobs:', error.message);
+        // Continue with internal results only
       }
     }
 
@@ -152,7 +154,7 @@ router.get('/', [
       },
       data: allInternships,
       sources: {
-        local: internships.length,
+        internal: internships.length,
         external: allInternships.length - internships.length
       }
     });
@@ -186,7 +188,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
     // Add user-specific data if authenticated
     if (req.user) {
       internship._doc.isSaved = req.user.savedInternships.includes(internship._id);
-      
+
       // Check if user has applied
       const application = await Application.findOne({
         internship: internship._id,
@@ -229,7 +231,7 @@ router.post('/', protect, authorize('company'), [
 ], async (req, res) => {
   try {
     console.log('Internship creation request body:', JSON.stringify(req.body, null, 2));
-    
+
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       console.log('Validation errors:', errors.array());
@@ -246,10 +248,10 @@ router.post('/', protect, authorize('company'), [
     console.log('User role:', req.user.role);
     console.log('Company name:', req.user.companyName);
     console.log('Company object:', req.user.toObject ? req.user.toObject() : req.user);
-    
+
     // For Company model, the user is already the company object
     let company = req.user;
-    
+
     // Check if this is a valid company object
     if (!company || !company._id) {
       console.log('No company object found');
@@ -258,7 +260,7 @@ router.post('/', protect, authorize('company'), [
         message: 'Company authentication failed'
       });
     }
-    
+
     // For Company model, companyName should exist, but let's be flexible
     if (!company.companyName && !company.name) {
       console.log('Company object missing name field');
@@ -272,7 +274,7 @@ router.post('/', protect, authorize('company'), [
     // Check posting limits manually since canPostInternship might not be available
     const maxPosts = company.subscription?.maxInternshipPosts || 5;
     const currentPosts = company.subscription?.currentInternshipPosts || 0;
-    
+
     if (currentPosts >= maxPosts) {
       return res.status(403).json({
         success: false,
@@ -287,7 +289,7 @@ router.post('/', protect, authorize('company'), [
     };
 
     const internship = await Internship.create(internshipData);
-    
+
     // Update company internship count manually
     try {
       const Company = require('../models/Company');
@@ -512,14 +514,18 @@ router.get('/company/mine', protect, authorize('company'), async (req, res) => {
   }
 });
 
-// @desc    Search external internships only
-// @route   GET /api/internships/external/search
+// ==================== EXTERNAL INTERNSHIP ROUTES ====================
+
+// @desc    Get external internships only
+// @route   GET /api/internships/external
 // @access  Public
-router.get('/external/search', [
-  query('q').optional().trim(),
-  query('location').optional().trim(),
+router.get('/external', [
+  query('page').optional().custom(value => value === '' || (Number.isInteger(+value) && +value >= 1)),
+  query('limit').optional().custom(value => value === '' || (Number.isInteger(+value) && +value >= 1 && +value <= 50)),
+  query('source').optional().isIn(['LinkedIn', 'Indeed', 'Internshala', 'Google']),
   query('category').optional().trim(),
-  query('platform').optional().isIn(['linkedin', 'indeed', 'internshala', 'all'])
+  query('location').optional().trim(),
+  query('search').optional().trim()
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -531,65 +537,82 @@ router.get('/external/search', [
       });
     }
 
-    const query = req.query.q || 'internship';
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
     const filters = {
+      source: req.query.source,
+      category: req.query.category,
       location: req.query.location,
-      category: req.query.category
+      search: req.query.search,
+      remote: req.query.remote
     };
 
-    let results = [];
-
-    if (!req.query.platform || req.query.platform === 'all') {
-      results = await externalAPIService.searchAllPlatforms(query, filters);
-    } else {
-      switch (req.query.platform) {
-        case 'linkedin':
-          results = await externalAPIService.linkedinAPI.searchInternships(query, filters);
-          break;
-        case 'indeed':
-          results = await externalAPIService.indeedAPI.searchInternships(query, filters);
-          break;
-        case 'internshala':
-          results = await externalAPIService.internshalaAPI.searchInternships(query, filters);
-          break;
-      }
-      results = externalAPIService.normalizeInternships(results);
-    }
+    const result = await jobAggregatorService.getExternalJobs(filters, page, limit);
 
     res.status(200).json({
       success: true,
-      count: results.length,
-      data: results,
-      platform: req.query.platform || 'all',
-      apiHealth: externalAPIService.getAPIHealth()
+      ...result
     });
   } catch (error) {
-    console.error('External search error:', error);
+    console.error('Get external internships error:', error);
     res.status(500).json({
       success: false,
-      message: 'External API search failed',
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Server error'
+      message: 'Server error'
     });
   }
 });
 
-// @desc    Get API health status
-// @route   GET /api/internships/external/health
+// @desc    Get external internships statistics
+// @route   GET /api/internships/external/stats
 // @access  Public
-router.get('/external/health', async (req, res) => {
+router.get('/external/stats', async (req, res) => {
   try {
-    const health = externalAPIService.getAPIHealth();
-    
+    const stats = await jobAggregatorService.getStats();
+    const status = jobAggregatorService.getStatus();
+
     res.status(200).json({
       success: true,
-      data: health,
-      timestamp: new Date().toISOString()
+      data: {
+        ...stats,
+        syncStatus: status
+      }
     });
   } catch (error) {
-    console.error('API health check error:', error);
+    console.error('Get external stats error:', error);
     res.status(500).json({
       success: false,
-      message: 'Health check failed'
+      message: 'Server error'
+    });
+  }
+});
+
+// @desc    Manually trigger external job sync
+// @route   POST /api/internships/external/sync
+// @access  Private (Admin only)
+router.post('/external/sync', protect, authorize('admin'), async (req, res) => {
+  try {
+    const { queries } = req.body;
+
+    // Start sync in background
+    const syncPromise = jobAggregatorService.syncAllPlatforms(queries);
+
+    res.status(202).json({
+      success: true,
+      message: 'Sync started in background',
+      status: jobAggregatorService.getStatus()
+    });
+
+    // Wait for sync to complete (non-blocking for response)
+    syncPromise.then(result => {
+      console.log('Manual sync completed:', result.stats?.totalSynced || 0, 'jobs synced');
+    }).catch(error => {
+      console.error('Manual sync failed:', error.message);
+    });
+  } catch (error) {
+    console.error('Sync trigger error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
     });
   }
 });

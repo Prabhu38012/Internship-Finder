@@ -110,11 +110,11 @@ mongoose.connect(process.env.MONGODB_URI, {
   serverSelectionTimeoutMS: 5000,
   socketTimeoutMS: 45000,
 })
-.then(() => console.log('MongoDB connected successfully'))
-.catch(err => {
-  console.error('MongoDB connection error:', err);
-  process.exit(1);
-});
+  .then(() => console.log('MongoDB connected successfully'))
+  .catch(err => {
+    console.error('MongoDB connection error:', err);
+    process.exit(1);
+  });
 
 // Handle MongoDB connection events
 mongoose.connection.on('error', err => {
@@ -152,14 +152,14 @@ app.use('/api/health', require('./routes/health'));
 app.get('/api/placeholder/:width/:height', (req, res) => {
   const width = Math.min(parseInt(req.params.width), 2000);
   const height = Math.min(parseInt(req.params.height), 2000);
-  
+
   const svg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
     <rect width="100%" height="100%" fill="#f0f0f0"/>
     <text x="50%" y="50%" font-family="Arial" font-size="16" fill="#999" text-anchor="middle" dy=".3em">
       ${width}x${height}
     </text>
   </svg>`;
-  
+
   res.setHeader('Content-Type', 'image/svg+xml');
   res.setHeader('Cache-Control', 'public, max-age=86400');
   res.send(svg);
@@ -185,7 +185,7 @@ app.get('/api/health', (req, res) => {
 // Improved error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  
+
   const errorResponse = {
     success: false,
     message: 'Something went wrong!',
@@ -263,9 +263,15 @@ process.on('uncaughtException', (error) => {
 // Initialize notification service
 const notificationService = require('./services/notificationService');
 
+// Initialize job aggregator service for external internship sync
+const jobAggregatorService = require('./services/jobAggregatorService');
+
 // Start server
 server.listen(PORT, () => {
   console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
   console.log('Press Ctrl+C to stop the server');
   console.log('Notification service initialized');
+
+  // Initialize job aggregator scheduler after server starts
+  jobAggregatorService.initializeScheduler();
 });
