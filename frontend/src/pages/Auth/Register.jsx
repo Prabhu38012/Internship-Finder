@@ -138,14 +138,14 @@ const Register = () => {
         borderColor: "rgba(255, 255, 255, 0.3)",
       },
       "&.Mui-focused fieldset": {
-        borderColor: "#a855f7",
+        borderColor: "#3b82f6",
       },
     },
     "& .MuiInputLabel-root": {
       color: "rgba(255, 255, 255, 0.5)",
     },
     "& .MuiInputLabel-root.Mui-focused": {
-      color: "#a855f7",
+      color: "#3b82f6",
     },
   };
 
@@ -343,7 +343,7 @@ const Register = () => {
               Already have an account?{" "}
               <Link
                 to="/login"
-                style={{ color: "#a855f7", textDecoration: "none" }}
+                style={{ color: "#3b82f6", textDecoration: "none" }}
               >
                 Log in
               </Link>
@@ -375,7 +375,7 @@ const Register = () => {
                       <Radio
                         sx={{
                           color: "rgba(255,255,255,0.5)",
-                          "&.Mui-checked": { color: "#a855f7" },
+                          "&.Mui-checked": { color: "#3b82f6" },
                         }}
                       />
                     }
@@ -389,7 +389,7 @@ const Register = () => {
                       <Radio
                         sx={{
                           color: "rgba(255,255,255,0.5)",
-                          "&.Mui-checked": { color: "#a855f7" },
+                          "&.Mui-checked": { color: "#3b82f6" },
                         }}
                       />
                     }
@@ -508,7 +508,7 @@ const Register = () => {
                       onChange={(e) => setAgreeTerms(e.target.checked)}
                       sx={{
                         color: "rgba(255,255,255,0.5)",
-                        "&.Mui-checked": { color: "#a855f7" },
+                        "&.Mui-checked": { color: "#3b82f6" },
                       }}
                     />
                   }
@@ -520,7 +520,7 @@ const Register = () => {
                       I agree to the{" "}
                       <Link
                         to="/terms"
-                        style={{ color: "#a855f7", textDecoration: "none" }}
+                        style={{ color: "#3b82f6", textDecoration: "none" }}
                       >
                         Terms & Conditions
                       </Link>
@@ -537,14 +537,14 @@ const Register = () => {
                   py: 1.5,
                   borderRadius: 2,
                   background:
-                    "linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)",
+                    "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
                   textTransform: "none",
                   fontSize: "1rem",
                   fontWeight: 600,
-                  boxShadow: "0 4px 14px rgba(168, 85, 247, 0.4)",
+                  boxShadow: "0 4px 14px rgba(59, 130, 246, 0.4)",
                   "&:hover": {
                     background:
-                      "linear-gradient(135deg, #9333ea 0%, #6d28d9 100%)",
+                      "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
                   },
                 }}
                 disabled={isLoading}

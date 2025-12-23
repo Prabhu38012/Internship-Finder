@@ -107,14 +107,14 @@ const Login = () => {
         borderColor: "rgba(255, 255, 255, 0.3)",
       },
       "&.Mui-focused fieldset": {
-        borderColor: "#a855f7",
+        borderColor: "#3b82f6",
       },
     },
     "& .MuiInputLabel-root": {
       color: "rgba(255, 255, 255, 0.5)",
     },
     "& .MuiInputLabel-root.Mui-focused": {
-      color: "#a855f7",
+      color: "#3b82f6",
     },
   };
 
@@ -311,7 +311,7 @@ const Login = () => {
               New to InternQuest?{" "}
               <Link
                 to="/register"
-                style={{ color: "#a855f7", textDecoration: "none" }}
+                style={{ color: "#3b82f6", textDecoration: "none" }}
               >
                 Create an account
               </Link>
@@ -364,7 +364,7 @@ const Login = () => {
                 <Link
                   to="/forgot-password"
                   style={{
-                    color: "#a855f7",
+                    color: "#3b82f6",
                     textDecoration: "none",
                     fontSize: "0.875rem",
                   }}
@@ -381,14 +381,14 @@ const Login = () => {
                   py: 1.5,
                   borderRadius: 2,
                   background:
-                    "linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)",
+                    "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
                   textTransform: "none",
                   fontSize: "1rem",
                   fontWeight: 600,
-                  boxShadow: "0 4px 14px rgba(168, 85, 247, 0.4)",
+                  boxShadow: "0 4px 14px rgba(59, 130, 246, 0.4)",
                   "&:hover": {
                     background:
-                      "linear-gradient(135deg, #9333ea 0%, #6d28d9 100%)",
+                      "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
                   },
                 }}
                 disabled={isLoading}

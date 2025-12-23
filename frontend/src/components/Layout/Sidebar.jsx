@@ -93,18 +93,80 @@ const Sidebar = () => {
 
   return (
     <aside
-      className={`fixed left-0 top-0 h-screen bg-slate-900 border-r border-slate-700/50 flex flex-col z-50 transition-all duration-300 ${
-        isCollapsed ? "w-20" : "w-[260px]"
-      }`}
+      className={`fixed left-0 top-0 h-screen bg-slate-900 border-r border-slate-700/50 flex flex-col z-50 transition-all duration-300 ${isCollapsed ? "w-20" : "w-[260px]"
+        }`}
     >
       {/* Logo Section */}
       <div className={`p-4 ${isCollapsed ? "px-4" : "p-6"}`}>
         <Link to="/" className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
-            <Briefcase className="w-5 h-5 text-white" />
+          {/* APEX-style Diamond Logo with arrows */}
+          <div className="flex-shrink-0 relative">
+            <svg
+              width={isCollapsed ? "40" : "44"}
+              height={isCollapsed ? "40" : "44"}
+              viewBox="0 0 100 100"
+              fill="none"
+            >
+              {/* Diamond Shape */}
+              <path
+                d="M50 5 L95 50 L50 95 L5 50 Z"
+                stroke="url(#diamondGradient)"
+                strokeWidth="4"
+                fill="none"
+              />
+
+              {/* Three Arrows */}
+              {/* Left Arrow */}
+              <path
+                d="M30 60 L30 35 L22 43 M30 35 L38 43"
+                stroke="url(#arrowGradient1)"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                fill="none"
+              />
+
+              {/* Center Arrow (taller) */}
+              <path
+                d="M50 68 L50 25 L40 37 M50 25 L60 37"
+                stroke="url(#arrowGradient2)"
+                strokeWidth="4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                fill="none"
+              />
+
+              {/* Right Arrow */}
+              <path
+                d="M70 60 L70 35 L62 43 M70 35 L78 43"
+                stroke="url(#arrowGradient1)"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                fill="none"
+              />
+
+              {/* Gradients */}
+              <defs>
+                <linearGradient id="diamondGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#7c3aed" />
+                  <stop offset="100%" stopColor="#a855f7" />
+                </linearGradient>
+                <linearGradient id="arrowGradient1" x1="0%" y1="100%" x2="0%" y2="0%">
+                  <stop offset="0%" stopColor="#a855f7" />
+                  <stop offset="100%" stopColor="#c4b5fd" />
+                </linearGradient>
+                <linearGradient id="arrowGradient2" x1="0%" y1="100%" x2="0%" y2="0%">
+                  <stop offset="0%" stopColor="#7c3aed" />
+                  <stop offset="100%" stopColor="#a855f7" />
+                </linearGradient>
+              </defs>
+            </svg>
           </div>
           {!isCollapsed && (
-            <span className="text-xl font-bold text-white">InternQuest</span>
+            <span className="text-xl font-bold tracking-wide" style={{ color: '#7c3aed' }}>
+              INTERN<span style={{ color: '#a855f7' }}>QUEST</span>
+            </span>
           )}
         </Link>
       </div>
@@ -131,13 +193,11 @@ const Sidebar = () => {
             <Link
               key={item.path}
               to={item.path}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
-                isCollapsed ? "justify-center px-3" : ""
-              } ${
-                active
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${isCollapsed ? "justify-center px-3" : ""
+                } ${active
                   ? "bg-blue-600/20 text-blue-400"
                   : "text-slate-400 hover:text-white hover:bg-slate-800"
-              }`}
+                }`}
               title={isCollapsed ? item.label : undefined}
             >
               <Icon className="w-5 h-5 flex-shrink-0" />
@@ -159,9 +219,8 @@ const Sidebar = () => {
             {user.role === "company" && (
               <Link
                 to="/internships/create"
-                className={`flex items-center gap-2 w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors font-medium ${
-                  isCollapsed ? "justify-center px-2" : "justify-center px-4"
-                }`}
+                className={`flex items-center gap-2 w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors font-medium ${isCollapsed ? "justify-center px-2" : "justify-center px-4"
+                  }`}
                 title={isCollapsed ? "Post Internship" : undefined}
               >
                 <Plus className="w-5 h-5 flex-shrink-0" />
@@ -172,13 +231,11 @@ const Sidebar = () => {
             {/* Profile Link */}
             <Link
               to="/profile"
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-                isCollapsed ? "justify-center px-3" : ""
-              } ${
-                isActive("/profile")
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${isCollapsed ? "justify-center px-3" : ""
+                } ${isActive("/profile")
                   ? "bg-blue-600/20 text-blue-400"
                   : "text-slate-400 hover:text-white hover:bg-slate-800"
-              }`}
+                }`}
               title={isCollapsed ? "Profile" : undefined}
             >
               <User className="w-5 h-5 flex-shrink-0" />
@@ -188,9 +245,8 @@ const Sidebar = () => {
             {/* Logout Button */}
             <button
               onClick={handleLogout}
-              className={`flex items-center gap-3 px-4 py-3 w-full text-left rounded-xl text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200 ${
-                isCollapsed ? "justify-center px-3" : ""
-              }`}
+              className={`flex items-center gap-3 px-4 py-3 w-full text-left rounded-xl text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200 ${isCollapsed ? "justify-center px-3" : ""
+                }`}
               title={isCollapsed ? "Logout" : undefined}
             >
               <LogOut className="w-5 h-5 flex-shrink-0" />
