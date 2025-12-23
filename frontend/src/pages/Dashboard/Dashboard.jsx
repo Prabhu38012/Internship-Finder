@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react'
-import { useSelector, useDispatch } from 'react-redux'
-import { Link, useNavigate } from 'react-router-dom'
-import { Helmet } from 'react-helmet-async'
-import { format } from 'date-fns'
-import toast from 'react-hot-toast'
+import React, { useEffect, useState } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { Link, useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
+import { format } from "date-fns";
+import toast from "react-hot-toast";
 import {
   Briefcase,
   Users,
@@ -17,21 +17,31 @@ import {
   Edit,
   Trash2,
   MoreVertical,
-  CheckCircle
-} from 'lucide-react'
+  CheckCircle,
+} from "lucide-react";
 
 /* ==========================================
    REDUX IMPORTS
    ========================================== */
-import { getMyApplications, getCompanyApplications } from '../../store/slices/applicationSlice'
-import { getMyInternships, deleteInternship } from '../../store/slices/internshipSlice'
-import userService from '../../services/userService'
-import useSocket from '../../hooks/useSocket'
+import {
+  getMyApplications,
+  getCompanyApplications,
+} from "../../store/slices/applicationSlice";
+import {
+  getMyInternships,
+  deleteInternship,
+} from "../../store/slices/internshipSlice";
+import userService from "../../services/userService";
+import useSocket from "../../hooks/useSocket";
 
 /* ==========================================
    REUSABLE COMPONENT IMPORTS
    ========================================== */
-import { KPICard, QuickActionButton, ActivityFeed } from '../../components/Dashboard'
+import {
+  KPICard,
+  QuickActionButton,
+  ActivityFeed,
+} from "../../components/Dashboard";
 
 /* ==========================================
    INTERNQUEST – COMPANY DASHBOARD
@@ -55,22 +65,22 @@ const Dashboard = () => {
   /* ==========================================
      STATE & HOOKS
      ========================================== */
-  const dispatch = useDispatch()
-  const navigate = useNavigate()
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   // Redux state
-  const { user } = useSelector((state) => state.auth)
-  const { applications } = useSelector((state) => state.applications)
-  const { myInternships } = useSelector((state) => state.internships)
-  const { companyApplications } = useSelector((state) => state.applications)
+  const { user } = useSelector((state) => state.auth);
+  const { applications } = useSelector((state) => state.applications);
+  const { myInternships } = useSelector((state) => state.internships);
+  const { companyApplications } = useSelector((state) => state.applications);
 
   // Local state
-  const [dashboardStats, setDashboardStats] = useState(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [activeMenu, setActiveMenu] = useState(null)
+  const [dashboardStats, setDashboardStats] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [activeMenu, setActiveMenu] = useState(null);
 
   // Real-time socket connection
-  useSocket()
+  useSocket();
 
   /* ==========================================
      DATA FETCHING
@@ -78,30 +88,32 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        setIsLoading(true)
+        setIsLoading(true);
 
         // Fetch dashboard stats from API
-        const statsResponse = await userService.getDashboardStats(localStorage.getItem('token'))
-        setDashboardStats(statsResponse.data)
+        const statsResponse = await userService.getDashboardStats(
+          localStorage.getItem("token"),
+        );
+        setDashboardStats(statsResponse.data);
 
         // Fetch role-specific data
-        if (user?.role === 'student') {
-          dispatch(getMyApplications({ limit: 5 }))
-        } else if (user?.role === 'company') {
-          dispatch(getMyInternships())
-          dispatch(getCompanyApplications({ limit: 10 }))
+        if (user?.role === "student") {
+          dispatch(getMyApplications({ limit: 5 }));
+        } else if (user?.role === "company") {
+          dispatch(getMyInternships());
+          dispatch(getCompanyApplications({ limit: 10 }));
         }
       } catch (error) {
-        console.error('Error fetching dashboard data:', error)
+        console.error("Error fetching dashboard data:", error);
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
+    };
 
     if (user) {
-      fetchDashboardData()
+      fetchDashboardData();
     }
-  }, [dispatch, user])
+  }, [dispatch, user]);
 
   /* ==========================================
      EVENT HANDLERS
@@ -109,23 +121,25 @@ const Dashboard = () => {
 
   // Handle internship deletion with confirmation
   const handleDelete = (internship) => {
-    if (window.confirm(`Are you sure you want to delete "${internship.title}"?`)) {
+    if (
+      window.confirm(`Are you sure you want to delete "${internship.title}"?`)
+    ) {
       dispatch(deleteInternship(internship._id))
         .unwrap()
-        .then(() => toast.success('Internship deleted successfully'))
-        .catch((error) => toast.error(error || 'Failed to delete internship'))
+        .then(() => toast.success("Internship deleted successfully"))
+        .catch((error) => toast.error(error || "Failed to delete internship"));
     }
-    setActiveMenu(null)
-  }
+    setActiveMenu(null);
+  };
 
   // Close dropdown when clicking outside
   useEffect(() => {
-    const handleClickOutside = () => setActiveMenu(null)
+    const handleClickOutside = () => setActiveMenu(null);
     if (activeMenu) {
-      document.addEventListener('click', handleClickOutside)
-      return () => document.removeEventListener('click', handleClickOutside)
+      document.addEventListener("click", handleClickOutside);
+      return () => document.removeEventListener("click", handleClickOutside);
     }
-  }, [activeMenu])
+  }, [activeMenu]);
 
   /* ==========================================
      UTILITY FUNCTIONS
@@ -134,25 +148,25 @@ const Dashboard = () => {
   // Status badge styling for internships (active, draft, closed, expired)
   const getStatusBadge = (status) => {
     const styles = {
-      active: 'bg-green-500/20 text-green-400 border-green-500/30',
-      draft: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-      closed: 'bg-red-500/20 text-red-400 border-red-500/30',
-      expired: 'bg-gray-500/20 text-gray-400 border-gray-500/30'
-    }
-    return styles[status] || styles.active
-  }
+      active: "bg-green-500/20 text-green-400 border-green-500/30",
+      draft: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
+      closed: "bg-red-500/20 text-red-400 border-red-500/30",
+      expired: "bg-gray-500/20 text-gray-400 border-gray-500/30",
+    };
+    return styles[status] || styles.active;
+  };
 
   // Status badge styling for applications
   const getAppStatusBadge = (status) => {
     const styles = {
-      pending: 'bg-yellow-500/20 text-yellow-400',
-      accepted: 'bg-green-500/20 text-green-400',
-      rejected: 'bg-red-500/20 text-red-400',
-      reviewing: 'bg-blue-500/20 text-blue-400',
-      shortlisted: 'bg-purple-500/20 text-purple-400'
-    }
-    return styles[status] || styles.pending
-  }
+      pending: "bg-yellow-500/20 text-yellow-400",
+      accepted: "bg-green-500/20 text-green-400",
+      rejected: "bg-red-500/20 text-red-400",
+      reviewing: "bg-blue-500/20 text-blue-400",
+      shortlisted: "bg-purple-500/20 text-purple-400",
+    };
+    return styles[status] || styles.pending;
+  };
 
   /* ==========================================
      LOADING STATE
@@ -165,25 +179,33 @@ const Dashboard = () => {
           <p className="text-slate-400 font-medium">Loading dashboard...</p>
         </div>
       </div>
-    )
+    );
   }
 
   /* ==========================================
      COMPANY DASHBOARD VIEW
      Two-column layout: 70% left / 30% right
      ========================================== */
-  if (user?.role === 'company') {
+  if (user?.role === "company") {
     // Calculate KPI values
-    const activeInternships = myInternships?.filter(i => i.status === 'active') || []
-    const totalApplications = myInternships?.reduce((sum, i) => sum + (i.applicationsCount || 0), 0) || 0
-    const pendingApplications = companyApplications?.filter(a => a.status === 'pending').length || 0
-    const totalViews = myInternships?.reduce((sum, i) => sum + (i.views || 0), 0) || 0
+    const activeInternships =
+      myInternships?.filter((i) => i.status === "active") || [];
+    const totalApplications =
+      myInternships?.reduce((sum, i) => sum + (i.applicationsCount || 0), 0) ||
+      0;
+    const pendingApplications =
+      companyApplications?.filter((a) => a.status === "pending").length || 0;
+    const totalViews =
+      myInternships?.reduce((sum, i) => sum + (i.views || 0), 0) || 0;
 
     return (
       <>
         <Helmet>
           <title>Company Dashboard - InternQuest</title>
-          <meta name="description" content="Manage your internship postings and review applications." />
+          <meta
+            name="description"
+            content="Manage your internship postings and review applications."
+          />
         </Helmet>
 
         {/* ==========================================
@@ -192,7 +214,6 @@ const Dashboard = () => {
             Padding: p-6
             ========================================== */}
         <div className="min-h-screen bg-[#0F1220] p-6">
-
           {/* ==========================================
               PAGE HEADER
               Flex layout with title left, CTA right
@@ -254,16 +275,13 @@ const Dashboard = () => {
               Gap: gap-6
               ========================================== */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-
             {/* ==========================================
                 LEFT COLUMN (70%)
                 Primary content: Internship management table
                 ========================================== */}
             <main className="lg:col-span-8">
-
               {/* Internship Table Card */}
               <section className="bg-slate-800 rounded-xl shadow-md overflow-hidden">
-
                 {/* Card Header */}
                 <div className="flex items-center justify-between p-5 border-b border-slate-700">
                   <h2 className="text-lg font-semibold text-white">
@@ -316,8 +334,12 @@ const Dashboard = () => {
                             {/* Title Column */}
                             <td className="px-5 py-4">
                               <div>
-                                <p className="font-medium text-white">{internship.title}</p>
-                                <p className="text-sm text-slate-400">{internship.category}</p>
+                                <p className="font-medium text-white">
+                                  {internship.title}
+                                </p>
+                                <p className="text-sm text-slate-400">
+                                  {internship.category}
+                                </p>
                               </div>
                             </td>
 
@@ -326,9 +348,10 @@ const Dashboard = () => {
                               <div className="flex items-center gap-2 text-slate-300">
                                 <MapPin className="w-4 h-4 text-slate-500 flex-shrink-0" />
                                 <span className="truncate">
-                                  {internship.location?.type === 'remote'
-                                    ? 'Remote'
-                                    : internship.location?.city || 'Not specified'}
+                                  {internship.location?.type === "remote"
+                                    ? "Remote"
+                                    : internship.location?.city ||
+                                      "Not specified"}
                                 </span>
                               </div>
                             </td>
@@ -342,15 +365,20 @@ const Dashboard = () => {
 
                             {/* Status Badge */}
                             <td className="px-5 py-4">
-                              <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusBadge(internship.status || 'active')}`}>
-                                {internship.status || 'active'}
+                              <span
+                                className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusBadge(internship.status || "active")}`}
+                              >
+                                {internship.status || "active"}
                               </span>
                             </td>
 
                             {/* Posted Date (hidden on small screens) */}
                             <td className="px-5 py-4 hidden sm:table-cell">
                               <span className="text-slate-300 text-sm">
-                                {format(new Date(internship.createdAt), 'MMM dd')}
+                                {format(
+                                  new Date(internship.createdAt),
+                                  "MMM dd",
+                                )}
                               </span>
                             </td>
 
@@ -369,8 +397,12 @@ const Dashboard = () => {
                                 {/* More Actions Dropdown */}
                                 <button
                                   onClick={(e) => {
-                                    e.stopPropagation()
-                                    setActiveMenu(activeMenu === internship._id ? null : internship._id)
+                                    e.stopPropagation();
+                                    setActiveMenu(
+                                      activeMenu === internship._id
+                                        ? null
+                                        : internship._id,
+                                    );
                                   }}
                                   className="p-2 text-slate-400 hover:text-white hover:bg-slate-600 rounded-lg transition-colors"
                                 >
@@ -385,8 +417,10 @@ const Dashboard = () => {
                                   >
                                     <button
                                       onClick={() => {
-                                        navigate(`/internships/edit/${internship._id}`)
-                                        setActiveMenu(null)
+                                        navigate(
+                                          `/internships/edit/${internship._id}`,
+                                        );
+                                        setActiveMenu(null);
                                       }}
                                       className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-slate-200 hover:bg-slate-600 transition-colors"
                                     >
@@ -436,7 +470,6 @@ const Dashboard = () => {
                 Secondary widgets: Live Activity + Quick Actions
                 ========================================== */}
             <aside className="lg:col-span-4 space-y-6">
-
               {/* ==========================================
                   LIVE ACTIVITY FEED
                   Real-time updates for company
@@ -475,7 +508,7 @@ const Dashboard = () => {
           </div>
         </div>
       </>
-    )
+    );
   }
 
   /* ==========================================
@@ -486,11 +519,13 @@ const Dashboard = () => {
     <>
       <Helmet>
         <title>Dashboard - InternQuest</title>
-        <meta name="description" content="View your internship applications and saved opportunities." />
+        <meta
+          name="description"
+          content="View your internship applications and saved opportunities."
+        />
       </Helmet>
 
       <div className="min-h-screen bg-[#0F1220] p-6">
-
         {/* Page Header */}
         <header className="mb-8">
           <h1 className="text-2xl md:text-3xl font-bold text-white mb-1">
@@ -503,13 +538,13 @@ const Dashboard = () => {
 
         {/* Two-Column Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-
           {/* LEFT COLUMN (70%) */}
           <main className="lg:col-span-8 space-y-6">
-
             {/* Quick Actions */}
             <section className="bg-slate-800 rounded-xl p-6 shadow-md">
-              <h2 className="text-lg font-semibold text-white mb-4">Quick Actions</h2>
+              <h2 className="text-lg font-semibold text-white mb-4">
+                Quick Actions
+              </h2>
               <div className="space-y-3">
                 <QuickActionButton
                   to="/internships"
@@ -535,20 +570,34 @@ const Dashboard = () => {
             {/* Recent Applications */}
             <section className="bg-slate-800 rounded-xl p-6 shadow-md">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-white">Recent Applications</h2>
-                <Link to="/applications" className="text-sm text-blue-400 hover:text-blue-300">
+                <h2 className="text-lg font-semibold text-white">
+                  Recent Applications
+                </h2>
+                <Link
+                  to="/applications"
+                  className="text-sm text-blue-400 hover:text-blue-300"
+                >
                   View All →
                 </Link>
               </div>
 
               <div className="space-y-4">
                 {applications?.slice(0, 5).map((app) => (
-                  <div key={app._id} className="flex items-center justify-between p-4 bg-slate-700/50 rounded-xl hover:bg-slate-700 transition-colors">
+                  <div
+                    key={app._id}
+                    className="flex items-center justify-between p-4 bg-slate-700/50 rounded-xl hover:bg-slate-700 transition-colors"
+                  >
                     <div>
-                      <p className="font-medium text-white">{app.internship?.title}</p>
-                      <p className="text-sm text-slate-400">{app.internship?.company?.name}</p>
+                      <p className="font-medium text-white">
+                        {app.internship?.title}
+                      </p>
+                      <p className="text-sm text-slate-400">
+                        {app.internship?.company?.name}
+                      </p>
                     </div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getAppStatusBadge(app.status)}`}>
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-medium ${getAppStatusBadge(app.status)}`}
+                    >
                       {app.status}
                     </span>
                   </div>
@@ -558,7 +607,10 @@ const Dashboard = () => {
                   <div className="text-center py-8">
                     <FileText className="w-12 h-12 text-slate-600 mx-auto mb-3" />
                     <p className="text-slate-400 mb-2">No applications yet</p>
-                    <Link to="/internships" className="text-blue-400 hover:text-blue-300 font-medium">
+                    <Link
+                      to="/internships"
+                      className="text-blue-400 hover:text-blue-300 font-medium"
+                    >
                       Browse internships →
                     </Link>
                   </div>
@@ -569,30 +621,38 @@ const Dashboard = () => {
 
           {/* RIGHT COLUMN (30%) */}
           <aside className="lg:col-span-4 space-y-6">
-
             {/* KPI Cards */}
             <KPICard
               title="Applications Sent"
-              value={dashboardStats?.applicationsCount || applications?.length || 0}
+              value={
+                dashboardStats?.applicationsCount || applications?.length || 0
+              }
               icon={FileText}
               iconBg="bg-blue-600"
             />
             <KPICard
               title="Under Review"
-              value={applications?.filter(a => a.status === 'reviewing').length || 0}
+              value={
+                applications?.filter((a) => a.status === "reviewing").length ||
+                0
+              }
               icon={Clock}
               iconBg="bg-yellow-600"
             />
             <KPICard
               title="Accepted"
-              value={applications?.filter(a => a.status === 'accepted').length || 0}
+              value={
+                applications?.filter((a) => a.status === "accepted").length || 0
+              }
               icon={CheckCircle}
               iconBg="bg-green-600"
             />
 
             {/* Profile Completion Widget */}
             <section className="bg-slate-800 rounded-xl p-5 shadow-md">
-              <h3 className="font-semibold text-white mb-3">Profile Completion</h3>
+              <h3 className="font-semibold text-white mb-3">
+                Profile Completion
+              </h3>
               <div className="mb-3">
                 <div className="flex justify-between text-sm mb-2">
                   <span className="text-slate-400">Progress</span>
@@ -603,11 +663,16 @@ const Dashboard = () => {
                 <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-500"
-                    style={{ width: `${dashboardStats?.profileCompletion || 60}%` }}
+                    style={{
+                      width: `${dashboardStats?.profileCompletion || 60}%`,
+                    }}
                   />
                 </div>
               </div>
-              <Link to="/profile" className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
+              <Link
+                to="/profile"
+                className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+              >
                 Complete your profile →
               </Link>
             </section>
@@ -615,7 +680,7 @@ const Dashboard = () => {
         </div>
       </div>
     </>
-  )
-}
+  );
+};
 
-export default Dashboard
+export default Dashboard;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   IconButton,
   Badge,
@@ -11,14 +11,14 @@ import {
   Typography,
   Box,
   Button,
-  Divider
-} from '@mui/material';
+  Divider,
+} from "@mui/material";
 import {
   Notifications as NotificationsIcon,
-  NotificationsNone as NotificationsNoneIcon
-} from '@mui/icons-material';
-import { formatDistanceToNow } from 'date-fns';
-import { notificationAPI } from '../../services/api';
+  NotificationsNone as NotificationsNoneIcon,
+} from "@mui/icons-material";
+import { formatDistanceToNow } from "date-fns";
+import { notificationAPI } from "../../services/api";
 
 const NotificationBell = ({ onOpenCenter, onNavigate }) => {
   const [anchorEl, setAnchorEl] = useState(null);
@@ -29,7 +29,7 @@ const NotificationBell = ({ onOpenCenter, onNavigate }) => {
   useEffect(() => {
     fetchUnreadCount();
     fetchRecentNotifications();
-    
+
     // Poll for updates every 30 seconds
     const interval = setInterval(() => {
       fetchUnreadCount();
@@ -44,7 +44,7 @@ const NotificationBell = ({ onOpenCenter, onNavigate }) => {
       const response = await notificationAPI.getStats();
       setUnreadCount(response.data.data.unread || 0);
     } catch (error) {
-      console.error('Failed to fetch unread count:', error);
+      console.error("Failed to fetch unread count:", error);
     }
   };
 
@@ -53,11 +53,11 @@ const NotificationBell = ({ onOpenCenter, onNavigate }) => {
       setLoading(true);
       const response = await notificationAPI.getNotifications({
         limit: 5,
-        unread: 'true'
+        unread: "true",
       });
       setRecentNotifications(response.data.data);
     } catch (error) {
-      console.error('Failed to fetch recent notifications:', error);
+      console.error("Failed to fetch recent notifications:", error);
     } finally {
       setLoading(false);
     }
@@ -76,17 +76,19 @@ const NotificationBell = ({ onOpenCenter, onNavigate }) => {
     try {
       if (!notification.read) {
         await notificationAPI.markAsRead(notification._id);
-        setUnreadCount(prev => Math.max(0, prev - 1));
-        setRecentNotifications(prev =>
-          prev.map(n => n._id === notification._id ? { ...n, read: true } : n)
+        setUnreadCount((prev) => Math.max(0, prev - 1));
+        setRecentNotifications((prev) =>
+          prev.map((n) =>
+            n._id === notification._id ? { ...n, read: true } : n,
+          ),
         );
       }
-      
+
       if (notification.data?.url && onNavigate) {
         onNavigate(notification.data.url);
       }
     } catch (error) {
-      console.error('Failed to handle notification click:', error);
+      console.error("Failed to handle notification click:", error);
     }
     handleClose();
   };
@@ -107,13 +109,17 @@ const NotificationBell = ({ onOpenCenter, onNavigate }) => {
           color="inherit"
           onClick={handleClick}
           sx={{
-            '&:hover': {
-              backgroundColor: 'rgba(255, 255, 255, 0.1)'
-            }
+            "&:hover": {
+              backgroundColor: "rgba(255, 255, 255, 0.1)",
+            },
           }}
         >
           <Badge badgeContent={unreadCount} color="error">
-            {unreadCount > 0 ? <NotificationsIcon /> : <NotificationsNoneIcon />}
+            {unreadCount > 0 ? (
+              <NotificationsIcon />
+            ) : (
+              <NotificationsNoneIcon />
+            )}
           </Badge>
         </IconButton>
       </Tooltip>
@@ -126,35 +132,31 @@ const NotificationBell = ({ onOpenCenter, onNavigate }) => {
           sx: {
             width: 350,
             maxHeight: 400,
-            overflow: 'visible',
-            filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
+            overflow: "visible",
+            filter: "drop-shadow(0px 2px 8px rgba(0,0,0,0.32))",
             mt: 1.5,
-            '&:before': {
+            "&:before": {
               content: '""',
-              display: 'block',
-              position: 'absolute',
+              display: "block",
+              position: "absolute",
               top: 0,
               right: 14,
               width: 10,
               height: 10,
-              bgcolor: 'background.paper',
-              transform: 'translateY(-50%) rotate(45deg)',
+              bgcolor: "background.paper",
+              transform: "translateY(-50%) rotate(45deg)",
               zIndex: 0,
             },
           },
         }}
-        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+        transformOrigin={{ horizontal: "right", vertical: "top" }}
+        anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
       >
         <Box sx={{ p: 2, pb: 1 }}>
           <Typography variant="h6">
             Notifications
             {unreadCount > 0 && (
-              <Badge 
-                badgeContent={unreadCount} 
-                color="error" 
-                sx={{ ml: 1 }}
-              />
+              <Badge badgeContent={unreadCount} color="error" sx={{ ml: 1 }} />
             )}
           </Typography>
         </Box>
@@ -162,39 +164,41 @@ const NotificationBell = ({ onOpenCenter, onNavigate }) => {
         <Divider />
 
         {loading ? (
-          <Box sx={{ p: 2, textAlign: 'center' }}>
+          <Box sx={{ p: 2, textAlign: "center" }}>
             <Typography variant="body2" color="text.secondary">
               Loading...
             </Typography>
           </Box>
         ) : recentNotifications.length === 0 ? (
-          <Box sx={{ p: 2, textAlign: 'center' }}>
+          <Box sx={{ p: 2, textAlign: "center" }}>
             <Typography variant="body2" color="text.secondary">
               No new notifications
             </Typography>
           </Box>
         ) : (
-          <List sx={{ p: 0, maxHeight: 300, overflow: 'auto' }}>
+          <List sx={{ p: 0, maxHeight: 300, overflow: "auto" }}>
             {recentNotifications.map((notification, index) => (
               <MenuItem
                 key={notification._id}
                 onClick={() => handleNotificationClick(notification)}
                 sx={{
-                  whiteSpace: 'normal',
-                  alignItems: 'flex-start',
+                  whiteSpace: "normal",
+                  alignItems: "flex-start",
                   py: 1.5,
-                  borderLeft: !notification.read ? '3px solid' : 'none',
-                  borderLeftColor: !notification.read ? 'primary.main' : 'transparent',
-                  bgcolor: !notification.read ? 'action.hover' : 'transparent'
+                  borderLeft: !notification.read ? "3px solid" : "none",
+                  borderLeftColor: !notification.read
+                    ? "primary.main"
+                    : "transparent",
+                  bgcolor: !notification.read ? "action.hover" : "transparent",
                 }}
               >
                 <ListItemText
                   primary={
-                    <Typography 
-                      variant="subtitle2" 
-                      sx={{ 
-                        fontWeight: !notification.read ? 'bold' : 'normal',
-                        mb: 0.5
+                    <Typography
+                      variant="subtitle2"
+                      sx={{
+                        fontWeight: !notification.read ? "bold" : "normal",
+                        mb: 0.5,
                       }}
                     >
                       {notification.title}
@@ -202,21 +206,23 @@ const NotificationBell = ({ onOpenCenter, onNavigate }) => {
                   }
                   secondary={
                     <Box>
-                      <Typography 
-                        variant="body2" 
+                      <Typography
+                        variant="body2"
                         color="text.secondary"
-                        sx={{ 
-                          display: '-webkit-box',
+                        sx={{
+                          display: "-webkit-box",
                           WebkitLineClamp: 2,
-                          WebkitBoxOrient: 'vertical',
-                          overflow: 'hidden',
-                          mb: 0.5
+                          WebkitBoxOrient: "vertical",
+                          overflow: "hidden",
+                          mb: 0.5,
                         }}
                       >
                         {notification.message}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+                        {formatDistanceToNow(new Date(notification.createdAt), {
+                          addSuffix: true,
+                        })}
                       </Typography>
                     </Box>
                   }
@@ -227,13 +233,9 @@ const NotificationBell = ({ onOpenCenter, onNavigate }) => {
         )}
 
         <Divider />
-        
+
         <Box sx={{ p: 1 }}>
-          <Button
-            fullWidth
-            onClick={handleViewAll}
-            size="small"
-          >
+          <Button fullWidth onClick={handleViewAll} size="small">
             View All Notifications
           </Button>
         </Box>

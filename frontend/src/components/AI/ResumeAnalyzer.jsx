@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Box,
   Card,
@@ -15,8 +15,8 @@ import {
   ListItemIcon,
   Divider,
   CircularProgress,
-  Paper
-} from '@mui/material';
+  Paper,
+} from "@mui/material";
 import {
   CloudUpload,
   Assessment,
@@ -25,10 +25,10 @@ import {
   TrendingUp,
   School,
   Work,
-  Code
-} from '@mui/icons-material';
-import { useDropzone } from 'react-dropzone';
-import aiService from '../../services/aiService';
+  Code,
+} from "@mui/icons-material";
+import { useDropzone } from "react-dropzone";
+import aiService from "../../services/aiService";
 
 const ResumeAnalyzer = () => {
   const [analysis, setAnalysis] = useState(null);
@@ -45,7 +45,7 @@ const ResumeAnalyzer = () => {
       const response = await aiService.analyzeResume(file, true);
       setAnalysis(response.data);
     } catch (err) {
-      setError(err.message || 'Failed to analyze resume');
+      setError(err.message || "Failed to analyze resume");
     } finally {
       setLoading(false);
     }
@@ -54,24 +54,25 @@ const ResumeAnalyzer = () => {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      'application/pdf': ['.pdf'],
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
-      'text/plain': ['.txt']
+      "application/pdf": [".pdf"],
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+        [".docx"],
+      "text/plain": [".txt"],
     },
     maxFiles: 1,
-    maxSize: 5 * 1024 * 1024 // 5MB
+    maxSize: 5 * 1024 * 1024, // 5MB
   });
 
   const getScoreColor = (score) => {
-    if (score >= 80) return 'success';
-    if (score >= 60) return 'warning';
-    return 'error';
+    if (score >= 80) return "success";
+    if (score >= 60) return "warning";
+    return "error";
   };
 
   const getSentimentColor = (score) => {
-    if (score > 0) return 'success';
-    if (score === 0) return 'warning';
-    return 'error';
+    if (score > 0) return "success";
+    if (score === 0) return "warning";
+    return "error";
   };
 
   const renderSkillCategory = (category, skills) => {
@@ -82,17 +83,27 @@ const ResumeAnalyzer = () => {
       databases: <Assessment />,
       cloud: <TrendingUp />,
       design: <School />,
-      analytics: <Assessment />
+      analytics: <Assessment />,
     };
 
     return (
       <Box key={category} mb={2}>
-        <Typography variant="subtitle2" gutterBottom sx={{ textTransform: 'capitalize' }}>
+        <Typography
+          variant="subtitle2"
+          gutterBottom
+          sx={{ textTransform: "capitalize" }}
+        >
           {categoryIcons[category]} {category}
         </Typography>
         <Box display="flex" flexWrap="wrap" gap={0.5}>
           {skills.map((skill, idx) => (
-            <Chip key={idx} label={skill} size="small" color="primary" variant="outlined" />
+            <Chip
+              key={idx}
+              label={skill}
+              size="small"
+              color="primary"
+              variant="outlined"
+            />
           ))}
         </Box>
       </Box>
@@ -105,7 +116,8 @@ const ResumeAnalyzer = () => {
         AI Resume Analyzer
       </Typography>
       <Typography variant="body2" color="text.secondary" paragraph>
-        Upload your resume to get AI-powered insights, skill extraction, and improvement suggestions.
+        Upload your resume to get AI-powered insights, skill extraction, and
+        improvement suggestions.
       </Typography>
 
       {/* Upload Area */}
@@ -113,19 +125,19 @@ const ResumeAnalyzer = () => {
         {...getRootProps()}
         sx={{
           p: 4,
-          textAlign: 'center',
-          border: '2px dashed',
-          borderColor: isDragActive ? 'primary.main' : 'grey.300',
-          bgcolor: isDragActive ? 'action.hover' : 'background.paper',
-          cursor: 'pointer',
+          textAlign: "center",
+          border: "2px dashed",
+          borderColor: isDragActive ? "primary.main" : "grey.300",
+          bgcolor: isDragActive ? "action.hover" : "background.paper",
+          cursor: "pointer",
           mb: 3,
-          transition: 'all 0.3s ease'
+          transition: "all 0.3s ease",
         }}
       >
         <input {...getInputProps()} />
-        <CloudUpload sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+        <CloudUpload sx={{ fontSize: 48, color: "text.secondary", mb: 2 }} />
         <Typography variant="h6" gutterBottom>
-          {isDragActive ? 'Drop your resume here' : 'Upload your resume'}
+          {isDragActive ? "Drop your resume here" : "Upload your resume"}
         </Typography>
         <Typography variant="body2" color="text.secondary">
           Supports PDF, DOCX, and TXT files (max 5MB)
@@ -159,7 +171,10 @@ const ResumeAnalyzer = () => {
                   <Typography variant="h6">Overall Score</Typography>
                 </Box>
                 <Box textAlign="center">
-                  <Typography variant="h2" color={`${getScoreColor(analysis.overallScore)}.main`}>
+                  <Typography
+                    variant="h2"
+                    color={`${getScoreColor(analysis.overallScore)}.main`}
+                  >
                     {analysis.overallScore}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
@@ -187,7 +202,7 @@ const ResumeAnalyzer = () => {
                 <Chip
                   label={analysis.experienceLevel}
                   color="primary"
-                  sx={{ textTransform: 'capitalize', fontSize: '1rem', p: 2 }}
+                  sx={{ textTransform: "capitalize", fontSize: "1rem", p: 2 }}
                 />
               </CardContent>
             </Card>
@@ -201,12 +216,19 @@ const ResumeAnalyzer = () => {
                   <TrendingUp color="primary" sx={{ mr: 1 }} />
                   <Typography variant="h6">Tone Analysis</Typography>
                 </Box>
-                <Typography variant="h4" color={`${getSentimentColor(analysis.sentiment.score)}.main`}>
-                  {analysis.sentiment.score > 0 ? 'Positive' : 
-                   analysis.sentiment.score === 0 ? 'Neutral' : 'Negative'}
+                <Typography
+                  variant="h4"
+                  color={`${getSentimentColor(analysis.sentiment.score)}.main`}
+                >
+                  {analysis.sentiment.score > 0
+                    ? "Positive"
+                    : analysis.sentiment.score === 0
+                      ? "Neutral"
+                      : "Negative"}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Score: {analysis.sentiment.score} | Words: {analysis.sentiment.tokens}
+                  Score: {analysis.sentiment.score} | Words:{" "}
+                  {analysis.sentiment.tokens}
                 </Typography>
               </CardContent>
             </Card>
@@ -220,7 +242,7 @@ const ResumeAnalyzer = () => {
                   Extracted Skills
                 </Typography>
                 {Object.entries(analysis.skills).map(([category, skills]) =>
-                  renderSkillCategory(category, skills)
+                  renderSkillCategory(category, skills),
                 )}
               </CardContent>
             </Card>
@@ -236,17 +258,31 @@ const ResumeAnalyzer = () => {
                 </Box>
                 {analysis.education.degrees.length > 0 && (
                   <Box mb={2}>
-                    <Typography variant="subtitle2" gutterBottom>Degrees:</Typography>
+                    <Typography variant="subtitle2" gutterBottom>
+                      Degrees:
+                    </Typography>
                     {analysis.education.degrees.map((degree, idx) => (
-                      <Chip key={idx} label={degree} size="small" sx={{ mr: 0.5, mb: 0.5 }} />
+                      <Chip
+                        key={idx}
+                        label={degree}
+                        size="small"
+                        sx={{ mr: 0.5, mb: 0.5 }}
+                      />
                     ))}
                   </Box>
                 )}
                 {analysis.education.fields.length > 0 && (
                   <Box>
-                    <Typography variant="subtitle2" gutterBottom>Fields:</Typography>
+                    <Typography variant="subtitle2" gutterBottom>
+                      Fields:
+                    </Typography>
                     {analysis.education.fields.map((field, idx) => (
-                      <Chip key={idx} label={field} size="small" sx={{ mr: 0.5, mb: 0.5 }} />
+                      <Chip
+                        key={idx}
+                        label={field}
+                        size="small"
+                        sx={{ mr: 0.5, mb: 0.5 }}
+                      />
                     ))}
                   </Box>
                 )}

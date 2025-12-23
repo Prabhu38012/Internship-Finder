@@ -3,7 +3,8 @@
  */
 
 // Backend base URL (without /api)
-const BACKEND_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
+const BACKEND_URL =
+  import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:5000";
 
 /**
  * Converts a relative file path to an absolute URL pointing to the backend server
@@ -11,17 +12,17 @@ const BACKEND_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http:/
  * @returns {string} - Absolute URL like http://localhost:5000/uploads/file.pdf
  */
 export const getFileUrl = (path) => {
-    if (!path) return '';
+  if (!path) return "";
 
-    // If already an absolute URL, return as-is
-    if (path.startsWith('http://') || path.startsWith('https://')) {
-        return path;
-    }
+  // If already an absolute URL, return as-is
+  if (path.startsWith("http://") || path.startsWith("https://")) {
+    return path;
+  }
 
-    // Ensure path starts with /
-    const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  // Ensure path starts with /
+  const cleanPath = path.startsWith("/") ? path : `/${path}`;
 
-    return `${BACKEND_URL}${cleanPath}`;
+  return `${BACKEND_URL}${cleanPath}`;
 };
 
 /**
@@ -30,7 +31,7 @@ export const getFileUrl = (path) => {
  * @returns {string} - Full download URL
  */
 export const getResumeUrl = (resumePath) => {
-    return getFileUrl(resumePath);
+  return getFileUrl(resumePath);
 };
 
 /**
@@ -39,11 +40,11 @@ export const getResumeUrl = (resumePath) => {
  * @returns {string} - Full image URL
  */
 export const getImageUrl = (imagePath) => {
-    return getFileUrl(imagePath);
+  return getFileUrl(imagePath);
 };
 
 export default {
-    getFileUrl,
-    getResumeUrl,
-    getImageUrl,
+  getFileUrl,
+  getResumeUrl,
+  getImageUrl,
 };

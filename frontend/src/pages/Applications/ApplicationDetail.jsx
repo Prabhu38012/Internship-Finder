@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { useDispatch, useSelector } from 'react-redux'
+import React, { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import {
   Container,
   Grid,
@@ -24,8 +24,8 @@ import {
   FormControl,
   InputLabel,
   Select,
-  MenuItem
-} from '@mui/material'
+  MenuItem,
+} from "@mui/material";
 import {
   Person,
   Business,
@@ -36,93 +36,112 @@ import {
   Download,
   Edit,
   Check,
-  Close
-} from '@mui/icons-material'
-import { Helmet } from 'react-helmet-async'
-import { format } from 'date-fns'
-import toast from 'react-hot-toast'
+  Close,
+} from "@mui/icons-material";
+import { Helmet } from "react-helmet-async";
+import { format } from "date-fns";
+import toast from "react-hot-toast";
 
-import { getApplication, updateApplicationStatus } from '../../store/slices/applicationSlice'
-import LoadingSpinner from '../../components/UI/LoadingSpinner'
-import { getResumeUrl } from '../../utils/fileUtils'
+import {
+  getApplication,
+  updateApplicationStatus,
+} from "../../store/slices/applicationSlice";
+import LoadingSpinner from "../../components/UI/LoadingSpinner";
+import { getResumeUrl } from "../../utils/fileUtils";
 
 const ApplicationDetail = () => {
-  const { id } = useParams()
-  const navigate = useNavigate()
-  const dispatch = useDispatch()
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-  const { application, isLoading } = useSelector((state) => state.applications)
-  const { user } = useSelector((state) => state.auth)
+  const { application, isLoading } = useSelector((state) => state.applications);
+  const { user } = useSelector((state) => state.auth);
 
-  const [statusDialogOpen, setStatusDialogOpen] = useState(false)
-  const [newStatus, setNewStatus] = useState('')
-  const [statusNote, setStatusNote] = useState('')
+  const [statusDialogOpen, setStatusDialogOpen] = useState(false);
+  const [newStatus, setNewStatus] = useState("");
+  const [statusNote, setStatusNote] = useState("");
 
   useEffect(() => {
     if (id) {
-      dispatch(getApplication(id))
+      dispatch(getApplication(id));
     }
-  }, [dispatch, id])
+  }, [dispatch, id]);
 
   const handleStatusUpdate = () => {
-    dispatch(updateApplicationStatus({ id, status: newStatus, note: statusNote }))
+    dispatch(
+      updateApplicationStatus({ id, status: newStatus, note: statusNote }),
+    )
       .unwrap()
       .then(() => {
-        toast.success('Application status updated successfully')
-        setStatusDialogOpen(false)
-        setStatusNote('')
+        toast.success("Application status updated successfully");
+        setStatusDialogOpen(false);
+        setStatusNote("");
       })
       .catch((error) => {
-        toast.error(error || 'Failed to update status')
-      })
-  }
+        toast.error(error || "Failed to update status");
+      });
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'accepted': return 'success'
-      case 'rejected': return 'error'
-      case 'pending': return 'warning'
-      case 'reviewing': return 'info'
-      case 'shortlisted': return 'primary'
-      case 'interviewed': return 'secondary'
-      case 'withdrawn': return 'default'
-      default: return 'default'
+      case "accepted":
+        return "success";
+      case "rejected":
+        return "error";
+      case "pending":
+        return "warning";
+      case "reviewing":
+        return "info";
+      case "shortlisted":
+        return "primary";
+      case "interviewed":
+        return "secondary";
+      case "withdrawn":
+        return "default";
+      default:
+        return "default";
     }
-  }
+  };
 
   const getTimelineIcon = (status) => {
     switch (status) {
-      case 'accepted': return <Check />
-      case 'rejected': return <Close />
-      default: return null
+      case "accepted":
+        return <Check />;
+      case "rejected":
+        return <Close />;
+      default:
+        return null;
     }
-  }
+  };
 
   if (isLoading) {
-    return <LoadingSpinner message="Loading application details..." />
+    return <LoadingSpinner message="Loading application details..." />;
   }
 
   if (!application) {
     return (
-      <Container maxWidth="md" sx={{ py: 8, textAlign: 'center' }}>
+      <Container maxWidth="md" sx={{ py: 8, textAlign: "center" }}>
         <Typography variant="h5" gutterBottom>
           Application not found
         </Typography>
-        <Button variant="outlined" onClick={() => navigate('/applications')}>
+        <Button variant="outlined" onClick={() => navigate("/applications")}>
           Back to Applications
         </Button>
       </Container>
-    )
+    );
   }
 
-  const isCompany = user?.role === 'company'
-  const canUpdateStatus = isCompany && application.company._id === user._id
+  const isCompany = user?.role === "company";
+  const canUpdateStatus = isCompany && application.company._id === user._id;
 
   return (
     <>
       <Helmet>
         <title>Application Details - InternQuest</title>
-        <meta name="description" content="View detailed information about the internship application." />
+        <meta
+          name="description"
+          content="View detailed information about the internship application."
+        />
       </Helmet>
 
       <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -132,12 +151,31 @@ const ApplicationDetail = () => {
             <Card>
               <CardContent sx={{ p: 4 }}>
                 {/* Header */}
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "flex-start",
+                    mb: 3,
+                  }}
+                >
                   <Box>
-                    <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
+                    <Typography
+                      variant="h4"
+                      component="h1"
+                      gutterBottom
+                      fontWeight="bold"
+                    >
                       {application.internship.title}
                     </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        mb: 2,
+                      }}
+                    >
                       <Business color="action" />
                       <Typography variant="h6" color="text.secondary">
                         {application.internship.companyName}
@@ -155,8 +193,8 @@ const ApplicationDetail = () => {
                       variant="outlined"
                       startIcon={<Edit />}
                       onClick={() => {
-                        setNewStatus(application.status)
-                        setStatusDialogOpen(true)
+                        setNewStatus(application.status);
+                        setStatusDialogOpen(true);
                       }}
                     >
                       Update Status
@@ -174,7 +212,14 @@ const ApplicationDetail = () => {
                     </Typography>
                     <Grid container spacing={3}>
                       <Grid item xs={12} sm={6}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 2,
+                            mb: 2,
+                          }}
+                        >
                           <Avatar
                             src={application.applicant.avatar}
                             sx={{ width: 60, height: 60 }}
@@ -192,9 +237,21 @@ const ApplicationDetail = () => {
                         </Box>
                       </Grid>
                       <Grid item xs={12} sm={6}>
-                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 1,
+                          }}
+                        >
                           {application.applicant.phone && (
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1,
+                              }}
+                            >
                               <Phone fontSize="small" color="action" />
                               <Typography variant="body2">
                                 {application.applicant.phone}
@@ -202,15 +259,30 @@ const ApplicationDetail = () => {
                             </Box>
                           )}
                           {application.applicant.studentProfile?.university && (
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1,
+                              }}
+                            >
                               <School fontSize="small" color="action" />
                               <Typography variant="body2">
-                                {application.applicant.studentProfile.university}
+                                {
+                                  application.applicant.studentProfile
+                                    .university
+                                }
                               </Typography>
                             </Box>
                           )}
                           {application.applicant.studentProfile?.degree && (
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1,
+                              }}
+                            >
                               <Work fontSize="small" color="action" />
                               <Typography variant="body2">
                                 {application.applicant.studentProfile.degree}
@@ -222,15 +294,23 @@ const ApplicationDetail = () => {
                     </Grid>
 
                     {/* Skills */}
-                    {application.applicant.studentProfile?.skills?.length > 0 && (
+                    {application.applicant.studentProfile?.skills?.length >
+                      0 && (
                       <Box sx={{ mt: 2 }}>
                         <Typography variant="subtitle2" gutterBottom>
                           Skills:
                         </Typography>
-                        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                          {application.applicant.studentProfile.skills.map((skill, index) => (
-                            <Chip key={index} label={skill} size="small" variant="outlined" />
-                          ))}
+                        <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                          {application.applicant.studentProfile.skills.map(
+                            (skill, index) => (
+                              <Chip
+                                key={index}
+                                label={skill}
+                                size="small"
+                                variant="outlined"
+                              />
+                            ),
+                          )}
                         </Box>
                       </Box>
                     )}
@@ -243,7 +323,10 @@ const ApplicationDetail = () => {
                     <Typography variant="h6" gutterBottom>
                       Cover Letter
                     </Typography>
-                    <Typography variant="body1" sx={{ whiteSpace: 'pre-line', lineHeight: 1.6 }}>
+                    <Typography
+                      variant="body1"
+                      sx={{ whiteSpace: "pre-line", lineHeight: 1.6 }}
+                    >
                       {application.coverLetter}
                     </Typography>
                   </Box>
@@ -270,7 +353,9 @@ const ApplicationDetail = () => {
                     <Typography variant="h6" gutterBottom>
                       Additional Documents
                     </Typography>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    <Box
+                      sx={{ display: "flex", flexDirection: "column", gap: 1 }}
+                    >
                       {application.additionalDocuments.map((doc, index) => (
                         <Button
                           key={index}
@@ -279,7 +364,7 @@ const ApplicationDetail = () => {
                           href={doc.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          sx={{ justifyContent: 'flex-start' }}
+                          sx={{ justifyContent: "flex-start" }}
                         >
                           {doc.name}
                         </Button>
@@ -299,13 +384,19 @@ const ApplicationDetail = () => {
                         <ListItemIcon>
                           <Chip
                             icon={getTimelineIcon(event.status)}
-                            label={event.status.charAt(0).toUpperCase() + event.status.slice(1)}
+                            label={
+                              event.status.charAt(0).toUpperCase() +
+                              event.status.slice(1)
+                            }
                             color={getStatusColor(event.status)}
                             size="small"
                           />
                         </ListItemIcon>
                         <ListItemText
-                          primary={format(new Date(event.date), 'MMM dd, yyyy HH:mm')}
+                          primary={format(
+                            new Date(event.date),
+                            "MMM dd, yyyy HH:mm",
+                          )}
                           secondary={event.note}
                         />
                       </ListItem>
@@ -324,7 +415,7 @@ const ApplicationDetail = () => {
                 <Typography variant="h6" gutterBottom>
                   Internship Details
                 </Typography>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                   <Box>
                     <Typography variant="subtitle2" color="text.secondary">
                       Type
@@ -338,10 +429,9 @@ const ApplicationDetail = () => {
                       Location
                     </Typography>
                     <Typography variant="body2">
-                      {application.internship.location?.type === 'remote'
-                        ? 'Remote'
-                        : `${application.internship.location?.city}`
-                      }
+                      {application.internship.location?.type === "remote"
+                        ? "Remote"
+                        : `${application.internship.location?.city}`}
                     </Typography>
                   </Box>
                   <Box>
@@ -349,7 +439,7 @@ const ApplicationDetail = () => {
                       Application Date
                     </Typography>
                     <Typography variant="body2">
-                      {format(new Date(application.createdAt), 'MMM dd, yyyy')}
+                      {format(new Date(application.createdAt), "MMM dd, yyyy")}
                     </Typography>
                   </Box>
                   <Box>
@@ -372,10 +462,10 @@ const ApplicationDetail = () => {
                 <Typography variant="h6" gutterBottom>
                   Actions
                 </Typography>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                   <Button
                     variant="outlined"
-                    onClick={() => navigate('/applications')}
+                    onClick={() => navigate("/applications")}
                     fullWidth
                   >
                     Back to Applications
@@ -404,7 +494,9 @@ const ApplicationDetail = () => {
         >
           <DialogTitle>Update Application Status</DialogTitle>
           <DialogContent>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+            <Box
+              sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}
+            >
               <FormControl fullWidth>
                 <InputLabel>Status</InputLabel>
                 <Select
@@ -433,9 +525,7 @@ const ApplicationDetail = () => {
             </Box>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setStatusDialogOpen(false)}>
-              Cancel
-            </Button>
+            <Button onClick={() => setStatusDialogOpen(false)}>Cancel</Button>
             <Button
               onClick={handleStatusUpdate}
               variant="contained"
@@ -447,7 +537,7 @@ const ApplicationDetail = () => {
         </Dialog>
       </Container>
     </>
-  )
-}
+  );
+};
 
-export default ApplicationDetail
+export default ApplicationDetail;

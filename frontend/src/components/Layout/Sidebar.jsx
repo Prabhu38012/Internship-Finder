@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { useSelector, useDispatch } from 'react-redux'
+import React, { useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
 import {
   Compass,
   LayoutDashboard,
@@ -13,10 +13,10 @@ import {
   Building2,
   Plus,
   ChevronLeft,
-  ChevronRight
-} from 'lucide-react'
-import { logout } from '../../store/slices/authSlice'
-import { useSidebar } from './SidebarContext'
+  ChevronRight,
+} from "lucide-react";
+import { logout } from "../../store/slices/authSlice";
+import { useSidebar } from "./SidebarContext";
 
 /* ==========================================
    SIDEBAR COMPONENT
@@ -26,72 +26,79 @@ import { useSidebar } from './SidebarContext'
    ========================================== */
 
 const Sidebar = () => {
-  const location = useLocation()
-  const navigate = useNavigate()
-  const dispatch = useDispatch()
-  const { user } = useSelector((state) => state.auth)
+  const location = useLocation();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
 
   // Use shared sidebar context for collapse state
-  const { isCollapsed, setIsCollapsed } = useSidebar()
+  const { isCollapsed, setIsCollapsed } = useSidebar();
 
   const isActive = (path) => {
-    return location.pathname === path || location.pathname.startsWith(path + '/')
-  }
+    return (
+      location.pathname === path || location.pathname.startsWith(path + "/")
+    );
+  };
 
   const handleLogout = () => {
-    dispatch(logout())
-    navigate('/')
-  }
+    dispatch(logout());
+    navigate("/");
+  };
 
   // Navigation items based on user role
   const getNavItems = () => {
     const commonItems = [
-      { icon: Compass, label: 'Discover', path: '/internships' },
-    ]
+      { icon: Compass, label: "Discover", path: "/internships" },
+    ];
 
     if (!user) {
-      return commonItems
+      return commonItems;
     }
 
-    if (user.role === 'student') {
+    if (user.role === "student") {
       return [
         ...commonItems,
-        { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
-        { icon: FileText, label: 'Applications', path: '/applications' },
-        { icon: Heart, label: 'Wishlist', path: '/wishlist' },
-        { icon: Bot, label: 'AI Assistant', path: '/ai' },
-      ]
+        { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
+        { icon: FileText, label: "Applications", path: "/applications" },
+        { icon: Heart, label: "Wishlist", path: "/wishlist" },
+        { icon: Bot, label: "AI Assistant", path: "/ai" },
+      ];
     }
 
-    if (user.role === 'company') {
+    if (user.role === "company") {
       return [
         ...commonItems,
-        { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
-        { icon: FileText, label: 'Applications', path: '/company/applications' },
-      ]
+        { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
+        {
+          icon: FileText,
+          label: "Applications",
+          path: "/company/applications",
+        },
+      ];
     }
 
-    if (user.role === 'admin') {
+    if (user.role === "admin") {
       return [
         ...commonItems,
-        { icon: LayoutDashboard, label: 'Admin Panel', path: '/admin' },
-        { icon: Building2, label: 'Companies', path: '/admin/companies' },
-        { icon: User, label: 'Users', path: '/admin/users' },
-      ]
+        { icon: LayoutDashboard, label: "Admin Panel", path: "/admin" },
+        { icon: Building2, label: "Companies", path: "/admin/companies" },
+        { icon: User, label: "Users", path: "/admin/users" },
+      ];
     }
 
-    return commonItems
-  }
+    return commonItems;
+  };
 
-  const navItems = getNavItems()
+  const navItems = getNavItems();
 
   return (
     <aside
-      className={`fixed left-0 top-0 h-screen bg-slate-900 border-r border-slate-700/50 flex flex-col z-50 transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-[260px]'
-        }`}
+      className={`fixed left-0 top-0 h-screen bg-slate-900 border-r border-slate-700/50 flex flex-col z-50 transition-all duration-300 ${
+        isCollapsed ? "w-20" : "w-[260px]"
+      }`}
     >
       {/* Logo Section */}
-      <div className={`p-4 ${isCollapsed ? 'px-4' : 'p-6'}`}>
+      <div className={`p-4 ${isCollapsed ? "px-4" : "p-6"}`}>
         <Link to="/" className="flex items-center gap-3">
           <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
             <Briefcase className="w-5 h-5 text-white" />
@@ -106,7 +113,7 @@ const Sidebar = () => {
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
         className="hidden md:flex absolute -right-3 top-20 w-6 h-6 bg-slate-800 border border-slate-600 rounded-full items-center justify-center text-slate-400 hover:text-white hover:bg-slate-700 transition-colors z-50"
-        title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
       >
         {isCollapsed ? (
           <ChevronRight className="w-4 h-4" />
@@ -118,17 +125,19 @@ const Sidebar = () => {
       {/* Navigation */}
       <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
-          const Icon = item.icon
-          const active = isActive(item.path)
+          const Icon = item.icon;
+          const active = isActive(item.path);
           return (
             <Link
               key={item.path}
               to={item.path}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${isCollapsed ? 'justify-center px-3' : ''
-                } ${active
-                  ? 'bg-blue-600/20 text-blue-400'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
-                }`}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
+                isCollapsed ? "justify-center px-3" : ""
+              } ${
+                active
+                  ? "bg-blue-600/20 text-blue-400"
+                  : "text-slate-400 hover:text-white hover:bg-slate-800"
+              }`}
               title={isCollapsed ? item.label : undefined}
             >
               <Icon className="w-5 h-5 flex-shrink-0" />
@@ -136,21 +145,24 @@ const Sidebar = () => {
                 <span className="font-medium">{item.label}</span>
               )}
             </Link>
-          )
+          );
         })}
       </nav>
 
       {/* Bottom Section */}
-      <div className={`p-3 border-t border-slate-700/50 space-y-2 ${isCollapsed ? 'px-2' : 'p-4'}`}>
+      <div
+        className={`p-3 border-t border-slate-700/50 space-y-2 ${isCollapsed ? "px-2" : "p-4"}`}
+      >
         {user ? (
           <>
             {/* Post Internship Button (for companies) */}
-            {user.role === 'company' && (
+            {user.role === "company" && (
               <Link
                 to="/internships/create"
-                className={`flex items-center gap-2 w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors font-medium ${isCollapsed ? 'justify-center px-2' : 'justify-center px-4'
-                  }`}
-                title={isCollapsed ? 'Post Internship' : undefined}
+                className={`flex items-center gap-2 w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors font-medium ${
+                  isCollapsed ? "justify-center px-2" : "justify-center px-4"
+                }`}
+                title={isCollapsed ? "Post Internship" : undefined}
               >
                 <Plus className="w-5 h-5 flex-shrink-0" />
                 {!isCollapsed && <span>Post Internship</span>}
@@ -160,12 +172,14 @@ const Sidebar = () => {
             {/* Profile Link */}
             <Link
               to="/profile"
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${isCollapsed ? 'justify-center px-3' : ''
-                } ${isActive('/profile')
-                  ? 'bg-blue-600/20 text-blue-400'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
-                }`}
-              title={isCollapsed ? 'Profile' : undefined}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                isCollapsed ? "justify-center px-3" : ""
+              } ${
+                isActive("/profile")
+                  ? "bg-blue-600/20 text-blue-400"
+                  : "text-slate-400 hover:text-white hover:bg-slate-800"
+              }`}
+              title={isCollapsed ? "Profile" : undefined}
             >
               <User className="w-5 h-5 flex-shrink-0" />
               {!isCollapsed && <span className="font-medium">Profile</span>}
@@ -174,9 +188,10 @@ const Sidebar = () => {
             {/* Logout Button */}
             <button
               onClick={handleLogout}
-              className={`flex items-center gap-3 px-4 py-3 w-full text-left rounded-xl text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200 ${isCollapsed ? 'justify-center px-3' : ''
-                }`}
-              title={isCollapsed ? 'Logout' : undefined}
+              className={`flex items-center gap-3 px-4 py-3 w-full text-left rounded-xl text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200 ${
+                isCollapsed ? "justify-center px-3" : ""
+              }`}
+              title={isCollapsed ? "Logout" : undefined}
             >
               <LogOut className="w-5 h-5 flex-shrink-0" />
               {!isCollapsed && <span className="font-medium">Logout</span>}
@@ -212,7 +227,7 @@ const Sidebar = () => {
         )}
       </div>
     </aside>
-  )
-}
+  );
+};
 
-export default Sidebar
+export default Sidebar;

@@ -1,16 +1,16 @@
-import React, { useState } from 'react'
-import { useSelector } from 'react-redux'
-import { MessageCircle } from 'lucide-react'
-import AIChatbot from '../AI/AIChatbot'
+import React, { useState } from "react";
+import { useSelector } from "react-redux";
+import { MessageCircle } from "lucide-react";
+import AIChatbot from "../AI/AIChatbot";
 
 const FloatingChatbot = () => {
-  const [isOpen, setIsOpen] = useState(false)
-  const [isMinimized, setIsMinimized] = useState(false)
-  const { user } = useSelector((state) => state.auth)
+  const [isOpen, setIsOpen] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
+  const { user } = useSelector((state) => state.auth);
 
   // Only show for authenticated users
   if (!user) {
-    return null
+    return null;
   }
 
   return (
@@ -23,10 +23,10 @@ const FloatingChatbot = () => {
             className="w-16 h-16 bg-gradient-purple rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform duration-300 group relative animate-bounce"
           >
             <MessageCircle className="w-8 h-8 text-white" />
-            
+
             {/* Pulse animation */}
             <span className="absolute inset-0 rounded-full bg-purple-400 animate-ping opacity-75"></span>
-            
+
             {/* Tooltip */}
             <div className="absolute right-full mr-3 px-3 py-2 bg-gray-800 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
               AI Assistant
@@ -39,14 +39,14 @@ const FloatingChatbot = () => {
       )}
 
       {/* AI Chatbot Component */}
-      <AIChatbot 
+      <AIChatbot
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
         isMinimized={isMinimized}
         onToggleMinimize={() => setIsMinimized(!isMinimized)}
       />
     </>
-  )
-}
+  );
+};
 
-export default FloatingChatbot
+export default FloatingChatbot;

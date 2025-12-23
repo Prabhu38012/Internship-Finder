@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   ListItem,
   ListItemAvatar,
@@ -8,8 +8,8 @@ import {
   Box,
   Chip,
   IconButton,
-  Tooltip
-} from '@mui/material';
+  Tooltip,
+} from "@mui/material";
 import {
   Notifications as NotificationsIcon,
   Schedule as ScheduleIcon,
@@ -20,36 +20,36 @@ import {
   Info as InfoIcon,
   CheckCircle as CheckCircleIcon,
   Delete as DeleteIcon,
-  Launch as LaunchIcon
-} from '@mui/icons-material';
-import { formatDistanceToNow } from 'date-fns';
-import { motion } from 'framer-motion';
+  Launch as LaunchIcon,
+} from "@mui/icons-material";
+import { formatDistanceToNow } from "date-fns";
+import { motion } from "framer-motion";
 
-const NotificationItem = ({ 
-  notification, 
-  onRead, 
-  onDelete, 
+const NotificationItem = ({
+  notification,
+  onRead,
+  onDelete,
   onAction,
-  showActions = true 
+  showActions = true,
 }) => {
   const getNotificationIcon = (type) => {
-    const iconProps = { fontSize: 'small' };
-    
+    const iconProps = { fontSize: "small" };
+
     switch (type) {
-      case 'wishlist_reminder':
-      case 'wishlist_deadline_approaching':
+      case "wishlist_reminder":
+      case "wishlist_deadline_approaching":
         return <ScheduleIcon {...iconProps} color="warning" />;
-      case 'new_similar_internship':
-      case 'new_internship_match':
+      case "new_similar_internship":
+      case "new_internship_match":
         return <WorkIcon {...iconProps} color="primary" />;
-      case 'wishlist_internship_updated':
+      case "wishlist_internship_updated":
         return <InfoIcon {...iconProps} color="info" />;
-      case 'wishlist_internship_expired':
+      case "wishlist_internship_expired":
         return <WarningIcon {...iconProps} color="error" />;
-      case 'application_received':
-      case 'application_status_update':
+      case "application_received":
+      case "application_status_update":
         return <CheckCircleIcon {...iconProps} color="success" />;
-      case 'profile_view':
+      case "profile_view":
         return <PersonIcon {...iconProps} color="secondary" />;
       default:
         return <NotificationsIcon {...iconProps} />;
@@ -58,10 +58,14 @@ const NotificationItem = ({
 
   const getPriorityColor = (priority) => {
     switch (priority) {
-      case 'high': return 'error';
-      case 'medium': return 'warning';
-      case 'low': return 'info';
-      default: return 'default';
+      case "high":
+        return "error";
+      case "medium":
+        return "warning";
+      case "low":
+        return "info";
+      default:
+        return "default";
     }
   };
 
@@ -69,7 +73,7 @@ const NotificationItem = ({
     if (!notification.read) {
       onRead(notification._id);
     }
-    
+
     if (notification.data?.url) {
       onAction(notification.data.url);
     }
@@ -96,22 +100,26 @@ const NotificationItem = ({
     >
       <ListItem
         sx={{
-          bgcolor: notification.read ? 'transparent' : 'action.hover',
-          borderLeft: notification.read ? 'none' : `4px solid`,
-          borderLeftColor: notification.read ? 'transparent' : `${getPriorityColor(notification.priority)}.main`,
-          cursor: 'pointer',
-          '&:hover': {
-            bgcolor: 'action.selected'
-          }
+          bgcolor: notification.read ? "transparent" : "action.hover",
+          borderLeft: notification.read ? "none" : `4px solid`,
+          borderLeftColor: notification.read
+            ? "transparent"
+            : `${getPriorityColor(notification.priority)}.main`,
+          cursor: "pointer",
+          "&:hover": {
+            bgcolor: "action.selected",
+          },
         }}
         onClick={handleItemClick}
       >
         <ListItemAvatar>
-          <Avatar 
-            sx={{ 
-              bgcolor: notification.read ? 'grey.300' : `${getPriorityColor(notification.priority)}.light`,
+          <Avatar
+            sx={{
+              bgcolor: notification.read
+                ? "grey.300"
+                : `${getPriorityColor(notification.priority)}.light`,
               width: 40,
-              height: 40
+              height: 40,
             }}
           >
             {getNotificationIcon(notification.type)}
@@ -120,27 +128,31 @@ const NotificationItem = ({
 
         <ListItemText
           primary={
-            <Box display="flex" alignItems="center" justifyContent="space-between">
-              <Typography 
-                variant="subtitle2" 
-                sx={{ 
-                  fontWeight: notification.read ? 'normal' : 'bold',
-                  color: notification.read ? 'text.secondary' : 'text.primary'
+            <Box
+              display="flex"
+              alignItems="center"
+              justifyContent="space-between"
+            >
+              <Typography
+                variant="subtitle2"
+                sx={{
+                  fontWeight: notification.read ? "normal" : "bold",
+                  color: notification.read ? "text.secondary" : "text.primary",
                 }}
               >
                 {notification.title}
               </Typography>
               <Box display="flex" alignItems="center" gap={1}>
-                <Chip 
-                  label={notification.priority} 
-                  color={getPriorityColor(notification.priority)} 
-                  size="small" 
+                <Chip
+                  label={notification.priority}
+                  color={getPriorityColor(notification.priority)}
+                  size="small"
                 />
                 {notification.data?.actionRequired && (
-                  <Chip 
-                    label="Action Required" 
-                    color="warning" 
-                    size="small" 
+                  <Chip
+                    label="Action Required"
+                    color="warning"
+                    size="small"
                     variant="outlined"
                   />
                 )}
@@ -149,44 +161,55 @@ const NotificationItem = ({
           }
           secondary={
             <Box>
-              <Typography 
-                variant="body2" 
+              <Typography
+                variant="body2"
                 color="text.secondary"
                 sx={{ mb: 0.5 }}
               >
                 {notification.message}
               </Typography>
-              
+
               {/* Additional metadata */}
               {notification.data?.internshipId && (
                 <Typography variant="caption" color="text.secondary">
-                  Related to: {notification.data.internshipId.title || 'Internship'}
+                  Related to:{" "}
+                  {notification.data.internshipId.title || "Internship"}
                 </Typography>
               )}
-              
-              <Box display="flex" justifyContent="space-between" alignItems="center" mt={1}>
+
+              <Box
+                display="flex"
+                justifyContent="space-between"
+                alignItems="center"
+                mt={1}
+              >
                 <Typography variant="caption" color="text.secondary">
-                  {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+                  {formatDistanceToNow(new Date(notification.createdAt), {
+                    addSuffix: true,
+                  })}
                 </Typography>
-                
+
                 {showActions && (
                   <Box display="flex" gap={0.5}>
                     {notification.data?.url && (
                       <Tooltip title="View Details">
-                        <IconButton 
-                          size="small" 
+                        <IconButton
+                          size="small"
                           onClick={handleExternalAction}
-                          sx={{ opacity: 0.7, '&:hover': { opacity: 1 } }}
+                          sx={{ opacity: 0.7, "&:hover": { opacity: 1 } }}
                         >
                           <LaunchIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
                     )}
                     <Tooltip title="Delete">
-                      <IconButton 
-                        size="small" 
+                      <IconButton
+                        size="small"
                         onClick={handleDelete}
-                        sx={{ opacity: 0.7, '&:hover': { opacity: 1, color: 'error.main' } }}
+                        sx={{
+                          opacity: 0.7,
+                          "&:hover": { opacity: 1, color: "error.main" },
+                        }}
                       >
                         <DeleteIcon fontSize="small" />
                       </IconButton>

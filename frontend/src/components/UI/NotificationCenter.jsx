@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import { useSelector, useDispatch } from 'react-redux'
+import React, { useState, useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import {
   Box,
   IconButton,
@@ -14,8 +14,8 @@ import {
   Divider,
   Button,
   Chip,
-  Paper
-} from '@mui/material'
+  Paper,
+} from "@mui/material";
 import {
   Notifications,
   NotificationsNone,
@@ -27,89 +27,95 @@ import {
   Warning,
   Error,
   Clear,
-  MarkEmailRead
-} from '@mui/icons-material'
-import { motion, AnimatePresence } from 'framer-motion'
-import { format, formatDistanceToNow } from 'date-fns'
-import { markNotificationAsRead, markAllAsRead, clearNotifications } from '../../store/slices/notificationSlice'
-import useSocket from '../../hooks/useSocket'
+  MarkEmailRead,
+} from "@mui/icons-material";
+import { motion, AnimatePresence } from "framer-motion";
+import { format, formatDistanceToNow } from "date-fns";
+import {
+  markNotificationAsRead,
+  markAllAsRead,
+  clearNotifications,
+} from "../../store/slices/notificationSlice";
+import useSocket from "../../hooks/useSocket";
 
 const NotificationCenter = () => {
-  const dispatch = useDispatch()
-  const { notifications, unreadCount } = useSelector((state) => state.notifications)
-  const [anchorEl, setAnchorEl] = useState(null)
-  const { socket } = useSocket()
+  const dispatch = useDispatch();
+  const { notifications, unreadCount } = useSelector(
+    (state) => state.notifications,
+  );
+  const [anchorEl, setAnchorEl] = useState(null);
+  const { socket } = useSocket();
 
   const handleClick = (event) => {
-    setAnchorEl(event.currentTarget)
-  }
+    setAnchorEl(event.currentTarget);
+  };
 
   const handleClose = () => {
-    setAnchorEl(null)
-  }
+    setAnchorEl(null);
+  };
 
   const handleMarkAsRead = (notificationId) => {
-    dispatch(markNotificationAsRead(notificationId))
+    dispatch(markNotificationAsRead(notificationId));
     if (socket) {
-      socket.emit('notification:read', notificationId)
+      socket.emit("notification:read", notificationId);
     }
-  }
+  };
 
   const handleMarkAllAsRead = () => {
-    dispatch(markAllAsRead())
+    dispatch(markAllAsRead());
     if (socket) {
-      socket.emit('notifications:mark_all_read')
+      socket.emit("notifications:mark_all_read");
     }
-  }
+  };
 
   const handleClearAll = () => {
-    dispatch(clearNotifications())
+    dispatch(clearNotifications());
     if (socket) {
-      socket.emit('notifications:clear_all')
+      socket.emit("notifications:clear_all");
     }
-  }
+  };
 
   const getNotificationIcon = (type) => {
     switch (type) {
-      case 'application':
-        return <Work color="primary" />
-      case 'interview':
-        return <Schedule color="warning" />
-      case 'offer':
-        return <CheckCircle color="success" />
-      case 'company':
-        return <Business color="info" />
-      case 'system':
-        return <Info color="action" />
-      case 'warning':
-        return <Warning color="warning" />
-      case 'error':
-        return <Error color="error" />
+      case "application":
+        return <Work color="primary" />;
+      case "interview":
+        return <Schedule color="warning" />;
+      case "offer":
+        return <CheckCircle color="success" />;
+      case "company":
+        return <Business color="info" />;
+      case "system":
+        return <Info color="action" />;
+      case "warning":
+        return <Warning color="warning" />;
+      case "error":
+        return <Error color="error" />;
       default:
-        return <Notifications color="action" />
+        return <Notifications color="action" />;
     }
-  }
+  };
 
   const getNotificationColor = (type) => {
     switch (type) {
-      case 'application':
-        return 'primary'
-      case 'interview':
-        return 'warning'
-      case 'offer':
-        return 'success'
-      case 'company':
-        return 'info'
-      case 'warning':
-        return 'warning'
-      case 'error':
-        return 'error'
+      case "application":
+        return "primary";
+      case "interview":
+        return "warning";
+      case "offer":
+        return "success";
+      case "company":
+        return "info";
+      case "warning":
+        return "warning";
+      case "error":
+        return "error";
       default:
-        return 'default'
+        return "default";
     }
-  }
+  };
 
-  const open = Boolean(anchorEl)
+  const open = Boolean(anchorEl);
 
   return (
     <>
@@ -117,10 +123,10 @@ const NotificationCenter = () => {
         onClick={handleClick}
         color="inherit"
         sx={{
-          position: 'relative',
-          '&:hover': {
-            backgroundColor: 'rgba(255, 255, 255, 0.1)'
-          }
+          position: "relative",
+          "&:hover": {
+            backgroundColor: "rgba(255, 255, 255, 0.1)",
+          },
         }}
       >
         <Badge badgeContent={unreadCount} color="error">
@@ -133,20 +139,20 @@ const NotificationCenter = () => {
         anchorEl={anchorEl}
         onClose={handleClose}
         anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'right',
+          vertical: "bottom",
+          horizontal: "right",
         }}
         transformOrigin={{
-          vertical: 'top',
-          horizontal: 'right',
+          vertical: "top",
+          horizontal: "right",
         }}
         PaperProps={{
           sx: {
             width: 400,
             maxHeight: 500,
             borderRadius: 2,
-            boxShadow: '0 8px 32px rgba(0,0,0,0.12)'
-          }
+            boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+          },
         }}
       >
         <motion.div
@@ -155,18 +161,20 @@ const NotificationCenter = () => {
           transition={{ duration: 0.2 }}
         >
           {/* Header */}
-          <Box sx={{ 
-            p: 2, 
-            borderBottom: 1, 
-            borderColor: 'divider',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center'
-          }}>
+          <Box
+            sx={{
+              p: 2,
+              borderBottom: 1,
+              borderColor: "divider",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
             <Typography variant="h6" fontWeight="bold">
               Notifications
             </Typography>
-            <Box sx={{ display: 'flex', gap: 1 }}>
+            <Box sx={{ display: "flex", gap: 1 }}>
               {unreadCount > 0 && (
                 <Button
                   size="small"
@@ -183,10 +191,12 @@ const NotificationCenter = () => {
           </Box>
 
           {/* Notifications List */}
-          <Box sx={{ maxHeight: 400, overflow: 'auto' }}>
+          <Box sx={{ maxHeight: 400, overflow: "auto" }}>
             {notifications.length === 0 ? (
-              <Box sx={{ p: 4, textAlign: 'center' }}>
-                <NotificationsNone sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+              <Box sx={{ p: 4, textAlign: "center" }}>
+                <NotificationsNone
+                  sx={{ fontSize: 48, color: "text.secondary", mb: 2 }}
+                />
                 <Typography variant="body1" color="text.secondary">
                   No notifications yet
                 </Typography>
@@ -207,57 +217,92 @@ const NotificationCenter = () => {
                     >
                       <ListItem
                         sx={{
-                          bgcolor: notification.read ? 'transparent' : 'action.hover',
-                          borderLeft: notification.read ? 'none' : `4px solid`,
+                          bgcolor: notification.read
+                            ? "transparent"
+                            : "action.hover",
+                          borderLeft: notification.read ? "none" : `4px solid`,
                           borderLeftColor: `${getNotificationColor(notification.type)}.main`,
-                          '&:hover': {
-                            bgcolor: 'action.selected'
+                          "&:hover": {
+                            bgcolor: "action.selected",
                           },
-                          cursor: 'pointer'
+                          cursor: "pointer",
                         }}
-                        onClick={() => !notification.read && handleMarkAsRead(notification.id)}
+                        onClick={() =>
+                          !notification.read &&
+                          handleMarkAsRead(notification.id)
+                        }
                       >
                         <ListItemAvatar>
-                          <Avatar sx={{ 
-                            bgcolor: `${getNotificationColor(notification.type)}.light`,
-                            color: `${getNotificationColor(notification.type)}.main`
-                          }}>
+                          <Avatar
+                            sx={{
+                              bgcolor: `${getNotificationColor(notification.type)}.light`,
+                              color: `${getNotificationColor(notification.type)}.main`,
+                            }}
+                          >
                             {getNotificationIcon(notification.type)}
                           </Avatar>
                         </ListItemAvatar>
                         <ListItemText
                           primary={
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <Typography 
-                                variant="body2" 
-                                fontWeight={notification.read ? 'normal' : 'medium'}
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1,
+                              }}
+                            >
+                              <Typography
+                                variant="body2"
+                                fontWeight={
+                                  notification.read ? "normal" : "medium"
+                                }
                                 sx={{ flex: 1 }}
                               >
                                 {notification.title}
                               </Typography>
                               {!notification.read && (
-                                <Box sx={{ 
-                                  width: 8, 
-                                  height: 8, 
-                                  borderRadius: '50%', 
-                                  bgcolor: 'primary.main' 
-                                }} />
+                                <Box
+                                  sx={{
+                                    width: 8,
+                                    height: 8,
+                                    borderRadius: "50%",
+                                    bgcolor: "primary.main",
+                                  }}
+                                />
                               )}
                             </Box>
                           }
                           secondary={
                             <Box>
-                              <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                                sx={{ mb: 0.5 }}
+                              >
                                 {notification.message}
                               </Typography>
-                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <Typography variant="caption" color="text.secondary">
-                                  {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  alignItems: "center",
+                                }}
+                              >
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                >
+                                  {formatDistanceToNow(
+                                    new Date(notification.createdAt),
+                                    { addSuffix: true },
+                                  )}
                                 </Typography>
-                                <Chip 
-                                  label={notification.type} 
-                                  size="small" 
-                                  color={getNotificationColor(notification.type)}
+                                <Chip
+                                  label={notification.type}
+                                  size="small"
+                                  color={getNotificationColor(
+                                    notification.type,
+                                  )}
                                   variant="outlined"
                                 />
                               </Box>
@@ -275,17 +320,15 @@ const NotificationCenter = () => {
 
           {/* Footer */}
           {notifications.length > 0 && (
-            <Box sx={{ 
-              p: 2, 
-              borderTop: 1, 
-              borderColor: 'divider',
-              textAlign: 'center'
-            }}>
-              <Button
-                variant="text"
-                size="small"
-                onClick={handleClose}
-              >
+            <Box
+              sx={{
+                p: 2,
+                borderTop: 1,
+                borderColor: "divider",
+                textAlign: "center",
+              }}
+            >
+              <Button variant="text" size="small" onClick={handleClose}>
                 View All Notifications
               </Button>
             </Box>
@@ -293,7 +336,7 @@ const NotificationCenter = () => {
         </motion.div>
       </Popover>
     </>
-  )
-}
+  );
+};
 
-export default NotificationCenter
+export default NotificationCenter;

@@ -1,6 +1,6 @@
-import axios from 'axios';
+import axios from "axios";
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 class AIService {
   // Get AI-powered job recommendations
@@ -9,8 +9,8 @@ class AIService {
       const response = await axios.get(`${API_URL}/ai/recommendations`, {
         params: { limit },
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
       });
       return response.data;
     } catch (error) {
@@ -22,15 +22,19 @@ class AIService {
   async analyzeResume(file, updateProfile = false) {
     try {
       const formData = new FormData();
-      formData.append('resume', file);
-      formData.append('updateProfile', updateProfile.toString());
+      formData.append("resume", file);
+      formData.append("updateProfile", updateProfile.toString());
 
-      const response = await axios.post(`${API_URL}/ai/analyze-resume`, formData, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'multipart/form-data'
-        }
-      });
+      const response = await axios.post(
+        `${API_URL}/ai/analyze-resume`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "multipart/form-data",
+          },
+        },
+      );
       return response.data;
     } catch (error) {
       throw error.response?.data || error.message;
@@ -40,13 +44,14 @@ class AIService {
   // Get chatbot response
   async getChatbotResponse(message) {
     try {
-      const response = await axios.post(`${API_URL}/ai/chatbot`, 
+      const response = await axios.post(
+        `${API_URL}/ai/chatbot`,
         { message },
         {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        }
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        },
       );
       return response.data;
     } catch (error) {
@@ -57,11 +62,15 @@ class AIService {
   // Predict application success
   async predictSuccess(internshipId) {
     try {
-      const response = await axios.post(`${API_URL}/ai/predict-success/${internshipId}`, {}, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const response = await axios.post(
+        `${API_URL}/ai/predict-success/${internshipId}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        },
+      );
       return response.data;
     } catch (error) {
       throw error.response?.data || error.message;
@@ -71,13 +80,14 @@ class AIService {
   // Auto-tag internship
   async autoTagInternship(internshipId, applyTags = false) {
     try {
-      const response = await axios.post(`${API_URL}/ai/auto-tag/${internshipId}`, 
+      const response = await axios.post(
+        `${API_URL}/ai/auto-tag/${internshipId}`,
         { applyTags },
         {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        }
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        },
       );
       return response.data;
     } catch (error) {
@@ -86,13 +96,13 @@ class AIService {
   }
 
   // Get skill insights
-  async getSkillInsights(category = '', location = '') {
+  async getSkillInsights(category = "", location = "") {
     try {
       const response = await axios.get(`${API_URL}/ai/skill-insights`, {
         params: { category, location },
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
       });
       return response.data;
     } catch (error) {
@@ -105,8 +115,8 @@ class AIService {
     try {
       const response = await axios.get(`${API_URL}/ai/user-insights`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
       });
       return response.data;
     } catch (error) {

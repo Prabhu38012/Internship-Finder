@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import {
   Container,
   Grid,
@@ -21,8 +21,8 @@ import {
   MenuItem,
   Avatar,
   Tabs,
-  Tab
-} from '@mui/material'
+  Tab,
+} from "@mui/material";
 import {
   People,
   Business,
@@ -32,151 +32,161 @@ import {
   Check,
   Close,
   Visibility,
-  Block
-} from '@mui/icons-material'
-import { Helmet } from 'react-helmet-async'
-import { format } from 'date-fns'
-import toast from 'react-hot-toast'
+  Block,
+} from "@mui/icons-material";
+import { Helmet } from "react-helmet-async";
+import { format } from "date-fns";
+import toast from "react-hot-toast";
 
-import LoadingSpinner from '../../components/UI/LoadingSpinner'
+import LoadingSpinner from "../../components/UI/LoadingSpinner";
 
 const AdminDashboard = () => {
-  const { user } = useSelector((state) => state.auth)
-  const [currentTab, setCurrentTab] = useState(0)
-  const [anchorEl, setAnchorEl] = useState(null)
-  const [selectedItem, setSelectedItem] = useState(null)
-  const [isLoading, setIsLoading] = useState(false)
+  const { user } = useSelector((state) => state.auth);
+  const [currentTab, setCurrentTab] = useState(0);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Mock data - replace with actual API calls
   const [stats, setStats] = useState({
     totalUsers: 1250,
     totalCompanies: 85,
     totalInternships: 320,
-    pendingVerifications: 12
-  })
+    pendingVerifications: 12,
+  });
 
-  const [users, setUsers] = useState([])
-  const [companies, setCompanies] = useState([])
-  const [internships, setInternships] = useState([])
+  const [users, setUsers] = useState([]);
+  const [companies, setCompanies] = useState([]);
+  const [internships, setInternships] = useState([]);
 
   useEffect(() => {
     // Fetch admin data
-    fetchAdminData()
-  }, [])
+    fetchAdminData();
+  }, []);
 
   const fetchAdminData = async () => {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
       // Mock API calls - replace with actual endpoints
       setUsers([
         {
-          _id: '1',
-          name: 'John Doe',
-          email: 'john@example.com',
-          role: 'student',
-          status: 'active',
+          _id: "1",
+          name: "John Doe",
+          email: "john@example.com",
+          role: "student",
+          status: "active",
           createdAt: new Date(),
-          avatar: null
+          avatar: null,
         },
         {
-          _id: '2',
-          name: 'Jane Smith',
-          email: 'jane@company.com',
-          role: 'company',
-          status: 'pending',
+          _id: "2",
+          name: "Jane Smith",
+          email: "jane@company.com",
+          role: "company",
+          status: "pending",
           createdAt: new Date(),
-          avatar: null
-        }
-      ])
+          avatar: null,
+        },
+      ]);
 
       setCompanies([
         {
-          _id: '1',
-          name: 'Tech Corp',
-          email: 'hr@techcorp.com',
-          status: 'verified',
+          _id: "1",
+          name: "Tech Corp",
+          email: "hr@techcorp.com",
+          status: "verified",
           internshipsCount: 5,
-          createdAt: new Date()
+          createdAt: new Date(),
         },
         {
-          _id: '2',
-          name: 'StartupXYZ',
-          email: 'jobs@startupxyz.com',
-          status: 'pending',
+          _id: "2",
+          name: "StartupXYZ",
+          email: "jobs@startupxyz.com",
+          status: "pending",
           internshipsCount: 2,
-          createdAt: new Date()
-        }
-      ])
+          createdAt: new Date(),
+        },
+      ]);
 
       setInternships([
         {
-          _id: '1',
-          title: 'Software Developer Intern',
-          companyName: 'Tech Corp',
-          status: 'active',
+          _id: "1",
+          title: "Software Developer Intern",
+          companyName: "Tech Corp",
+          status: "active",
           applicationsCount: 25,
-          createdAt: new Date()
+          createdAt: new Date(),
         },
         {
-          _id: '2',
-          title: 'Marketing Intern',
-          companyName: 'StartupXYZ',
-          status: 'pending',
+          _id: "2",
+          title: "Marketing Intern",
+          companyName: "StartupXYZ",
+          status: "pending",
           applicationsCount: 8,
-          createdAt: new Date()
-        }
-      ])
+          createdAt: new Date(),
+        },
+      ]);
     } catch (error) {
-      toast.error('Failed to fetch admin data')
+      toast.error("Failed to fetch admin data");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleTabChange = (event, newValue) => {
-    setCurrentTab(newValue)
-  }
+    setCurrentTab(newValue);
+  };
 
   const handleMenuOpen = (event, item) => {
-    setAnchorEl(event.currentTarget)
-    setSelectedItem(item)
-  }
+    setAnchorEl(event.currentTarget);
+    setSelectedItem(item);
+  };
 
   const handleMenuClose = () => {
-    setAnchorEl(null)
-    setSelectedItem(null)
-  }
+    setAnchorEl(null);
+    setSelectedItem(null);
+  };
 
   const handleApprove = () => {
-    toast.success('Item approved successfully')
-    handleMenuClose()
-  }
+    toast.success("Item approved successfully");
+    handleMenuClose();
+  };
 
   const handleReject = () => {
-    toast.success('Item rejected successfully')
-    handleMenuClose()
-  }
+    toast.success("Item rejected successfully");
+    handleMenuClose();
+  };
 
   const handleBlock = () => {
-    toast.success('Item blocked successfully')
-    handleMenuClose()
-  }
+    toast.success("Item blocked successfully");
+    handleMenuClose();
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'active':
-      case 'verified': return 'success'
-      case 'pending': return 'warning'
-      case 'blocked':
-      case 'rejected': return 'error'
-      default: return 'default'
+      case "active":
+      case "verified":
+        return "success";
+      case "pending":
+        return "warning";
+      case "blocked":
+      case "rejected":
+        return "error";
+      default:
+        return "default";
     }
-  }
+  };
 
-  const StatCard = ({ title, value, icon, color = 'primary' }) => (
+  const StatCard = ({ title, value, icon, color = "primary" }) => (
     <Card>
       <CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
           <Box>
             <Typography color="textSecondary" gutterBottom variant="overline">
               {title}
@@ -191,23 +201,31 @@ const AdminDashboard = () => {
         </Box>
       </CardContent>
     </Card>
-  )
+  );
 
   if (isLoading) {
-    return <LoadingSpinner message="Loading admin dashboard..." />
+    return <LoadingSpinner message="Loading admin dashboard..." />;
   }
 
   return (
     <>
       <Helmet>
         <title>Admin Dashboard - InternQuest</title>
-        <meta name="description" content="Admin panel for managing users, companies, and internships." />
+        <meta
+          name="description"
+          content="Admin panel for managing users, companies, and internships."
+        />
       </Helmet>
 
       <Container maxWidth="xl" sx={{ py: 4 }}>
         {/* Header */}
         <Box sx={{ mb: 4 }}>
-          <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
+          <Typography
+            variant="h4"
+            component="h1"
+            gutterBottom
+            fontWeight="bold"
+          >
             Admin Dashboard
           </Typography>
           <Typography variant="body1" color="text.secondary">
@@ -253,7 +271,7 @@ const AdminDashboard = () => {
 
         {/* Management Tabs */}
         <Card>
-          <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+          <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
             <Tabs value={currentTab} onChange={handleTabChange}>
               <Tab label="Users" />
               <Tab label="Companies" />
@@ -279,8 +297,13 @@ const AdminDashboard = () => {
                   {users.map((user) => (
                     <TableRow key={user._id} hover>
                       <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                          <Avatar src={user.avatar} sx={{ width: 40, height: 40 }}>
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 2 }}
+                        >
+                          <Avatar
+                            src={user.avatar}
+                            sx={{ width: 40, height: 40 }}
+                          >
                             {user.name.charAt(0)}
                           </Avatar>
                           <Typography variant="subtitle2" fontWeight="bold">
@@ -304,7 +327,7 @@ const AdminDashboard = () => {
                         />
                       </TableCell>
                       <TableCell>
-                        {format(new Date(user.createdAt), 'MMM dd, yyyy')}
+                        {format(new Date(user.createdAt), "MMM dd, yyyy")}
                       </TableCell>
                       <TableCell align="right">
                         <IconButton
@@ -353,7 +376,7 @@ const AdminDashboard = () => {
                       </TableCell>
                       <TableCell>{company.internshipsCount}</TableCell>
                       <TableCell>
-                        {format(new Date(company.createdAt), 'MMM dd, yyyy')}
+                        {format(new Date(company.createdAt), "MMM dd, yyyy")}
                       </TableCell>
                       <TableCell align="right">
                         <IconButton
@@ -402,7 +425,7 @@ const AdminDashboard = () => {
                       </TableCell>
                       <TableCell>{internship.applicationsCount}</TableCell>
                       <TableCell>
-                        {format(new Date(internship.createdAt), 'MMM dd, yyyy')}
+                        {format(new Date(internship.createdAt), "MMM dd, yyyy")}
                       </TableCell>
                       <TableCell align="right">
                         <IconButton
@@ -438,14 +461,14 @@ const AdminDashboard = () => {
             <Close sx={{ mr: 1 }} />
             Reject
           </MenuItem>
-          <MenuItem onClick={handleBlock} sx={{ color: 'error.main' }}>
+          <MenuItem onClick={handleBlock} sx={{ color: "error.main" }}>
             <Block sx={{ mr: 1 }} />
             Block
           </MenuItem>
         </Menu>
       </Container>
     </>
-  )
-}
+  );
+};
 
-export default AdminDashboard
+export default AdminDashboard;

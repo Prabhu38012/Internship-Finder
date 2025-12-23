@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
-import { useDebounce } from 'use-debounce'
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useDebounce } from "use-debounce";
 import {
   Box,
   Drawer,
@@ -20,95 +20,95 @@ import {
   AccordionSummary,
   AccordionDetails,
   Badge,
-  Divider
-} from '@mui/material'
+  Divider,
+} from "@mui/material";
 import {
   Close,
   ExpandMore,
   FilterList,
   Clear,
-  TuneRounded
-} from '@mui/icons-material'
-import { motion, AnimatePresence } from 'framer-motion'
-import { setFilters } from '../../store/slices/internshipSlice'
+  TuneRounded,
+} from "@mui/icons-material";
+import { motion, AnimatePresence } from "framer-motion";
+import { setFilters } from "../../store/slices/internshipSlice";
 
 const categories = [
-  'Software Development',
-  'Data Science',
-  'Machine Learning',
-  'Web Development',
-  'Mobile Development',
-  'UI/UX Design',
-  'Digital Marketing',
-  'Business Development',
-  'Finance',
-  'Human Resources',
-  'Content Writing',
-  'Graphic Design',
-  'Sales',
-  'Operations',
-  'Research',
-  'Other'
-]
+  "Software Development",
+  "Data Science",
+  "Machine Learning",
+  "Web Development",
+  "Mobile Development",
+  "UI/UX Design",
+  "Digital Marketing",
+  "Business Development",
+  "Finance",
+  "Human Resources",
+  "Content Writing",
+  "Graphic Design",
+  "Sales",
+  "Operations",
+  "Research",
+  "Other",
+];
 
 const DynamicFilters = ({ open, onClose }) => {
-  const dispatch = useDispatch()
-  const { filters } = useSelector((state) => state.internships)
-  
-  const [localFilters, setLocalFilters] = useState(filters)
-  const [debouncedFilters] = useDebounce(localFilters, 500)
+  const dispatch = useDispatch();
+  const { filters } = useSelector((state) => state.internships);
+
+  const [localFilters, setLocalFilters] = useState(filters);
+  const [debouncedFilters] = useDebounce(localFilters, 500);
   const [expandedSections, setExpandedSections] = useState({
     basic: true,
     location: false,
     compensation: false,
-    advanced: false
-  })
+    advanced: false,
+  });
 
   useEffect(() => {
-    setLocalFilters(filters)
-  }, [filters])
+    setLocalFilters(filters);
+  }, [filters]);
 
   // Auto-apply filters with debouncing for better UX
   useEffect(() => {
     if (JSON.stringify(debouncedFilters) !== JSON.stringify(filters)) {
-      dispatch(setFilters(debouncedFilters))
+      dispatch(setFilters(debouncedFilters));
     }
-  }, [debouncedFilters, dispatch, filters])
+  }, [debouncedFilters, dispatch, filters]);
 
   const handleFilterChange = (field, value) => {
-    setLocalFilters(prev => ({ ...prev, [field]: value }))
-  }
+    setLocalFilters((prev) => ({ ...prev, [field]: value }));
+  };
 
   const clearFilters = () => {
     const clearedFilters = {
-      search: '',
-      category: '',
-      location: '',
-      type: '',
+      search: "",
+      category: "",
+      location: "",
+      type: "",
       remote: false,
-      stipendMin: '',
-      stipendMax: '',
-      duration: '',
-      experience: '',
-      skills: []
-    }
-    setLocalFilters(clearedFilters)
-  }
+      stipendMin: "",
+      stipendMax: "",
+      duration: "",
+      experience: "",
+      skills: [],
+    };
+    setLocalFilters(clearedFilters);
+  };
 
   const getActiveFiltersCount = () => {
     return Object.entries(localFilters).filter(([key, value]) => {
-      if (key === 'page' || key === 'limit') return false
-      if (Array.isArray(value)) return value.length > 0
-      return value && value !== ''
-    }).length
-  }
+      if (key === "page" || key === "limit") return false;
+      if (Array.isArray(value)) return value.length > 0;
+      return value && value !== "";
+    }).length;
+  };
 
   const toggleSection = (section) => {
-    setExpandedSections(prev => ({
+    setExpandedSections((prev) => ({
       ...prev,
-      [section]: !prev[section]
-    }))
-  }
+      [section]: !prev[section],
+    }));
+  };
 
   return (
     <Drawer
@@ -117,30 +117,32 @@ const DynamicFilters = ({ open, onClose }) => {
       onClose={onClose}
       PaperProps={{
         sx: {
-          width: { xs: '100%', sm: 400 },
-          borderRadius: { xs: 0, sm: '16px 0 0 16px' }
-        }
+          width: { xs: "100%", sm: 400 },
+          borderRadius: { xs: 0, sm: "16px 0 0 16px" },
+        },
       }}
     >
       <motion.div
         initial={{ x: 400 }}
         animate={{ x: 0 }}
         exit={{ x: 400 }}
-        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+        transition={{ type: "spring", damping: 25, stiffness: 200 }}
       >
-        <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <Box sx={{ height: "100vh", display: "flex", flexDirection: "column" }}>
           {/* Header */}
-          <Box sx={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'space-between',
-            p: 3,
-            borderBottom: 1,
-            borderColor: 'divider',
-            bgcolor: 'primary.main',
-            color: 'primary.contrastText'
-          }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              p: 3,
+              borderBottom: 1,
+              borderColor: "divider",
+              bgcolor: "primary.main",
+              color: "primary.contrastText",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <TuneRounded />
               <Typography variant="h6" fontWeight="bold">
                 Filters
@@ -149,23 +151,23 @@ const DynamicFilters = ({ open, onClose }) => {
                 <FilterList />
               </Badge>
             </Box>
-            <IconButton onClick={onClose} sx={{ color: 'inherit' }}>
+            <IconButton onClick={onClose} sx={{ color: "inherit" }}>
               <Close />
             </IconButton>
           </Box>
 
           {/* Filter Content */}
-          <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
+          <Box sx={{ flex: 1, overflow: "auto", p: 2 }}>
             <AnimatePresence>
               {/* Basic Filters */}
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
+                animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
               >
-                <Accordion 
+                <Accordion
                   expanded={expandedSections.basic}
-                  onChange={() => toggleSection('basic')}
+                  onChange={() => toggleSection("basic")}
                   sx={{ mb: 1 }}
                 >
                   <AccordionSummary expandIcon={<ExpandMore />}>
@@ -174,13 +176,17 @@ const DynamicFilters = ({ open, onClose }) => {
                     </Typography>
                   </AccordionSummary>
                   <AccordionDetails>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <Box
+                      sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+                    >
                       <FormControl fullWidth>
                         <InputLabel>Category</InputLabel>
                         <Select
-                          value={localFilters.category || ''}
+                          value={localFilters.category || ""}
                           label="Category"
-                          onChange={(e) => handleFilterChange('category', e.target.value)}
+                          onChange={(e) =>
+                            handleFilterChange("category", e.target.value)
+                          }
                         >
                           <MenuItem value="">All Categories</MenuItem>
                           {categories.map((category) => (
@@ -194,9 +200,11 @@ const DynamicFilters = ({ open, onClose }) => {
                       <FormControl fullWidth>
                         <InputLabel>Type</InputLabel>
                         <Select
-                          value={localFilters.type || ''}
+                          value={localFilters.type || ""}
                           label="Type"
-                          onChange={(e) => handleFilterChange('type', e.target.value)}
+                          onChange={(e) =>
+                            handleFilterChange("type", e.target.value)
+                          }
                         >
                           <MenuItem value="">All Types</MenuItem>
                           <MenuItem value="internship">Internship</MenuItem>
@@ -209,9 +217,11 @@ const DynamicFilters = ({ open, onClose }) => {
                       <FormControl fullWidth>
                         <InputLabel>Duration</InputLabel>
                         <Select
-                          value={localFilters.duration || ''}
+                          value={localFilters.duration || ""}
                           label="Duration"
-                          onChange={(e) => handleFilterChange('duration', e.target.value)}
+                          onChange={(e) =>
+                            handleFilterChange("duration", e.target.value)
+                          }
                         >
                           <MenuItem value="">Any Duration</MenuItem>
                           <MenuItem value="1-3 months">1-3 months</MenuItem>
@@ -225,9 +235,9 @@ const DynamicFilters = ({ open, onClose }) => {
               </motion.div>
 
               {/* Location Filters */}
-              <Accordion 
+              <Accordion
                 expanded={expandedSections.location}
-                onChange={() => toggleSection('location')}
+                onChange={() => toggleSection("location")}
                 sx={{ mb: 1 }}
               >
                 <AccordionSummary expandIcon={<ExpandMore />}>
@@ -236,12 +246,16 @@ const DynamicFilters = ({ open, onClose }) => {
                   </Typography>
                 </AccordionSummary>
                 <AccordionDetails>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+                  >
                     <TextField
                       fullWidth
                       label="Location"
-                      value={localFilters.location || ''}
-                      onChange={(e) => handleFilterChange('location', e.target.value)}
+                      value={localFilters.location || ""}
+                      onChange={(e) =>
+                        handleFilterChange("location", e.target.value)
+                      }
                       placeholder="City, State, or Country"
                     />
 
@@ -249,7 +263,9 @@ const DynamicFilters = ({ open, onClose }) => {
                       control={
                         <Switch
                           checked={localFilters.remote || false}
-                          onChange={(e) => handleFilterChange('remote', e.target.checked)}
+                          onChange={(e) =>
+                            handleFilterChange("remote", e.target.checked)
+                          }
                         />
                       }
                       label="Remote Work"
@@ -259,9 +275,9 @@ const DynamicFilters = ({ open, onClose }) => {
               </Accordion>
 
               {/* Compensation Filters */}
-              <Accordion 
+              <Accordion
                 expanded={expandedSections.compensation}
-                onChange={() => toggleSection('compensation')}
+                onChange={() => toggleSection("compensation")}
                 sx={{ mb: 1 }}
               >
                 <AccordionSummary expandIcon={<ExpandMore />}>
@@ -270,44 +286,56 @@ const DynamicFilters = ({ open, onClose }) => {
                   </Typography>
                 </AccordionSummary>
                 <AccordionDetails>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 3 }}
+                  >
                     <Typography variant="body2" color="text.secondary">
                       Stipend Range (₹ per month)
                     </Typography>
                     <Slider
                       value={[
                         parseInt(localFilters.stipendMin) || 0,
-                        parseInt(localFilters.stipendMax) || 100000
+                        parseInt(localFilters.stipendMax) || 100000,
                       ]}
                       onChange={(e, newValue) => {
-                        handleFilterChange('stipendMin', newValue[0].toString())
-                        handleFilterChange('stipendMax', newValue[1].toString())
+                        handleFilterChange(
+                          "stipendMin",
+                          newValue[0].toString(),
+                        );
+                        handleFilterChange(
+                          "stipendMax",
+                          newValue[1].toString(),
+                        );
                       }}
                       valueLabelDisplay="auto"
                       min={0}
                       max={100000}
                       step={5000}
                       marks={[
-                        { value: 0, label: '₹0' },
-                        { value: 25000, label: '₹25K' },
-                        { value: 50000, label: '₹50K' },
-                        { value: 100000, label: '₹100K' }
+                        { value: 0, label: "₹0" },
+                        { value: 25000, label: "₹25K" },
+                        { value: 50000, label: "₹50K" },
+                        { value: 100000, label: "₹100K" },
                       ]}
                     />
-                    <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Box sx={{ display: "flex", gap: 1 }}>
                       <TextField
                         label="Min Stipend"
                         type="number"
-                        value={localFilters.stipendMin || ''}
-                        onChange={(e) => handleFilterChange('stipendMin', e.target.value)}
+                        value={localFilters.stipendMin || ""}
+                        onChange={(e) =>
+                          handleFilterChange("stipendMin", e.target.value)
+                        }
                         sx={{ flex: 1 }}
                         size="small"
                       />
                       <TextField
                         label="Max Stipend"
                         type="number"
-                        value={localFilters.stipendMax || ''}
-                        onChange={(e) => handleFilterChange('stipendMax', e.target.value)}
+                        value={localFilters.stipendMax || ""}
+                        onChange={(e) =>
+                          handleFilterChange("stipendMax", e.target.value)
+                        }
                         sx={{ flex: 1 }}
                         size="small"
                       />
@@ -317,9 +345,9 @@ const DynamicFilters = ({ open, onClose }) => {
               </Accordion>
 
               {/* Advanced Filters */}
-              <Accordion 
+              <Accordion
                 expanded={expandedSections.advanced}
-                onChange={() => toggleSection('advanced')}
+                onChange={() => toggleSection("advanced")}
                 sx={{ mb: 1 }}
               >
                 <AccordionSummary expandIcon={<ExpandMore />}>
@@ -328,13 +356,17 @@ const DynamicFilters = ({ open, onClose }) => {
                   </Typography>
                 </AccordionSummary>
                 <AccordionDetails>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+                  >
                     <FormControl fullWidth>
                       <InputLabel>Experience Level</InputLabel>
                       <Select
-                        value={localFilters.experience || ''}
+                        value={localFilters.experience || ""}
                         label="Experience Level"
-                        onChange={(e) => handleFilterChange('experience', e.target.value)}
+                        onChange={(e) =>
+                          handleFilterChange("experience", e.target.value)
+                        }
                       >
                         <MenuItem value="">Any Experience</MenuItem>
                         <MenuItem value="fresher">Fresher</MenuItem>
@@ -347,8 +379,13 @@ const DynamicFilters = ({ open, onClose }) => {
                     <TextField
                       fullWidth
                       label="Required Skills"
-                      value={localFilters.skills?.join(', ') || ''}
-                      onChange={(e) => handleFilterChange('skills', e.target.value.split(', ').filter(s => s.trim()))}
+                      value={localFilters.skills?.join(", ") || ""}
+                      onChange={(e) =>
+                        handleFilterChange(
+                          "skills",
+                          e.target.value.split(", ").filter((s) => s.trim()),
+                        )
+                      }
                       placeholder="React, Node.js, Python..."
                       helperText="Separate skills with commas"
                     />
@@ -364,24 +401,39 @@ const DynamicFilters = ({ open, onClose }) => {
                 <Typography variant="subtitle2" gutterBottom>
                   Active Filters ({getActiveFiltersCount()})
                 </Typography>
-                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
                   {Object.entries(localFilters).map(([key, value]) => {
-                    if (!value || key === 'page' || key === 'limit' || key === 'search') return null
-                    
-                    const displayValue = Array.isArray(value) ? value.join(', ') : 
-                                       typeof value === 'boolean' ? (value ? 'Yes' : 'No') : 
-                                       value
+                    if (
+                      !value ||
+                      key === "page" ||
+                      key === "limit" ||
+                      key === "search"
+                    )
+                      return null;
+
+                    const displayValue = Array.isArray(value)
+                      ? value.join(", ")
+                      : typeof value === "boolean"
+                        ? value
+                          ? "Yes"
+                          : "No"
+                        : value;
 
                     return (
                       <Chip
                         key={key}
                         label={`${key}: ${displayValue}`}
-                        onDelete={() => handleFilterChange(key, Array.isArray(value) ? [] : '')}
+                        onDelete={() =>
+                          handleFilterChange(
+                            key,
+                            Array.isArray(value) ? [] : "",
+                          )
+                        }
                         size="small"
                         color="primary"
                         variant="outlined"
                       />
-                    )
+                    );
                   })}
                 </Box>
               </Box>
@@ -389,13 +441,15 @@ const DynamicFilters = ({ open, onClose }) => {
           </Box>
 
           {/* Footer Actions */}
-          <Box sx={{ 
-            p: 2, 
-            borderTop: 1, 
-            borderColor: 'divider',
-            bgcolor: 'background.paper'
-          }}>
-            <Box sx={{ display: 'flex', gap: 1 }}>
+          <Box
+            sx={{
+              p: 2,
+              borderTop: 1,
+              borderColor: "divider",
+              bgcolor: "background.paper",
+            }}
+          >
+            <Box sx={{ display: "flex", gap: 1 }}>
               <Button
                 variant="outlined"
                 onClick={clearFilters}
@@ -404,11 +458,7 @@ const DynamicFilters = ({ open, onClose }) => {
               >
                 Clear All
               </Button>
-              <Button
-                variant="contained"
-                onClick={onClose}
-                fullWidth
-              >
+              <Button variant="contained" onClick={onClose} fullWidth>
                 Apply Filters
               </Button>
             </Box>
@@ -416,7 +466,7 @@ const DynamicFilters = ({ open, onClose }) => {
         </Box>
       </motion.div>
     </Drawer>
-  )
-}
+  );
+};
 
-export default DynamicFilters
+export default DynamicFilters;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Drawer,
   Box,
@@ -18,19 +18,19 @@ import {
   Tab,
   Badge,
   CircularProgress,
-  Alert
-} from '@mui/material';
+  Alert,
+} from "@mui/material";
 import {
   Close as CloseIcon,
   MarkEmailRead as MarkReadIcon,
   Delete as DeleteIcon,
   FilterList as FilterIcon,
   Refresh as RefreshIcon,
-  Settings as SettingsIcon
-} from '@mui/icons-material';
-import { AnimatePresence } from 'framer-motion';
-import NotificationItem from './NotificationItem';
-import { notificationAPI } from '../../services/api';
+  Settings as SettingsIcon,
+} from "@mui/icons-material";
+import { AnimatePresence } from "framer-motion";
+import NotificationItem from "./NotificationItem";
+import { notificationAPI } from "../../services/api";
 
 const NotificationCenter = ({ open, onClose, onNavigate }) => {
   const [notifications, setNotifications] = useState([]);
@@ -38,15 +38,15 @@ const NotificationCenter = ({ open, onClose, onNavigate }) => {
   const [loading, setLoading] = useState(false);
   const [selectedTab, setSelectedTab] = useState(0);
   const [filters, setFilters] = useState({
-    type: 'all',
-    priority: 'all',
-    unread: false
+    type: "all",
+    priority: "all",
+    unread: false,
   });
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 20,
     total: 0,
-    pages: 0
+    pages: 0,
   });
 
   useEffect(() => {
@@ -62,21 +62,23 @@ const NotificationCenter = ({ open, onClose, onNavigate }) => {
       const params = {
         page: pagination.page,
         limit: pagination.limit,
-        unread: selectedTab === 1 ? 'true' : undefined,
+        unread: selectedTab === 1 ? "true" : undefined,
         ...Object.fromEntries(
-          Object.entries(filters).filter(([key, value]) => value && value !== 'all')
-        )
+          Object.entries(filters).filter(
+            ([key, value]) => value && value !== "all",
+          ),
+        ),
       };
 
       const response = await notificationAPI.getNotifications(params);
       setNotifications(response.data.data);
-      setPagination(prev => ({
+      setPagination((prev) => ({
         ...prev,
         total: response.data.pagination.total,
-        pages: response.data.pagination.pages
+        pages: response.data.pagination.pages,
       }));
     } catch (error) {
-      console.error('Failed to fetch notifications:', error);
+      console.error("Failed to fetch notifications:", error);
     } finally {
       setLoading(false);
     }
@@ -87,47 +89,47 @@ const NotificationCenter = ({ open, onClose, onNavigate }) => {
       const response = await notificationAPI.getStats();
       setStats(response.data.data);
     } catch (error) {
-      console.error('Failed to fetch notification stats:', error);
+      console.error("Failed to fetch notification stats:", error);
     }
   };
 
   const handleMarkAsRead = async (notificationId) => {
     try {
       await notificationAPI.markAsRead(notificationId);
-      setNotifications(prev =>
-        prev.map(n => n._id === notificationId ? { ...n, read: true } : n)
+      setNotifications((prev) =>
+        prev.map((n) => (n._id === notificationId ? { ...n, read: true } : n)),
       );
       fetchStats();
     } catch (error) {
-      console.error('Failed to mark as read:', error);
+      console.error("Failed to mark as read:", error);
     }
   };
 
   const handleMarkAllAsRead = async () => {
     try {
       await notificationAPI.markAllAsRead();
-      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
       fetchStats();
     } catch (error) {
-      console.error('Failed to mark all as read:', error);
+      console.error("Failed to mark all as read:", error);
     }
   };
 
   const handleDelete = async (notificationId) => {
     try {
       await notificationAPI.deleteNotification(notificationId);
-      setNotifications(prev => prev.filter(n => n._id !== notificationId));
+      setNotifications((prev) => prev.filter((n) => n._id !== notificationId));
       fetchStats();
     } catch (error) {
-      console.error('Failed to delete notification:', error);
+      console.error("Failed to delete notification:", error);
     }
   };
 
   const handleBulkDelete = async () => {
     const selectedIds = notifications
-      .filter(n => selectedTab === 1 ? !n.read : n.read)
-      .map(n => n._id);
-    
+      .filter((n) => (selectedTab === 1 ? !n.read : n.read))
+      .map((n) => n._id);
+
     if (selectedIds.length === 0) return;
 
     try {
@@ -135,7 +137,7 @@ const NotificationCenter = ({ open, onClose, onNavigate }) => {
       fetchNotifications();
       fetchStats();
     } catch (error) {
-      console.error('Failed to bulk delete:', error);
+      console.error("Failed to bulk delete:", error);
     }
   };
 
@@ -148,22 +150,26 @@ const NotificationCenter = ({ open, onClose, onNavigate }) => {
 
   const handleTabChange = (event, newValue) => {
     setSelectedTab(newValue);
-    setPagination(prev => ({ ...prev, page: 1 }));
+    setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
   const handleFilterChange = (field) => (event) => {
-    setFilters(prev => ({
+    setFilters((prev) => ({
       ...prev,
-      [field]: event.target.value
+      [field]: event.target.value,
     }));
   };
 
   const getTabLabel = (index) => {
     switch (index) {
-      case 0: return `All (${stats.total || 0})`;
-      case 1: return `Unread (${stats.unread || 0})`;
-      case 2: return 'Settings';
-      default: return '';
+      case 0:
+        return `All (${stats.total || 0})`;
+      case 1:
+        return `Unread (${stats.unread || 0})`;
+      case 2:
+        return "Settings";
+      default:
+        return "";
     }
   };
 
@@ -180,13 +186,12 @@ const NotificationCenter = ({ open, onClose, onNavigate }) => {
       return (
         <Box textAlign="center" py={4}>
           <Typography variant="h6" color="text.secondary" gutterBottom>
-            {selectedTab === 1 ? 'No unread notifications' : 'No notifications'}
+            {selectedTab === 1 ? "No unread notifications" : "No notifications"}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {selectedTab === 1 
-              ? "You're all caught up!" 
-              : 'New notifications will appear here'
-            }
+            {selectedTab === 1
+              ? "You're all caught up!"
+              : "New notifications will appear here"}
           </Typography>
         </Box>
       );
@@ -212,20 +217,24 @@ const NotificationCenter = ({ open, onClose, onNavigate }) => {
   };
 
   const renderFilters = () => (
-    <Box sx={{ p: 2, bgcolor: 'grey.50' }}>
+    <Box sx={{ p: 2, bgcolor: "grey.50" }}>
       <Stack direction="row" spacing={2} alignItems="center">
         <FormControl size="small" sx={{ minWidth: 120 }}>
           <InputLabel>Type</InputLabel>
           <Select
             value={filters.type}
-            onChange={handleFilterChange('type')}
+            onChange={handleFilterChange("type")}
             label="Type"
           >
             <MenuItem value="all">All Types</MenuItem>
             <MenuItem value="wishlist_reminder">Wishlist Reminders</MenuItem>
-            <MenuItem value="wishlist_deadline_approaching">Deadline Alerts</MenuItem>
+            <MenuItem value="wishlist_deadline_approaching">
+              Deadline Alerts
+            </MenuItem>
             <MenuItem value="new_similar_internship">New Matches</MenuItem>
-            <MenuItem value="application_status_update">Application Updates</MenuItem>
+            <MenuItem value="application_status_update">
+              Application Updates
+            </MenuItem>
           </Select>
         </FormControl>
 
@@ -233,7 +242,7 @@ const NotificationCenter = ({ open, onClose, onNavigate }) => {
           <InputLabel>Priority</InputLabel>
           <Select
             value={filters.priority}
-            onChange={handleFilterChange('priority')}
+            onChange={handleFilterChange("priority")}
             label="Priority"
           >
             <MenuItem value="all">All Priorities</MenuItem>
@@ -259,15 +268,15 @@ const NotificationCenter = ({ open, onClose, onNavigate }) => {
       <Typography variant="h6" gutterBottom>
         Notification Preferences
       </Typography>
-      
+
       <Stack spacing={2}>
         <Alert severity="info">
           Notification preferences can be managed in your profile settings.
         </Alert>
-        
+
         <Button
           variant="outlined"
-          onClick={() => onNavigate('/profile/settings')}
+          onClick={() => onNavigate("/profile/settings")}
           fullWidth
         >
           Go to Settings
@@ -282,36 +291,34 @@ const NotificationCenter = ({ open, onClose, onNavigate }) => {
       open={open}
       onClose={onClose}
       sx={{
-        '& .MuiDrawer-paper': {
-          width: { xs: '100%', sm: 400, md: 500 },
-          maxWidth: '100vw'
-        }
+        "& .MuiDrawer-paper": {
+          width: { xs: "100%", sm: 400, md: 500 },
+          maxWidth: "100vw",
+        },
       }}
     >
-      <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
         {/* Header */}
-        <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
-          <Box display="flex" alignItems="center" justifyContent="space-between">
-            <Typography variant="h6">
-              Notifications
-            </Typography>
+        <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
+          <Box
+            display="flex"
+            alignItems="center"
+            justifyContent="space-between"
+          >
+            <Typography variant="h6">Notifications</Typography>
             <IconButton onClick={onClose}>
               <CloseIcon />
             </IconButton>
           </Box>
 
-          <Tabs 
-            value={selectedTab} 
-            onChange={handleTabChange}
-            sx={{ mt: 1 }}
-          >
+          <Tabs value={selectedTab} onChange={handleTabChange} sx={{ mt: 1 }}>
             <Tab label={getTabLabel(0)} />
-            <Tab 
+            <Tab
               label={
                 <Badge badgeContent={stats.unread} color="error">
                   {getTabLabel(1)}
                 </Badge>
-              } 
+              }
             />
             <Tab label="Settings" />
           </Tabs>
@@ -319,7 +326,7 @@ const NotificationCenter = ({ open, onClose, onNavigate }) => {
 
         {/* Actions Bar */}
         {selectedTab < 2 && (
-          <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+          <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
             <Stack direction="row" spacing={1} justifyContent="space-between">
               <Stack direction="row" spacing={1}>
                 {stats.unread > 0 && (
@@ -337,11 +344,14 @@ const NotificationCenter = ({ open, onClose, onNavigate }) => {
                   size="small"
                   color="error"
                 >
-                  Clear {selectedTab === 1 ? 'Read' : 'All'}
+                  Clear {selectedTab === 1 ? "Read" : "All"}
                 </Button>
               </Stack>
-              
-              <IconButton size="small" onClick={() => setFilters({ type: 'all', priority: 'all' })}>
+
+              <IconButton
+                size="small"
+                onClick={() => setFilters({ type: "all", priority: "all" })}
+              >
                 <FilterIcon />
               </IconButton>
             </Stack>
@@ -352,16 +362,18 @@ const NotificationCenter = ({ open, onClose, onNavigate }) => {
         {selectedTab < 2 && renderFilters()}
 
         {/* Content */}
-        <Box sx={{ flex: 1, overflow: 'auto' }}>
+        <Box sx={{ flex: 1, overflow: "auto" }}>
           {selectedTab === 2 ? renderSettings() : renderNotificationList()}
         </Box>
 
         {/* Load More */}
         {selectedTab < 2 && pagination.pages > pagination.page && (
-          <Box sx={{ p: 2, borderTop: 1, borderColor: 'divider' }}>
+          <Box sx={{ p: 2, borderTop: 1, borderColor: "divider" }}>
             <Button
               fullWidth
-              onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
+              onClick={() =>
+                setPagination((prev) => ({ ...prev, page: prev.page + 1 }))
+              }
               disabled={loading}
             >
               Load More

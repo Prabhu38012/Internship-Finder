@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import {
   Container,
   Grid,
@@ -34,8 +34,8 @@ import {
   Badge,
   Tooltip,
   Divider,
-  Checkbox
-} from '@mui/material';
+  Checkbox,
+} from "@mui/material";
 import {
   Visibility,
   MoreVert,
@@ -48,39 +48,44 @@ import {
   FilterList,
   Search,
   Refresh,
-  Compare
-} from '@mui/icons-material';
-import { Helmet } from 'react-helmet-async';
-import { format } from 'date-fns';
-import toast from 'react-hot-toast';
+  Compare,
+} from "@mui/icons-material";
+import { Helmet } from "react-helmet-async";
+import { format } from "date-fns";
+import toast from "react-hot-toast";
 
-import { getCompanyApplications, updateApplicationStatus } from '../../store/slices/applicationSlice';
-import { internshipAPI } from '../../services/api';
-import LoadingSpinner from '../../components/UI/LoadingSpinner';
-import { useSocket } from '../../hooks/useSocket';
-import CandidateComparison from '../../components/Company/CandidateComparison';
+import {
+  getCompanyApplications,
+  updateApplicationStatus,
+} from "../../store/slices/applicationSlice";
+import { internshipAPI } from "../../services/api";
+import LoadingSpinner from "../../components/UI/LoadingSpinner";
+import { useSocket } from "../../hooks/useSocket";
+import CandidateComparison from "../../components/Company/CandidateComparison";
 
 const ApplicationManagement = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
-  const { companyApplications, isLoading } = useSelector((state) => state.applications);
+  const { companyApplications, isLoading } = useSelector(
+    (state) => state.applications,
+  );
 
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [statusDialog, setStatusDialog] = useState(false);
-  const [newStatus, setNewStatus] = useState('');
-  const [statusNote, setStatusNote] = useState('');
+  const [newStatus, setNewStatus] = useState("");
+  const [statusNote, setStatusNote] = useState("");
   const [currentTab, setCurrentTab] = useState(0);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
   const [realTimeUpdates, setRealTimeUpdates] = useState([]);
 
   // Candidate comparison state
   const [selectedForComparison, setSelectedForComparison] = useState([]);
   const [comparisonOpen, setComparisonOpen] = useState(false);
 
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem("token");
   const { socket } = useSocket(token);
 
   useEffect(() => {
@@ -90,34 +95,40 @@ const ApplicationManagement = () => {
   useEffect(() => {
     if (socket) {
       // Listen for new applications
-      socket.on('new_application', (data) => {
+      socket.on("new_application", (data) => {
         if (data.companyId === user?.id) {
           toast.success(`New application received for ${data.internshipTitle}`);
-          setRealTimeUpdates(prev => [...prev, {
-            type: 'new',
-            message: `New application from ${data.applicantName}`,
-            timestamp: new Date()
-          }]);
+          setRealTimeUpdates((prev) => [
+            ...prev,
+            {
+              type: "new",
+              message: `New application from ${data.applicantName}`,
+              timestamp: new Date(),
+            },
+          ]);
           dispatch(getCompanyApplications());
         }
       });
 
       // Listen for application withdrawals
-      socket.on('application_withdrawn', (data) => {
+      socket.on("application_withdrawn", (data) => {
         if (data.companyId === user?.id) {
           toast.info(`Application withdrawn for ${data.internshipTitle}`);
-          setRealTimeUpdates(prev => [...prev, {
-            type: 'withdrawn',
-            message: `${data.applicantName} withdrew their application`,
-            timestamp: new Date()
-          }]);
+          setRealTimeUpdates((prev) => [
+            ...prev,
+            {
+              type: "withdrawn",
+              message: `${data.applicantName} withdrew their application`,
+              timestamp: new Date(),
+            },
+          ]);
           dispatch(getCompanyApplications());
         }
       });
 
       return () => {
-        socket.off('new_application');
-        socket.off('application_withdrawn');
+        socket.off("new_application");
+        socket.off("application_withdrawn");
       };
     }
   }, [socket, user?.id, dispatch]);
@@ -133,8 +144,8 @@ const ApplicationManagement = () => {
   };
 
   const handleStatusUpdate = () => {
-    setNewStatus(selectedApplication?.status || '');
-    setStatusNote('');
+    setNewStatus(selectedApplication?.status || "");
+    setStatusNote("");
     setStatusDialog(true);
     handleMenuClose();
   };
@@ -143,25 +154,28 @@ const ApplicationManagement = () => {
     if (!selectedApplication || !newStatus) return;
 
     try {
-      await internshipAPI.updateApplicationStatus(selectedApplication._id, newStatus);
+      await internshipAPI.updateApplicationStatus(
+        selectedApplication._id,
+        newStatus,
+      );
 
       // Emit real-time update
       if (socket) {
-        socket.emit('application_status_updated', {
+        socket.emit("application_status_updated", {
           applicationId: selectedApplication._id,
           status: newStatus,
           companyId: user.id,
           applicantId: selectedApplication.applicant._id,
-          internshipTitle: selectedApplication.internship.title
+          internshipTitle: selectedApplication.internship.title,
         });
       }
 
-      toast.success('Application status updated successfully');
+      toast.success("Application status updated successfully");
       dispatch(getCompanyApplications());
       setStatusDialog(false);
       setSelectedApplication(null);
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to update status');
+      toast.error(error.response?.data?.message || "Failed to update status");
     }
   };
 
@@ -176,13 +190,14 @@ const ApplicationManagement = () => {
   // Handler for Download Resume
   const handleDownloadResume = () => {
     if (selectedApplication?.applicant?.studentProfile?.resume) {
-      const resumeUrl = selectedApplication.applicant.studentProfile.resume.startsWith('http')
-        ? selectedApplication.applicant.studentProfile.resume
-        : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${selectedApplication.applicant.studentProfile.resume}`;
-      window.open(resumeUrl, '_blank');
-      toast.success('Opening resume...');
+      const resumeUrl =
+        selectedApplication.applicant.studentProfile.resume.startsWith("http")
+          ? selectedApplication.applicant.studentProfile.resume
+          : `${import.meta.env.VITE_API_URL || "http://localhost:5000"}${selectedApplication.applicant.studentProfile.resume}`;
+      window.open(resumeUrl, "_blank");
+      toast.success("Opening resume...");
     } else {
-      toast.error('Resume not available for this applicant');
+      toast.error("Resume not available for this applicant");
     }
     handleMenuClose();
   };
@@ -192,21 +207,21 @@ const ApplicationManagement = () => {
     if (selectedApplication?.applicant?.email) {
       window.location.href = `mailto:${selectedApplication.applicant.email}?subject=Regarding your application for ${selectedApplication.internship?.title}`;
     } else {
-      toast.error('Email not available for this applicant');
+      toast.error("Email not available for this applicant");
     }
     handleMenuClose();
   };
 
   // Handler for toggling candidate selection for comparison
   const handleToggleComparison = (application) => {
-    setSelectedForComparison(prev => {
-      const isSelected = prev.find(a => a._id === application._id);
+    setSelectedForComparison((prev) => {
+      const isSelected = prev.find((a) => a._id === application._id);
       if (isSelected) {
-        return prev.filter(a => a._id !== application._id);
+        return prev.filter((a) => a._id !== application._id);
       } else if (prev.length < 3) {
         return [...prev, application];
       } else {
-        toast.error('You can compare up to 3 candidates at a time');
+        toast.error("You can compare up to 3 candidates at a time");
         return prev;
       }
     });
@@ -215,7 +230,7 @@ const ApplicationManagement = () => {
   // Handler to open comparison modal
   const handleOpenComparison = () => {
     if (selectedForComparison.length < 2) {
-      toast.error('Select at least 2 candidates to compare');
+      toast.error("Select at least 2 candidates to compare");
       return;
     }
     setComparisonOpen(true);
@@ -229,13 +244,20 @@ const ApplicationManagement = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'pending': return 'warning';
-      case 'reviewing': return 'info';
-      case 'shortlisted': return 'primary';
-      case 'accepted': return 'success';
-      case 'rejected': return 'error';
-      case 'withdrawn': return 'default';
-      default: return 'default';
+      case "pending":
+        return "warning";
+      case "reviewing":
+        return "info";
+      case "shortlisted":
+        return "primary";
+      case "accepted":
+        return "success";
+      case "rejected":
+        return "error";
+      case "withdrawn":
+        return "default";
+      default:
+        return "default";
     }
   };
 
@@ -246,10 +268,10 @@ const ApplicationManagement = () => {
       reviewing: 0,
       shortlisted: 0,
       accepted: 0,
-      rejected: 0
+      rejected: 0,
     };
 
-    companyApplications?.forEach(app => {
+    companyApplications?.forEach((app) => {
       if (counts[app.status] !== undefined) {
         counts[app.status]++;
       }
@@ -258,15 +280,18 @@ const ApplicationManagement = () => {
     return counts;
   };
 
-  const filteredApplications = companyApplications?.filter(app => {
-    const matchesSearch = !searchTerm ||
-      app.applicant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      app.internship.title.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredApplications =
+    companyApplications?.filter((app) => {
+      const matchesSearch =
+        !searchTerm ||
+        app.applicant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        app.internship.title.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus = filterStatus === 'all' || app.status === filterStatus;
+      const matchesStatus =
+        filterStatus === "all" || app.status === filterStatus;
 
-    return matchesSearch && matchesStatus;
-  }) || [];
+      return matchesSearch && matchesStatus;
+    }) || [];
 
   const statusCounts = getStatusCounts();
 
@@ -278,21 +303,36 @@ const ApplicationManagement = () => {
     <>
       <Helmet>
         <title>Application Management - InternQuest</title>
-        <meta name="description" content="Manage and track internship applications in real-time." />
+        <meta
+          name="description"
+          content="Manage and track internship applications in real-time."
+        />
       </Helmet>
 
       <Container maxWidth="xl" sx={{ py: 4 }}>
         {/* Header */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 4,
+          }}
+        >
           <Box>
-            <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
+            <Typography
+              variant="h4"
+              component="h1"
+              gutterBottom
+              fontWeight="bold"
+            >
               Application Management
             </Typography>
             <Typography variant="body1" color="text.secondary">
               Track and manage internship applications in real-time
             </Typography>
           </Box>
-          <Box sx={{ display: 'flex', gap: 2 }}>
+          <Box sx={{ display: "flex", gap: 2 }}>
             {selectedForComparison.length > 0 && (
               <Button
                 variant="contained"
@@ -316,23 +356,24 @@ const ApplicationManagement = () => {
 
         {/* Real-time Updates */}
         {realTimeUpdates.length > 0 && (
-          <Card sx={{ mb: 3, bgcolor: 'primary.50' }}>
+          <Card sx={{ mb: 3, bgcolor: "primary.50" }}>
             <CardContent>
               <Typography variant="h6" gutterBottom>
                 Recent Updates
               </Typography>
               {realTimeUpdates.slice(-3).map((update, index) => (
-                <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
+                <Box
+                  key={index}
+                  sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1 }}
+                >
                   <Chip
                     size="small"
                     label={update.type}
-                    color={update.type === 'new' ? 'success' : 'info'}
+                    color={update.type === "new" ? "success" : "info"}
                   />
-                  <Typography variant="body2">
-                    {update.message}
-                  </Typography>
+                  <Typography variant="body2">{update.message}</Typography>
                   <Typography variant="caption" color="text.secondary">
-                    {format(update.timestamp, 'HH:mm')}
+                    {format(update.timestamp, "HH:mm")}
                   </Typography>
                 </Box>
               ))}
@@ -351,7 +392,9 @@ const ApplicationManagement = () => {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   InputProps={{
-                    startAdornment: <Search sx={{ mr: 1, color: 'text.secondary' }} />
+                    startAdornment: (
+                      <Search sx={{ mr: 1, color: "text.secondary" }} />
+                    ),
                   }}
                 />
               </Grid>
@@ -363,30 +406,45 @@ const ApplicationManagement = () => {
                     onChange={(e) => setFilterStatus(e.target.value)}
                     label="Filter by Status"
                   >
-                    <MenuItem value="all">All Applications ({statusCounts.all})</MenuItem>
-                    <MenuItem value="pending">Pending ({statusCounts.pending})</MenuItem>
-                    <MenuItem value="reviewing">Reviewing ({statusCounts.reviewing})</MenuItem>
-                    <MenuItem value="shortlisted">Shortlisted ({statusCounts.shortlisted})</MenuItem>
-                    <MenuItem value="accepted">Accepted ({statusCounts.accepted})</MenuItem>
-                    <MenuItem value="rejected">Rejected ({statusCounts.rejected})</MenuItem>
+                    <MenuItem value="all">
+                      All Applications ({statusCounts.all})
+                    </MenuItem>
+                    <MenuItem value="pending">
+                      Pending ({statusCounts.pending})
+                    </MenuItem>
+                    <MenuItem value="reviewing">
+                      Reviewing ({statusCounts.reviewing})
+                    </MenuItem>
+                    <MenuItem value="shortlisted">
+                      Shortlisted ({statusCounts.shortlisted})
+                    </MenuItem>
+                    <MenuItem value="accepted">
+                      Accepted ({statusCounts.accepted})
+                    </MenuItem>
+                    <MenuItem value="rejected">
+                      Rejected ({statusCounts.rejected})
+                    </MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
               <Grid item xs={12} md={5}>
-                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                  {Object.entries(statusCounts).map(([status, count]) => (
-                    status !== 'all' && (
-                      <Chip
-                        key={status}
-                        label={`${status}: ${count}`}
-                        size="small"
-                        color={getStatusColor(status)}
-                        variant={filterStatus === status ? 'filled' : 'outlined'}
-                        onClick={() => setFilterStatus(status)}
-                        clickable
-                      />
-                    )
-                  ))}
+                <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                  {Object.entries(statusCounts).map(
+                    ([status, count]) =>
+                      status !== "all" && (
+                        <Chip
+                          key={status}
+                          label={`${status}: ${count}`}
+                          size="small"
+                          color={getStatusColor(status)}
+                          variant={
+                            filterStatus === status ? "filled" : "outlined"
+                          }
+                          onClick={() => setFilterStatus(status)}
+                          clickable
+                        />
+                      ),
+                  )}
                 </Box>
               </Grid>
             </Grid>
@@ -406,7 +464,10 @@ const ApplicationManagement = () => {
                   <TableRow>
                     <TableCell padding="checkbox">
                       <Tooltip title="Select for comparison">
-                        <Compare fontSize="small" sx={{ color: 'text.secondary' }} />
+                        <Compare
+                          fontSize="small"
+                          sx={{ color: "text.secondary" }}
+                        />
                       </Tooltip>
                     </TableCell>
                     <TableCell>Applicant</TableCell>
@@ -422,17 +483,27 @@ const ApplicationManagement = () => {
                     <TableRow key={application._id} hover>
                       <TableCell padding="checkbox">
                         <Checkbox
-                          checked={!!selectedForComparison.find(a => a._id === application._id)}
+                          checked={
+                            !!selectedForComparison.find(
+                              (a) => a._id === application._id,
+                            )
+                          }
                           onChange={() => handleToggleComparison(application)}
-                          disabled={!selectedForComparison.find(a => a._id === application._id) && selectedForComparison.length >= 3}
+                          disabled={
+                            !selectedForComparison.find(
+                              (a) => a._id === application._id,
+                            ) && selectedForComparison.length >= 3
+                          }
                           sx={{
-                            color: 'primary.main',
-                            '&.Mui-checked': { color: 'primary.main' }
+                            color: "primary.main",
+                            "&.Mui-checked": { color: "primary.main" },
                           }}
                         />
                       </TableCell>
                       <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 2 }}
+                        >
                           <Avatar
                             src={application.applicant.avatar}
                             sx={{ width: 40, height: 40 }}
@@ -443,7 +514,10 @@ const ApplicationManagement = () => {
                             <Typography variant="subtitle2" fontWeight="bold">
                               {application.applicant.name}
                             </Typography>
-                            <Typography variant="caption" color="text.secondary">
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
                               {application.applicant.email}
                             </Typography>
                           </Box>
@@ -459,10 +533,13 @@ const ApplicationManagement = () => {
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2">
-                          {format(new Date(application.createdAt), 'MMM dd, yyyy')}
+                          {format(
+                            new Date(application.createdAt),
+                            "MMM dd, yyyy",
+                          )}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          {format(new Date(application.createdAt), 'HH:mm')}
+                          {format(new Date(application.createdAt), "HH:mm")}
                         </Typography>
                       </TableCell>
                       <TableCell>
@@ -474,7 +551,8 @@ const ApplicationManagement = () => {
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2">
-                          {application.applicant.profile?.experience || 'Not specified'}
+                          {application.applicant.profile?.experience ||
+                            "Not specified"}
                         </Typography>
                       </TableCell>
                       <TableCell align="right">
@@ -502,15 +580,14 @@ const ApplicationManagement = () => {
             </TableContainer>
 
             {filteredApplications.length === 0 && (
-              <Box sx={{ p: 4, textAlign: 'center' }}>
+              <Box sx={{ p: 4, textAlign: "center" }}>
                 <Typography variant="h6" gutterBottom>
                   No applications found
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {searchTerm || filterStatus !== 'all'
-                    ? 'Try adjusting your search or filter criteria'
-                    : 'Applications will appear here once students start applying'
-                  }
+                  {searchTerm || filterStatus !== "all"
+                    ? "Try adjusting your search or filter criteria"
+                    : "Applications will appear here once students start applying"}
                 </Typography>
               </Box>
             )}
@@ -543,7 +620,12 @@ const ApplicationManagement = () => {
         </Menu>
 
         {/* Status Update Dialog */}
-        <Dialog open={statusDialog} onClose={() => setStatusDialog(false)} maxWidth="sm" fullWidth>
+        <Dialog
+          open={statusDialog}
+          onClose={() => setStatusDialog(false)}
+          maxWidth="sm"
+          fullWidth
+        >
           <DialogTitle>Update Application Status</DialogTitle>
           <DialogContent>
             <Box sx={{ pt: 1 }}>
@@ -589,7 +671,9 @@ const ApplicationManagement = () => {
           open={comparisonOpen}
           onClose={() => setComparisonOpen(false)}
           candidates={selectedForComparison}
-          internshipTitle={selectedForComparison[0]?.internship?.title || 'Internship'}
+          internshipTitle={
+            selectedForComparison[0]?.internship?.title || "Internship"
+          }
           onStatusUpdate={handleComparisonStatusUpdate}
         />
       </Container>

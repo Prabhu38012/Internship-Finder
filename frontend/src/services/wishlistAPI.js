@@ -1,18 +1,19 @@
-import axios from 'axios';
+import axios from "axios";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 // Create axios instance with default config
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
 // Add auth token to requests
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem("token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -24,22 +25,22 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      window.location.href = '/login';
+      localStorage.removeItem("token");
+      window.location.href = "/login";
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 export const wishlistAPI = {
   // Get user's wishlist with filters
   getWishlist: (params = {}) => {
-    return api.get('/wishlist', { params });
+    return api.get("/wishlist", { params });
   },
 
   // Add internship to wishlist
   addToWishlist: (data) => {
-    return api.post('/wishlist', data);
+    return api.post("/wishlist", data);
   },
 
   // Update wishlist item
@@ -54,24 +55,24 @@ export const wishlistAPI = {
 
   // Get wishlist statistics
   getStats: () => {
-    return api.get('/wishlist/stats');
+    return api.get("/wishlist/stats");
   },
 
   // Get wishlist reminders
   getReminders: () => {
-    return api.get('/wishlist/reminders');
+    return api.get("/wishlist/reminders");
   },
 
   // Bulk update wishlist items
   bulkUpdate: (items) => {
-    return api.put('/wishlist/bulk', { items });
-  }
+    return api.put("/wishlist/bulk", { items });
+  },
 };
 
 export const notificationAPI = {
   // Get notifications with filters
   getNotifications: (params = {}) => {
-    return api.get('/notifications', { params });
+    return api.get("/notifications", { params });
   },
 
   // Mark notification as read
@@ -81,7 +82,7 @@ export const notificationAPI = {
 
   // Mark all notifications as read
   markAllAsRead: () => {
-    return api.put('/notifications/read-all');
+    return api.put("/notifications/read-all");
   },
 
   // Delete notification
@@ -91,23 +92,23 @@ export const notificationAPI = {
 
   // Get notification statistics
   getStats: () => {
-    return api.get('/notifications/stats');
+    return api.get("/notifications/stats");
   },
 
   // Update notification preferences
   updatePreferences: (preferences) => {
-    return api.put('/notifications/preferences', preferences);
+    return api.put("/notifications/preferences", preferences);
   },
 
   // Bulk mark as read
   bulkMarkAsRead: (notificationIds) => {
-    return api.put('/notifications/bulk-read', { notificationIds });
+    return api.put("/notifications/bulk-read", { notificationIds });
   },
 
   // Bulk delete
   bulkDelete: (notificationIds) => {
-    return api.delete('/notifications/bulk', { data: notificationIds });
-  }
+    return api.delete("/notifications/bulk", { data: notificationIds });
+  },
 };
 
 export default { wishlistAPI, notificationAPI };

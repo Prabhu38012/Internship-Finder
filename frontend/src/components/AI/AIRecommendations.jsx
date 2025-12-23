@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Card,
@@ -10,16 +10,16 @@ import {
   CircularProgress,
   Alert,
   Divider,
-  LinearProgress
-} from '@mui/material';
+  LinearProgress,
+} from "@mui/material";
 import {
   AutoAwesome,
   TrendingUp,
   LocationOn,
   AttachMoney,
-  Schedule
-} from '@mui/icons-material';
-import aiService from '../../services/aiService';
+  Schedule,
+} from "@mui/icons-material";
+import aiService from "../../services/aiService";
 
 const AIRecommendations = ({ limit = 10 }) => {
   const [recommendations, setRecommendations] = useState([]);
@@ -41,54 +41,63 @@ const AIRecommendations = ({ limit = 10 }) => {
       const mockRecommendations = [
         {
           internship: {
-            _id: '1',
-            title: 'Frontend Developer Intern',
-            company: { name: 'TechCorp', logo: null },
-            location: { city: 'San Francisco', country: 'USA', type: 'hybrid' },
-            stipend: { amount: 2000, currency: '$', period: 'month' },
-            duration: '3 months',
-            skills: ['React', 'JavaScript', 'CSS']
+            _id: "1",
+            title: "Frontend Developer Intern",
+            company: { name: "TechCorp", logo: null },
+            location: { city: "San Francisco", country: "USA", type: "hybrid" },
+            stipend: { amount: 2000, currency: "$", period: "month" },
+            duration: "3 months",
+            skills: ["React", "JavaScript", "CSS"],
           },
           score: 0.92,
-          reasons: ['Strong React skills match', 'Location preference aligned', 'Experience level suitable']
+          reasons: [
+            "Strong React skills match",
+            "Location preference aligned",
+            "Experience level suitable",
+          ],
         },
         {
           internship: {
-            _id: '2',
-            title: 'AI/ML Research Intern',
-            company: { name: 'DataLabs', logo: null },
-            location: { city: 'Remote', country: 'Global', type: 'remote' },
-            stipend: { amount: 1800, currency: '$', period: 'month' },
-            duration: '6 months',
-            skills: ['Python', 'Machine Learning', 'TensorFlow']
+            _id: "2",
+            title: "AI/ML Research Intern",
+            company: { name: "DataLabs", logo: null },
+            location: { city: "Remote", country: "Global", type: "remote" },
+            stipend: { amount: 1800, currency: "$", period: "month" },
+            duration: "6 months",
+            skills: ["Python", "Machine Learning", "TensorFlow"],
           },
           score: 0.85,
-          reasons: ['Python expertise', 'ML background', 'Research experience']
-        }
+          reasons: ["Python expertise", "ML background", "Research experience"],
+        },
       ];
       setRecommendations(mockRecommendations);
-      setError('Using demo data - backend server may be unavailable');
+      setError("Using demo data - backend server may be unavailable");
     } finally {
       setLoading(false);
     }
   };
 
   const getScoreColor = (score) => {
-    if (score >= 0.8) return 'success';
-    if (score >= 0.6) return 'warning';
-    return 'error';
+    if (score >= 0.8) return "success";
+    if (score >= 0.6) return "warning";
+    return "error";
   };
 
   const getScoreLabel = (score) => {
-    if (score >= 0.8) return 'Excellent Match';
-    if (score >= 0.6) return 'Good Match';
-    if (score >= 0.4) return 'Fair Match';
-    return 'Low Match';
+    if (score >= 0.8) return "Excellent Match";
+    if (score >= 0.6) return "Good Match";
+    if (score >= 0.4) return "Fair Match";
+    return "Low Match";
   };
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="200px"
+      >
         <CircularProgress />
       </Box>
     );
@@ -96,11 +105,14 @@ const AIRecommendations = ({ limit = 10 }) => {
 
   if (error) {
     return (
-      <Alert severity="error" action={
-        <Button color="inherit" size="small" onClick={fetchRecommendations}>
-          Retry
-        </Button>
-      }>
+      <Alert
+        severity="error"
+        action={
+          <Button color="inherit" size="small" onClick={fetchRecommendations}>
+            Retry
+          </Button>
+        }
+      >
         {error}
       </Alert>
     );
@@ -117,18 +129,19 @@ const AIRecommendations = ({ limit = 10 }) => {
 
       {recommendations.length === 0 ? (
         <Alert severity="info">
-          No recommendations available. Complete your profile to get personalized suggestions.
+          No recommendations available. Complete your profile to get
+          personalized suggestions.
         </Alert>
       ) : (
         <Grid container spacing={3}>
           {recommendations.map(({ internship, score, reasons }, index) => (
             <Grid item xs={12} md={6} key={internship._id}>
-              <Card 
+              <Card
                 elevation={3}
-                sx={{ 
-                  height: '100%',
-                  border: score >= 0.8 ? '2px solid #4caf50' : 'none',
-                  position: 'relative'
+                sx={{
+                  height: "100%",
+                  border: score >= 0.8 ? "2px solid #4caf50" : "none",
+                  position: "relative",
                 }}
               >
                 {score >= 0.8 && (
@@ -136,21 +149,26 @@ const AIRecommendations = ({ limit = 10 }) => {
                     label="Top Match"
                     color="success"
                     size="small"
-                    sx={{ position: 'absolute', top: 8, right: 8, zIndex: 1 }}
+                    sx={{ position: "absolute", top: 8, right: 8, zIndex: 1 }}
                   />
                 )}
-                
+
                 <CardContent>
                   <Typography variant="h6" component="h3" gutterBottom>
                     {internship.title}
                   </Typography>
-                  
+
                   <Typography variant="subtitle1" color="primary" gutterBottom>
                     {internship.companyName}
                   </Typography>
 
                   <Box mb={2}>
-                    <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
+                    <Box
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="space-between"
+                      mb={1}
+                    >
                       <Typography variant="body2" color="text.secondary">
                         Match Score
                       </Typography>
@@ -170,15 +188,24 @@ const AIRecommendations = ({ limit = 10 }) => {
                   </Box>
 
                   <Box display="flex" alignItems="center" mb={1}>
-                    <LocationOn fontSize="small" color="action" sx={{ mr: 1 }} />
+                    <LocationOn
+                      fontSize="small"
+                      color="action"
+                      sx={{ mr: 1 }}
+                    />
                     <Typography variant="body2" component="div">
-                      {internship.location?.city || 'Location not specified'}, {internship.location?.country || ''}
+                      {internship.location?.city || "Location not specified"},{" "}
+                      {internship.location?.country || ""}
                       {internship.location?.type && (
-                        <Chip 
-                          label={internship.location.type} 
-                          size="small" 
+                        <Chip
+                          label={internship.location.type}
+                          size="small"
                           sx={{ ml: 1 }}
-                          color={internship.location.type === 'remote' ? 'success' : 'default'}
+                          color={
+                            internship.location.type === "remote"
+                              ? "success"
+                              : "default"
+                          }
                         />
                       )}
                     </Typography>
@@ -186,9 +213,15 @@ const AIRecommendations = ({ limit = 10 }) => {
 
                   {internship.stipend && (
                     <Box display="flex" alignItems="center" mb={1}>
-                      <AttachMoney fontSize="small" color="action" sx={{ mr: 1 }} />
+                      <AttachMoney
+                        fontSize="small"
+                        color="action"
+                        sx={{ mr: 1 }}
+                      />
                       <Typography variant="body2">
-                        {internship.stipend?.currency || '$'} {internship.stipend?.amount || 'N/A'}/{internship.stipend?.period || 'month'}
+                        {internship.stipend?.currency || "$"}{" "}
+                        {internship.stipend?.amount || "N/A"}/
+                        {internship.stipend?.period || "month"}
                       </Typography>
                     </Box>
                   )}
@@ -196,7 +229,7 @@ const AIRecommendations = ({ limit = 10 }) => {
                   <Box display="flex" alignItems="center" mb={2}>
                     <Schedule fontSize="small" color="action" sx={{ mr: 1 }} />
                     <Typography variant="body2">
-                      {internship.duration || 'Duration not specified'}
+                      {internship.duration || "Duration not specified"}
                     </Typography>
                   </Box>
 

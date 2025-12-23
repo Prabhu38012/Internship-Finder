@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Card,
@@ -14,38 +14,56 @@ import {
   Button,
   TextField,
   MenuItem,
-  Paper
-} from '@mui/material';
+  Paper,
+} from "@mui/material";
 import {
   TrendingUp,
   School,
   LocationOn,
   AttachMoney,
   Code,
-  Refresh
-} from '@mui/icons-material';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import aiService from '../../services/aiService';
+  Refresh,
+} from "@mui/icons-material";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
+import aiService from "../../services/aiService";
 
 const SkillInsights = () => {
   const [insights, setInsights] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
-    category: '',
-    location: ''
+    category: "",
+    location: "",
   });
 
   const categories = [
-    'Software Development',
-    'Data Science',
-    'Design',
-    'Marketing',
-    'Business',
-    'Finance'
+    "Software Development",
+    "Data Science",
+    "Design",
+    "Marketing",
+    "Business",
+    "Finance",
   ];
 
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
+  const COLORS = [
+    "#0088FE",
+    "#00C49F",
+    "#FFBB28",
+    "#FF8042",
+    "#8884d8",
+    "#82ca9d",
+  ];
 
   useEffect(() => {
     fetchInsights();
@@ -54,23 +72,31 @@ const SkillInsights = () => {
   const fetchInsights = async () => {
     try {
       setLoading(true);
-      const response = await aiService.getSkillInsights(filters.category, filters.location);
+      const response = await aiService.getSkillInsights(
+        filters.category,
+        filters.location,
+      );
       setInsights(response.data);
       setError(null);
     } catch (err) {
-      setError(err.message || 'Failed to fetch skill insights');
+      setError(err.message || "Failed to fetch skill insights");
     } finally {
       setLoading(false);
     }
   };
 
   const handleFilterChange = (field, value) => {
-    setFilters(prev => ({ ...prev, [field]: value }));
+    setFilters((prev) => ({ ...prev, [field]: value }));
   };
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="400px"
+      >
         <CircularProgress />
       </Box>
     );
@@ -78,27 +104,32 @@ const SkillInsights = () => {
 
   if (error) {
     return (
-      <Alert severity="error" action={
-        <Button color="inherit" size="small" onClick={fetchInsights}>
-          Retry
-        </Button>
-      }>
+      <Alert
+        severity="error"
+        action={
+          <Button color="inherit" size="small" onClick={fetchInsights}>
+            Retry
+          </Button>
+        }
+      >
         {error}
       </Alert>
     );
   }
 
-  const skillChartData = insights?.topSkills.slice(0, 10).map(skill => ({
-    name: skill.skill,
-    demand: skill.demand,
-    avgStipend: skill.avgStipend
-  })) || [];
+  const skillChartData =
+    insights?.topSkills.slice(0, 10).map((skill) => ({
+      name: skill.skill,
+      demand: skill.demand,
+      avgStipend: skill.avgStipend,
+    })) || [];
 
-  const categoryChartData = insights?.topCategories.map((cat, index) => ({
-    name: cat.category,
-    value: cat.opportunities,
-    color: COLORS[index % COLORS.length]
-  })) || [];
+  const categoryChartData =
+    insights?.topCategories.map((cat, index) => ({
+      name: cat.category,
+      value: cat.opportunities,
+      color: COLORS[index % COLORS.length],
+    })) || [];
 
   return (
     <Box>
@@ -106,7 +137,8 @@ const SkillInsights = () => {
         AI Skill Insights & Market Trends
       </Typography>
       <Typography variant="body2" color="text.secondary" paragraph>
-        Discover the most in-demand skills and market trends based on current internship postings.
+        Discover the most in-demand skills and market trends based on current
+        internship postings.
       </Typography>
 
       {/* Filters */}
@@ -118,7 +150,7 @@ const SkillInsights = () => {
               fullWidth
               label="Category"
               value={filters.category}
-              onChange={(e) => handleFilterChange('category', e.target.value)}
+              onChange={(e) => handleFilterChange("category", e.target.value)}
               size="small"
             >
               <MenuItem value="">All Categories</MenuItem>
@@ -134,7 +166,7 @@ const SkillInsights = () => {
               fullWidth
               label="Location"
               value={filters.location}
-              onChange={(e) => handleFilterChange('location', e.target.value)}
+              onChange={(e) => handleFilterChange("location", e.target.value)}
               placeholder="e.g., San Francisco"
               size="small"
             />
@@ -218,17 +250,19 @@ const SkillInsights = () => {
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={skillChartData}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
-                        dataKey="name" 
+                      <XAxis
+                        dataKey="name"
                         angle={-45}
                         textAnchor="end"
                         height={100}
                       />
                       <YAxis />
-                      <Tooltip 
+                      <Tooltip
                         formatter={(value, name) => [
-                          name === 'demand' ? `${value} opportunities` : `$${value}`,
-                          name === 'demand' ? 'Demand' : 'Avg Stipend'
+                          name === "demand"
+                            ? `${value} opportunities`
+                            : `$${value}`,
+                          name === "demand" ? "Demand" : "Avg Stipend",
                         ]}
                       />
                       <Bar dataKey="demand" fill="#8884d8" />
@@ -254,7 +288,9 @@ const SkillInsights = () => {
                         cx="50%"
                         cy="50%"
                         labelLine={false}
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        label={({ name, percent }) =>
+                          `${name} ${(percent * 100).toFixed(0)}%`
+                        }
                         outerRadius={80}
                         fill="#8884d8"
                         dataKey="value"
@@ -284,13 +320,20 @@ const SkillInsights = () => {
                     <ListItem key={skill.skill} divider>
                       <ListItemText
                         primary={
-                          <Box display="flex" alignItems="center" justifyContent="space-between">
-                            <Typography variant="body1" sx={{ textTransform: 'capitalize' }}>
+                          <Box
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="space-between"
+                          >
+                            <Typography
+                              variant="body1"
+                              sx={{ textTransform: "capitalize" }}
+                            >
                               {skill.skill}
                             </Typography>
-                            <Chip 
-                              label={`${skill.demand} jobs`} 
-                              size="small" 
+                            <Chip
+                              label={`${skill.demand} jobs`}
+                              size="small"
                               color="primary"
                             />
                           </Box>
@@ -301,12 +344,17 @@ const SkillInsights = () => {
                             <Typography variant="body2">
                               Avg: ${skill.avgStipend}/month
                             </Typography>
-                            <Box ml={2} display="flex" flexWrap="wrap" gap={0.5}>
+                            <Box
+                              ml={2}
+                              display="flex"
+                              flexWrap="wrap"
+                              gap={0.5}
+                            >
                               {skill.categories.slice(0, 2).map((cat, idx) => (
-                                <Chip 
+                                <Chip
                                   key={idx}
-                                  label={cat} 
-                                  size="small" 
+                                  label={cat}
+                                  size="small"
                                   variant="outlined"
                                 />
                               ))}
@@ -334,13 +382,17 @@ const SkillInsights = () => {
                     <ListItem key={location.location} divider>
                       <ListItemText
                         primary={
-                          <Box display="flex" alignItems="center" justifyContent="space-between">
+                          <Box
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="space-between"
+                          >
                             <Typography variant="body1">
                               {location.location}
                             </Typography>
-                            <Chip 
-                              label={`${location.opportunities} opportunities`} 
-                              size="small" 
+                            <Chip
+                              label={`${location.opportunities} opportunities`}
+                              size="small"
                               color="secondary"
                             />
                           </Box>
@@ -372,12 +424,12 @@ const SkillInsights = () => {
                 <Grid container spacing={2}>
                   {insights.topCategories.map((category, index) => (
                     <Grid item xs={12} sm={6} md={4} key={category.category}>
-                      <Paper 
-                        sx={{ 
-                          p: 2, 
-                          textAlign: 'center',
+                      <Paper
+                        sx={{
+                          p: 2,
+                          textAlign: "center",
                           bgcolor: `${COLORS[index % COLORS.length]}15`,
-                          border: `1px solid ${COLORS[index % COLORS.length]}30`
+                          border: `1px solid ${COLORS[index % COLORS.length]}30`,
                         }}
                       >
                         <Typography variant="h6" color="primary">
@@ -389,7 +441,12 @@ const SkillInsights = () => {
                         <Typography variant="body2" color="text.secondary">
                           opportunities
                         </Typography>
-                        <Box display="flex" alignItems="center" justifyContent="center" mt={1}>
+                        <Box
+                          display="flex"
+                          alignItems="center"
+                          justifyContent="center"
+                          mt={1}
+                        >
                           <AttachMoney fontSize="small" />
                           <Typography variant="body2">
                             ${category.avgStipend}/month avg

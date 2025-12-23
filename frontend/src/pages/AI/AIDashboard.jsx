@@ -1,22 +1,15 @@
-import React, { useState } from 'react';
-import {
-  Box,
-  Container,
-  Typography,
-  Tabs,
-  Tab,
-  Paper
-} from '@mui/material';
+import React, { useState } from "react";
+import { Box, Container, Typography, Tabs, Tab, Paper } from "@mui/material";
 import {
   AutoAwesome,
   Assessment,
   Psychology,
-  TrendingUp
-} from '@mui/icons-material';
-import AIRecommendations from '../../components/AI/AIRecommendations';
-import ResumeAnalyzer from '../../components/AI/ResumeAnalyzer';
-import PredictiveAnalytics from '../../components/AI/PredictiveAnalytics';
-import SkillInsights from '../../components/AI/SkillInsights';
+  TrendingUp,
+} from "@mui/icons-material";
+import AIRecommendations from "../../components/AI/AIRecommendations";
+import ResumeAnalyzer from "../../components/AI/ResumeAnalyzer";
+import PredictiveAnalytics from "../../components/AI/PredictiveAnalytics";
+import SkillInsights from "../../components/AI/SkillInsights";
 
 function TabPanel({ children, value, index, ...other }) {
   return (
@@ -27,11 +20,7 @@ function TabPanel({ children, value, index, ...other }) {
       aria-labelledby={`ai-tab-${index}`}
       {...other}
     >
-      {value === index && (
-        <Box sx={{ py: 3 }}>
-          {children}
-        </Box>
-      )}
+      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
     </div>
   );
 }
@@ -45,25 +34,25 @@ const AIDashboard = () => {
 
   const tabs = [
     {
-      label: 'Smart Recommendations',
+      label: "Smart Recommendations",
       icon: <AutoAwesome />,
-      component: <AIRecommendations />
+      component: <AIRecommendations />,
     },
     {
-      label: 'Resume Analyzer',
+      label: "Resume Analyzer",
       icon: <Assessment />,
-      component: <ResumeAnalyzer />
+      component: <ResumeAnalyzer />,
     },
     {
-      label: 'Success Predictor',
+      label: "Success Predictor",
       icon: <Psychology />,
-      component: <PredictiveAnalytics />
+      component: <PredictiveAnalytics />,
     },
     {
-      label: 'Market Insights',
+      label: "Market Insights",
       icon: <TrendingUp />,
-      component: <SkillInsights />
-    }
+      component: <SkillInsights />,
+    },
   ];
 
   return (
@@ -75,7 +64,8 @@ const AIDashboard = () => {
             AI Career Assistant
           </Typography>
           <Typography variant="h6" color="text.secondary" paragraph>
-            Leverage artificial intelligence to supercharge your internship search and career development
+            Leverage artificial intelligence to supercharge your internship
+            search and career development
           </Typography>
         </Box>
 
@@ -86,7 +76,7 @@ const AIDashboard = () => {
             onChange={handleTabChange}
             variant="scrollable"
             scrollButtons="auto"
-            sx={{ borderBottom: 1, borderColor: 'divider' }}
+            sx={{ borderBottom: 1, borderColor: "divider" }}
           >
             {tabs.map((tab, index) => (
               <Tab
@@ -94,7 +84,7 @@ const AIDashboard = () => {
                 icon={tab.icon}
                 label={tab.label}
                 iconPosition="start"
-                sx={{ minHeight: 64, textTransform: 'none' }}
+                sx={{ minHeight: 64, textTransform: "none" }}
               />
             ))}
           </Tabs>

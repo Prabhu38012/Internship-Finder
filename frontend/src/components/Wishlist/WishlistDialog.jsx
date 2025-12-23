@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -14,79 +14,79 @@ import {
   Box,
   Typography,
   Grid,
-  Autocomplete
-} from '@mui/material';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
-import dayjs from 'dayjs';
+  Autocomplete,
+} from "@mui/material";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
+import dayjs from "dayjs";
 
-const WishlistDialog = ({ 
-  open, 
-  onClose, 
-  onSave, 
-  item = null, 
-  internship = null 
+const WishlistDialog = ({
+  open,
+  onClose,
+  onSave,
+  item = null,
+  internship = null,
 }) => {
   const [formData, setFormData] = useState({
-    notes: '',
-    priority: 'medium',
-    category: 'interested',
-    applicationStatus: 'not_applied',
+    notes: "",
+    priority: "medium",
+    category: "interested",
+    applicationStatus: "not_applied",
     tags: [],
-    reminderDate: null
+    reminderDate: null,
   });
-  const [tagInput, setTagInput] = useState('');
+  const [tagInput, setTagInput] = useState("");
 
   useEffect(() => {
     if (item) {
       setFormData({
-        notes: item.notes || '',
-        priority: item.priority || 'medium',
-        category: item.category || 'interested',
-        applicationStatus: item.applicationStatus || 'not_applied',
+        notes: item.notes || "",
+        priority: item.priority || "medium",
+        category: item.category || "interested",
+        applicationStatus: item.applicationStatus || "not_applied",
         tags: item.tags || [],
-        reminderDate: item.reminderDate ? dayjs(item.reminderDate) : null
+        reminderDate: item.reminderDate ? dayjs(item.reminderDate) : null,
       });
     } else {
       setFormData({
-        notes: '',
-        priority: 'medium',
-        category: 'interested',
-        applicationStatus: 'not_applied',
+        notes: "",
+        priority: "medium",
+        category: "interested",
+        applicationStatus: "not_applied",
         tags: [],
-        reminderDate: null
+        reminderDate: null,
       });
     }
   }, [item, open]);
 
   const handleInputChange = (field) => (event) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: event.target.value
+      [field]: event.target.value,
     }));
   };
 
   const handleTagsChange = (event, newValue) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      tags: newValue
+      tags: newValue,
     }));
   };
 
   const handleDateChange = (date) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      reminderDate: date
+      reminderDate: date,
     }));
   };
 
   const handleSubmit = () => {
     const submitData = {
       ...formData,
-      internshipId: internship?._id || item?.internship?._id
+      internshipId: internship?._id || item?.internship?._id,
     };
-    
+
     if (item) {
       onSave(item._id, submitData);
     } else {
@@ -96,27 +96,27 @@ const WishlistDialog = ({
   };
 
   const predefinedTags = [
-    'High Priority',
-    'Dream Job',
-    'Good Fit',
-    'Remote',
-    'Good Stipend',
-    'Learning Opportunity',
-    'Career Growth',
-    'Flexible Hours',
-    'Startup',
-    'Big Company',
-    'Technical',
-    'Creative',
-    'Leadership'
+    "High Priority",
+    "Dream Job",
+    "Good Fit",
+    "Remote",
+    "Good Stipend",
+    "Learning Opportunity",
+    "Career Growth",
+    "Flexible Hours",
+    "Startup",
+    "Big Company",
+    "Technical",
+    "Creative",
+    "Leadership",
   ];
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>
-        {item ? 'Edit Wishlist Item' : 'Add to Wishlist'}
+        {item ? "Edit Wishlist Item" : "Add to Wishlist"}
       </DialogTitle>
-      
+
       <DialogContent>
         {(internship || item?.internship) && (
           <Box mb={3} p={2} bgcolor="grey.50" borderRadius={1}>
@@ -137,7 +137,7 @@ const WishlistDialog = ({
               multiline
               rows={3}
               value={formData.notes}
-              onChange={handleInputChange('notes')}
+              onChange={handleInputChange("notes")}
               placeholder="Add your thoughts about this internship..."
               helperText="Personal notes about why you're interested in this position"
             />
@@ -148,7 +148,7 @@ const WishlistDialog = ({
               <InputLabel>Priority</InputLabel>
               <Select
                 value={formData.priority}
-                onChange={handleInputChange('priority')}
+                onChange={handleInputChange("priority")}
                 label="Priority"
               >
                 <MenuItem value="low">Low</MenuItem>
@@ -163,7 +163,7 @@ const WishlistDialog = ({
               <InputLabel>Category</InputLabel>
               <Select
                 value={formData.category}
-                onChange={handleInputChange('category')}
+                onChange={handleInputChange("category")}
                 label="Category"
               >
                 <MenuItem value="interested">Interested</MenuItem>
@@ -180,13 +180,15 @@ const WishlistDialog = ({
               <InputLabel>Application Status</InputLabel>
               <Select
                 value={formData.applicationStatus}
-                onChange={handleInputChange('applicationStatus')}
+                onChange={handleInputChange("applicationStatus")}
                 label="Application Status"
               >
                 <MenuItem value="not_applied">Not Applied</MenuItem>
                 <MenuItem value="planning_to_apply">Planning to Apply</MenuItem>
                 <MenuItem value="applied">Applied</MenuItem>
-                <MenuItem value="no_longer_interested">No Longer Interested</MenuItem>
+                <MenuItem value="no_longer_interested">
+                  No Longer Interested
+                </MenuItem>
               </Select>
             </FormControl>
           </Grid>
@@ -200,8 +202,8 @@ const WishlistDialog = ({
                 slotProps={{
                   textField: {
                     fullWidth: true,
-                    helperText: "Set a reminder for this internship"
-                  }
+                    helperText: "Set a reminder for this internship",
+                  },
                 }}
                 minDateTime={dayjs()}
               />
@@ -240,12 +242,12 @@ const WishlistDialog = ({
 
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
-        <Button 
-          onClick={handleSubmit} 
+        <Button
+          onClick={handleSubmit}
           variant="contained"
           disabled={!formData.notes?.trim() && formData.tags.length === 0}
         >
-          {item ? 'Update' : 'Add to Wishlist'}
+          {item ? "Update" : "Add to Wishlist"}
         </Button>
       </DialogActions>
     </Dialog>

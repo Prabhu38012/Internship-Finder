@@ -1,19 +1,19 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
-import { Container, Typography, Button, Box } from '@mui/material'
-import { Home, ArrowBack } from '@mui/icons-material'
+import React from "react";
+import { Link } from "react-router-dom";
+import { Container, Typography, Button, Box } from "@mui/material";
+import { Home, ArrowBack } from "@mui/icons-material";
 
 const NotFound = () => {
   return (
-    <Container maxWidth="sm" sx={{ py: 8, textAlign: 'center' }}>
+    <Container maxWidth="sm" sx={{ py: 8, textAlign: "center" }}>
       <Box sx={{ mb: 4 }}>
         <Typography
           variant="h1"
           sx={{
-            fontSize: '6rem',
-            fontWeight: 'bold',
-            color: 'primary.main',
-            mb: 2
+            fontSize: "6rem",
+            fontWeight: "bold",
+            color: "primary.main",
+            mb: 2,
           }}
         >
           404
@@ -25,8 +25,15 @@ const NotFound = () => {
           The page you're looking for doesn't exist or has been moved.
         </Typography>
       </Box>
-      
-      <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+
+      <Box
+        sx={{
+          display: "flex",
+          gap: 2,
+          justifyContent: "center",
+          flexWrap: "wrap",
+        }}
+      >
         <Button
           variant="contained"
           startIcon={<Home />}
@@ -46,7 +53,7 @@ const NotFound = () => {
         </Button>
       </Box>
     </Container>
-  )
-}
+  );
+};
 
-export default NotFound
+export default NotFound;

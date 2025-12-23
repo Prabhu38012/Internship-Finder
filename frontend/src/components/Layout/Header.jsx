@@ -1,26 +1,26 @@
-import React, { useState } from 'react'
-import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { useSelector, useDispatch } from 'react-redux'
-import { Search, Bell, MessageSquare, User, Menu, X } from 'lucide-react'
-import { logout } from '../../store/slices/authSlice'
-import NotificationCenter from '../Notifications/NotificationCenter'
-import NotificationBell from '../Notifications/NotificationBell'
+import React, { useState } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import { Search, Bell, MessageSquare, User, Menu, X } from "lucide-react";
+import { logout } from "../../store/slices/authSlice";
+import NotificationCenter from "../Notifications/NotificationCenter";
+import NotificationBell from "../Notifications/NotificationBell";
 
 const Header = () => {
-  const navigate = useNavigate()
-  const location = useLocation()
-  const dispatch = useDispatch()
-  const { user } = useSelector((state) => state.auth)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [notificationCenterOpen, setNotificationCenterOpen] = useState(false)
-  const [showProfileMenu, setShowProfileMenu] = useState(false)
+  const navigate = useNavigate();
+  const location = useLocation();
+  const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [notificationCenterOpen, setNotificationCenterOpen] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   const handleSearch = (e) => {
-    e.preventDefault()
+    e.preventDefault();
     if (searchQuery.trim()) {
-      navigate(`/internships?search=${encodeURIComponent(searchQuery)}`)
+      navigate(`/internships?search=${encodeURIComponent(searchQuery)}`);
     }
-  }
+  };
 
   return (
     <header className="sticky top-0 z-40 bg-dark-800/90 backdrop-blur-xl border-b border-dark-600">
@@ -97,9 +97,9 @@ const Header = () => {
                       <hr className="my-2 border-dark-500" />
                       <button
                         onClick={() => {
-                          dispatch(logout())
-                          setShowProfileMenu(false)
-                          navigate('/')
+                          dispatch(logout());
+                          setShowProfileMenu(false);
+                          navigate("/");
                         }}
                         className="block w-full text-left px-4 py-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors"
                       >
@@ -136,7 +136,7 @@ const Header = () => {
         onNavigate={navigate}
       />
     </header>
-  )
-}
+  );
+};
 
-export default Header
+export default Header;

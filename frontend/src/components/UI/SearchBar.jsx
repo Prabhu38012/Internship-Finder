@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
-import { useDispatch, useSelector } from 'react-redux'
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import {
   TextField,
   InputAdornment,
@@ -8,57 +8,59 @@ import {
   Autocomplete,
   Paper,
   Box,
-  Typography
-} from '@mui/material'
-import { Search, Clear } from '@mui/icons-material'
-import { addToSearchHistory } from '../../store/slices/uiSlice'
-import { setFilters } from '../../store/slices/internshipSlice'
+  Typography,
+} from "@mui/material";
+import { Search, Clear } from "@mui/icons-material";
+import { addToSearchHistory } from "../../store/slices/uiSlice";
+import { setFilters } from "../../store/slices/internshipSlice";
 
-const SearchBar = ({ placeholder = "Search internships, companies, skills..." }) => {
-  const navigate = useNavigate()
-  const location = useLocation()
-  const dispatch = useDispatch()
+const SearchBar = ({
+  placeholder = "Search internships, companies, skills...",
+}) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const dispatch = useDispatch();
 
-  const { searchHistory } = useSelector((state) => state.ui)
-  const { filters } = useSelector((state) => state.internships)
+  const { searchHistory } = useSelector((state) => state.ui);
+  const { filters } = useSelector((state) => state.internships);
 
-  const [searchValue, setSearchValue] = useState(filters.search || '')
-  const [open, setOpen] = useState(false)
+  const [searchValue, setSearchValue] = useState(filters.search || "");
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    setSearchValue(filters.search || '')
-  }, [filters.search])
+    setSearchValue(filters.search || "");
+  }, [filters.search]);
 
   const handleSearch = (value) => {
     if (value?.trim()) {
-      dispatch(addToSearchHistory(value.trim()))
-      dispatch(setFilters({ search: value.trim() }))
+      dispatch(addToSearchHistory(value.trim()));
+      dispatch(setFilters({ search: value.trim() }));
 
       // Navigate to internships page if not already there
-      if (location.pathname !== '/internships') {
-        navigate('/internships')
+      if (location.pathname !== "/internships") {
+        navigate("/internships");
       }
     }
-  }
+  };
 
   const handleSubmit = (e) => {
-    e.preventDefault()
-    handleSearch(searchValue)
-    setOpen(false)
-  }
+    e.preventDefault();
+    handleSearch(searchValue);
+    setOpen(false);
+  };
 
   const handleClear = () => {
-    setSearchValue('')
-    dispatch(setFilters({ search: '' }))
-  }
+    setSearchValue("");
+    dispatch(setFilters({ search: "" }));
+  };
 
   const handleOptionSelect = (event, value) => {
     if (value) {
-      setSearchValue(value)
-      handleSearch(value)
-      setOpen(false)
+      setSearchValue(value);
+      handleSearch(value);
+      setOpen(false);
     }
-  }
+  };
 
   return (
     <form onSubmit={handleSubmit}>
@@ -69,7 +71,7 @@ const SearchBar = ({ placeholder = "Search internships, companies, skills..." })
         onClose={() => setOpen(false)}
         value={searchValue}
         onInputChange={(event, newValue) => {
-          setSearchValue(newValue)
+          setSearchValue(newValue);
         }}
         onChange={handleOptionSelect}
         options={searchHistory}
@@ -90,35 +92,31 @@ const SearchBar = ({ placeholder = "Search internships, companies, skills..." })
               endAdornment: (
                 <InputAdornment position="end">
                   {searchValue && (
-                    <IconButton
-                      size="small"
-                      onClick={handleClear}
-                      edge="end"
-                    >
+                    <IconButton size="small" onClick={handleClear} edge="end">
                       <Clear />
                     </IconButton>
                   )}
                 </InputAdornment>
               ),
               sx: {
-                backgroundColor: 'white',
+                backgroundColor: "white",
                 borderRadius: 2,
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'grey.300',
+                "& .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "grey.300",
                 },
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'primary.main',
+                "&:hover .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "primary.main",
                 },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'primary.main',
+                "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "primary.main",
                 },
-              }
+              },
             }}
           />
         )}
         renderOption={(props, option) => (
           <Box component="li" {...props}>
-            <Search sx={{ mr: 2, color: 'text.secondary' }} />
+            <Search sx={{ mr: 2, color: "text.secondary" }} />
             <Typography variant="body2">{option}</Typography>
           </Box>
         )}
@@ -137,7 +135,7 @@ const SearchBar = ({ placeholder = "Search internships, companies, skills..." })
         )}
       />
     </form>
-  )
-}
+  );
+};
 
-export default SearchBar
+export default SearchBar;

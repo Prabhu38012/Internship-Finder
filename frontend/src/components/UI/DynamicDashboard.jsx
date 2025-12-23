@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import { useSelector } from 'react-redux'
+import React, { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
 import {
   Box,
   Grid,
@@ -10,8 +10,8 @@ import {
   Chip,
   LinearProgress,
   IconButton,
-  Tooltip
-} from '@mui/material'
+  Tooltip,
+} from "@mui/material";
 import {
   TrendingUp,
   TrendingDown,
@@ -20,8 +20,8 @@ import {
   LocationOn,
   Schedule,
   Refresh,
-  Visibility
-} from '@mui/icons-material'
+  Visibility,
+} from "@mui/icons-material";
 import {
   BarChart,
   Bar,
@@ -36,17 +36,24 @@ import {
   LineChart,
   Line,
   AreaChart,
-  Area
-} from 'recharts'
-import { motion } from 'framer-motion'
-import AnimatedCard from './AnimatedCard'
+  Area,
+} from "recharts";
+import { motion } from "framer-motion";
+import AnimatedCard from "./AnimatedCard";
 
-const COLORS = ['#f59e0b', '#3b82f6', '#10b981', '#ef4444', '#8b5cf6', '#f97316']
+const COLORS = [
+  "#f59e0b",
+  "#3b82f6",
+  "#10b981",
+  "#ef4444",
+  "#8b5cf6",
+  "#f97316",
+];
 
 const DynamicDashboard = ({ data }) => {
-  const { user } = useSelector((state) => state.auth)
-  const [refreshing, setRefreshing] = useState(false)
-  const [viewMode, setViewMode] = useState('overview')
+  const { user } = useSelector((state) => state.auth);
+  const [refreshing, setRefreshing] = useState(false);
+  const [viewMode, setViewMode] = useState("overview");
 
   const mockData = {
     stats: {
@@ -54,50 +61,81 @@ const DynamicDashboard = ({ data }) => {
       newThisWeek: 89,
       applications: 156,
       interviews: 12,
-      offers: 3
+      offers: 3,
     },
     categoryData: [
-      { name: 'Software Dev', value: 35, count: 437 },
-      { name: 'Data Science', value: 20, count: 249 },
-      { name: 'Design', value: 15, count: 187 },
-      { name: 'Marketing', value: 12, count: 150 },
-      { name: 'Business', value: 10, count: 125 },
-      { name: 'Other', value: 8, count: 99 }
+      { name: "Software Dev", value: 35, count: 437 },
+      { name: "Data Science", value: 20, count: 249 },
+      { name: "Design", value: 15, count: 187 },
+      { name: "Marketing", value: 12, count: 150 },
+      { name: "Business", value: 10, count: 125 },
+      { name: "Other", value: 8, count: 99 },
     ],
     trendData: [
-      { month: 'Jan', internships: 120, applications: 45 },
-      { month: 'Feb', internships: 135, applications: 52 },
-      { month: 'Mar', internships: 148, applications: 61 },
-      { month: 'Apr', internships: 162, applications: 58 },
-      { month: 'May', internships: 178, applications: 67 },
-      { month: 'Jun', internships: 195, applications: 73 }
+      { month: "Jan", internships: 120, applications: 45 },
+      { month: "Feb", internships: 135, applications: 52 },
+      { month: "Mar", internships: 148, applications: 61 },
+      { month: "Apr", internships: 162, applications: 58 },
+      { month: "May", internships: 178, applications: 67 },
+      { month: "Jun", internships: 195, applications: 73 },
     ],
     topCompanies: [
-      { name: 'Google', logo: 'https://logo.clearbit.com/google.com', openings: 25, growth: 15 },
-      { name: 'Microsoft', logo: 'https://logo.clearbit.com/microsoft.com', openings: 22, growth: 12 },
-      { name: 'Amazon', logo: 'https://logo.clearbit.com/amazon.com', openings: 18, growth: -5 },
-      { name: 'Meta', logo: 'https://logo.clearbit.com/meta.com', openings: 16, growth: 8 },
-      { name: 'Netflix', logo: 'https://logo.clearbit.com/netflix.com', openings: 12, growth: 20 }
+      {
+        name: "Google",
+        logo: "https://logo.clearbit.com/google.com",
+        openings: 25,
+        growth: 15,
+      },
+      {
+        name: "Microsoft",
+        logo: "https://logo.clearbit.com/microsoft.com",
+        openings: 22,
+        growth: 12,
+      },
+      {
+        name: "Amazon",
+        logo: "https://logo.clearbit.com/amazon.com",
+        openings: 18,
+        growth: -5,
+      },
+      {
+        name: "Meta",
+        logo: "https://logo.clearbit.com/meta.com",
+        openings: 16,
+        growth: 8,
+      },
+      {
+        name: "Netflix",
+        logo: "https://logo.clearbit.com/netflix.com",
+        openings: 12,
+        growth: 20,
+      },
     ],
     locationData: [
-      { city: 'Bangalore', count: 245, percentage: 35 },
-      { city: 'Mumbai', count: 189, percentage: 27 },
-      { city: 'Delhi', count: 156, percentage: 22 },
-      { city: 'Hyderabad', count: 98, percentage: 14 },
-      { city: 'Pune', count: 67, percentage: 10 }
-    ]
-  }
+      { city: "Bangalore", count: 245, percentage: 35 },
+      { city: "Mumbai", count: 189, percentage: 27 },
+      { city: "Delhi", count: 156, percentage: 22 },
+      { city: "Hyderabad", count: 98, percentage: 14 },
+      { city: "Pune", count: 67, percentage: 10 },
+    ],
+  };
 
   const handleRefresh = async () => {
-    setRefreshing(true)
+    setRefreshing(true);
     // Simulate API call
-    setTimeout(() => setRefreshing(false), 2000)
-  }
+    setTimeout(() => setRefreshing(false), 2000);
+  };
 
-  const StatCard = ({ title, value, change, icon, color = 'primary' }) => (
+  const StatCard = ({ title, value, change, icon, color = "primary" }) => (
     <AnimatedCard>
       <CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
           <Box>
             <Typography variant="body2" color="text.secondary" gutterBottom>
               {title}
@@ -106,7 +144,7 @@ const DynamicDashboard = ({ data }) => {
               {value}
             </Typography>
             {change && (
-              <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+              <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
                 {change > 0 ? (
                   <TrendingUp color="success" fontSize="small" />
                 ) : (
@@ -114,7 +152,7 @@ const DynamicDashboard = ({ data }) => {
                 )}
                 <Typography
                   variant="body2"
-                  color={change > 0 ? 'success.main' : 'error.main'}
+                  color={change > 0 ? "success.main" : "error.main"}
                   sx={{ ml: 0.5 }}
                 >
                   {Math.abs(change)}% this week
@@ -128,12 +166,19 @@ const DynamicDashboard = ({ data }) => {
         </Box>
       </CardContent>
     </AnimatedCard>
-  )
+  );
 
   return (
     <Box sx={{ p: 3 }}>
       {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 4,
+        }}
+      >
         <Box>
           <Typography variant="h4" fontWeight="bold" gutterBottom>
             Dashboard Analytics
@@ -142,7 +187,7 @@ const DynamicDashboard = ({ data }) => {
             Real-time insights into internship trends and opportunities
           </Typography>
         </Box>
-        <Box sx={{ display: 'flex', gap: 1 }}>
+        <Box sx={{ display: "flex", gap: 1 }}>
           <Tooltip title="Refresh Data">
             <IconButton onClick={handleRefresh} disabled={refreshing}>
               <motion.div
@@ -154,7 +199,11 @@ const DynamicDashboard = ({ data }) => {
             </IconButton>
           </Tooltip>
           <Tooltip title="Change View">
-            <IconButton onClick={() => setViewMode(viewMode === 'overview' ? 'detailed' : 'overview')}>
+            <IconButton
+              onClick={() =>
+                setViewMode(viewMode === "overview" ? "detailed" : "overview")
+              }
+            >
               <Visibility />
             </IconButton>
           </Tooltip>
@@ -231,22 +280,27 @@ const DynamicDashboard = ({ data }) => {
                     dataKey="value"
                   >
                     {mockData.categoryData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={COLORS[index % COLORS.length]}
+                      />
                     ))}
                   </Pie>
-                  <RechartsTooltip formatter={(value) => [`${value}%`, 'Percentage']} />
+                  <RechartsTooltip
+                    formatter={(value) => [`${value}%`, "Percentage"]}
+                  />
                 </PieChart>
               </ResponsiveContainer>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 2 }}>
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 2 }}>
                 {mockData.categoryData.map((item, index) => (
                   <Chip
                     key={item.name}
                     label={`${item.name} (${item.count})`}
                     size="small"
-                    sx={{ 
+                    sx={{
                       bgcolor: COLORS[index % COLORS.length],
-                      color: 'white',
-                      '& .MuiChip-label': { fontWeight: 'medium' }
+                      color: "white",
+                      "& .MuiChip-label": { fontWeight: "medium" },
                     }}
                   />
                 ))}
@@ -297,7 +351,7 @@ const DynamicDashboard = ({ data }) => {
               <Typography variant="h6" gutterBottom fontWeight="medium">
                 Top Hiring Companies
               </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                 {mockData.topCompanies.map((company, index) => (
                   <motion.div
                     key={company.name}
@@ -305,17 +359,24 @@ const DynamicDashboard = ({ data }) => {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.1 }}
                   >
-                    <Box sx={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'space-between',
-                      p: 2,
-                      borderRadius: 2,
-                      bgcolor: 'background.default',
-                      '&:hover': { bgcolor: 'action.hover' }
-                    }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Avatar src={company.logo} sx={{ width: 40, height: 40 }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        p: 2,
+                        borderRadius: 2,
+                        bgcolor: "background.default",
+                        "&:hover": { bgcolor: "action.hover" },
+                      }}
+                    >
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 2 }}
+                      >
+                        <Avatar
+                          src={company.logo}
+                          sx={{ width: 40, height: 40 }}
+                        >
                           {company.name[0]}
                         </Avatar>
                         <Box>
@@ -327,7 +388,9 @@ const DynamicDashboard = ({ data }) => {
                           </Typography>
                         </Box>
                       </Box>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
                         {company.growth > 0 ? (
                           <TrendingUp color="success" fontSize="small" />
                         ) : (
@@ -335,7 +398,9 @@ const DynamicDashboard = ({ data }) => {
                         )}
                         <Typography
                           variant="body2"
-                          color={company.growth > 0 ? 'success.main' : 'error.main'}
+                          color={
+                            company.growth > 0 ? "success.main" : "error.main"
+                          }
                           fontWeight="medium"
                         >
                           {Math.abs(company.growth)}%
@@ -356,7 +421,7 @@ const DynamicDashboard = ({ data }) => {
               <Typography variant="h6" gutterBottom fontWeight="medium">
                 Top Locations
               </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                 {mockData.locationData.map((location, index) => (
                   <motion.div
                     key={location.city}
@@ -365,8 +430,16 @@ const DynamicDashboard = ({ data }) => {
                     transition={{ delay: index * 0.1 }}
                   >
                     <Box sx={{ mb: 2 }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          mb: 1,
+                        }}
+                      >
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
                           <LocationOn fontSize="small" color="action" />
                           <Typography variant="body2" fontWeight="medium">
                             {location.city}
@@ -382,11 +455,11 @@ const DynamicDashboard = ({ data }) => {
                         sx={{
                           height: 8,
                           borderRadius: 4,
-                          bgcolor: 'action.hover',
-                          '& .MuiLinearProgress-bar': {
+                          bgcolor: "action.hover",
+                          "& .MuiLinearProgress-bar": {
                             borderRadius: 4,
-                            bgcolor: COLORS[index % COLORS.length]
-                          }
+                            bgcolor: COLORS[index % COLORS.length],
+                          },
                         }}
                       />
                     </Box>
@@ -398,7 +471,7 @@ const DynamicDashboard = ({ data }) => {
         </Grid>
       </Grid>
     </Box>
-  )
-}
+  );
+};
 
-export default DynamicDashboard
+export default DynamicDashboard;

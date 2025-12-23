@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { useDispatch, useSelector } from 'react-redux'
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import {
   Container,
   Grid,
@@ -20,8 +20,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  InputAdornment
-} from '@mui/material'
+  InputAdornment,
+} from "@mui/material";
 import {
   Add,
   Delete,
@@ -29,230 +29,249 @@ import {
   AttachMoney,
   Business,
   Schedule,
-  Work
-} from '@mui/icons-material'
-import { Helmet } from 'react-helmet-async'
-import toast from 'react-hot-toast'
+  Work,
+} from "@mui/icons-material";
+import { Helmet } from "react-helmet-async";
+import toast from "react-hot-toast";
 
-import { getInternship, updateInternship } from '../../store/slices/internshipSlice'
-import LoadingSpinner from '../../components/UI/LoadingSpinner'
+import {
+  getInternship,
+  updateInternship,
+} from "../../store/slices/internshipSlice";
+import LoadingSpinner from "../../components/UI/LoadingSpinner";
 
 const EditInternship = () => {
-  const { id } = useParams()
-  const navigate = useNavigate()
-  const dispatch = useDispatch()
-  const { internship, isLoading } = useSelector((state) => state.internships)
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { internship, isLoading } = useSelector((state) => state.internships);
 
-  const [skillDialogOpen, setSkillDialogOpen] = useState(false)
-  const [newSkill, setNewSkill] = useState('')
+  const [skillDialogOpen, setSkillDialogOpen] = useState(false);
+  const [newSkill, setNewSkill] = useState("");
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    requirements: '',
-    responsibilities: '',
-    type: 'internship',
-    category: '',
+    title: "",
+    description: "",
+    requirements: "",
+    responsibilities: "",
+    type: "internship",
+    category: "",
     location: {
-      type: 'onsite',
-      city: '',
-      state: '',
-      country: '',
-      address: ''
+      type: "onsite",
+      city: "",
+      state: "",
+      country: "",
+      address: "",
     },
     remote: false,
     duration: {
       months: 3,
-      startDate: '',
-      endDate: ''
+      startDate: "",
+      endDate: "",
     },
     stipend: {
-      amount: '',
-      currency: 'USD',
-      period: 'monthly'
+      amount: "",
+      currency: "USD",
+      period: "monthly",
     },
     skills: [],
-    applicationDeadline: '',
+    applicationDeadline: "",
     positions: 1,
     benefits: [],
     companyInfo: {
-      name: '',
-      website: '',
-      industry: ''
-    }
-  })
+      name: "",
+      website: "",
+      industry: "",
+    },
+  });
 
   useEffect(() => {
     if (id) {
-      dispatch(getInternship(id))
+      dispatch(getInternship(id));
     }
-  }, [dispatch, id])
+  }, [dispatch, id]);
 
   useEffect(() => {
     if (internship) {
       setFormData({
-        title: internship.title || '',
-        description: internship.description || '',
-        requirements: internship.requirements || '',
-        responsibilities: internship.responsibilities || '',
-        type: internship.type || 'internship',
-        category: internship.category || '',
+        title: internship.title || "",
+        description: internship.description || "",
+        requirements: internship.requirements || "",
+        responsibilities: internship.responsibilities || "",
+        type: internship.type || "internship",
+        category: internship.category || "",
         location: {
-          type: internship.location?.type || 'onsite',
-          city: internship.location?.city || '',
-          state: internship.location?.state || '',
-          country: internship.location?.country || '',
-          address: internship.location?.address || ''
+          type: internship.location?.type || "onsite",
+          city: internship.location?.city || "",
+          state: internship.location?.state || "",
+          country: internship.location?.country || "",
+          address: internship.location?.address || "",
         },
         remote: internship.remote || false,
         duration: {
           months: internship.duration?.months || 3,
-          startDate: internship.duration?.startDate ?
-            new Date(internship.duration.startDate).toISOString().split('T')[0] : '',
-          endDate: internship.duration?.endDate ?
-            new Date(internship.duration.endDate).toISOString().split('T')[0] : ''
+          startDate: internship.duration?.startDate
+            ? new Date(internship.duration.startDate)
+                .toISOString()
+                .split("T")[0]
+            : "",
+          endDate: internship.duration?.endDate
+            ? new Date(internship.duration.endDate).toISOString().split("T")[0]
+            : "",
         },
         stipend: {
-          amount: internship.stipend?.amount || '',
-          currency: internship.stipend?.currency || 'USD',
-          period: internship.stipend?.period || 'monthly'
+          amount: internship.stipend?.amount || "",
+          currency: internship.stipend?.currency || "USD",
+          period: internship.stipend?.period || "monthly",
         },
         skills: internship.skills || [],
-        applicationDeadline: internship.applicationDeadline ?
-          new Date(internship.applicationDeadline).toISOString().split('T')[0] : '',
+        applicationDeadline: internship.applicationDeadline
+          ? new Date(internship.applicationDeadline).toISOString().split("T")[0]
+          : "",
         positions: internship.positions || 1,
         benefits: internship.benefits || [],
         companyInfo: {
-          name: internship.companyInfo?.name || '',
-          website: internship.companyInfo?.website || '',
-          industry: internship.companyInfo?.industry || ''
-        }
-      })
+          name: internship.companyInfo?.name || "",
+          website: internship.companyInfo?.website || "",
+          industry: internship.companyInfo?.industry || "",
+        },
+      });
     }
-  }, [internship])
+  }, [internship]);
 
   const handleInputChange = (field, value) => {
-    if (field.includes('.')) {
-      const [parent, child] = field.split('.')
-      setFormData(prev => ({
+    if (field.includes(".")) {
+      const [parent, child] = field.split(".");
+      setFormData((prev) => ({
         ...prev,
         [parent]: {
           ...prev[parent],
-          [child]: value
-        }
-      }))
+          [child]: value,
+        },
+      }));
     } else {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        [field]: value
-      }))
+        [field]: value,
+      }));
     }
-  }
+  };
 
   const handleLocationTypeChange = (type) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       location: {
         ...prev.location,
-        type
+        type,
       },
-      remote: type === 'remote'
-    }))
-  }
+      remote: type === "remote",
+    }));
+  };
 
   const addSkill = () => {
     if (newSkill.trim() && !formData.skills.includes(newSkill.trim())) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        skills: [...prev.skills, newSkill.trim()]
-      }))
-      setNewSkill('')
-      setSkillDialogOpen(false)
+        skills: [...prev.skills, newSkill.trim()],
+      }));
+      setNewSkill("");
+      setSkillDialogOpen(false);
     }
-  }
+  };
 
   const removeSkill = (skillToRemove) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      skills: prev.skills.filter(skill => skill !== skillToRemove)
-    }))
-  }
+      skills: prev.skills.filter((skill) => skill !== skillToRemove),
+    }));
+  };
 
   const handleSubmit = (e) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (!formData.title || !formData.description || !formData.category) {
-      toast.error('Please fill in all required fields')
-      return
+      toast.error("Please fill in all required fields");
+      return;
     }
 
     dispatch(updateInternship({ id, data: formData }))
       .unwrap()
       .then(() => {
-        toast.success('Internship updated successfully!')
-        navigate('/company/dashboard')
+        toast.success("Internship updated successfully!");
+        navigate("/company/dashboard");
       })
       .catch((error) => {
-        toast.error(error || 'Failed to update internship')
-      })
-  }
+        toast.error(error || "Failed to update internship");
+      });
+  };
 
   if (isLoading) {
-    return <LoadingSpinner message="Loading internship details..." />
+    return <LoadingSpinner message="Loading internship details..." />;
   }
 
   if (!internship) {
     return (
-      <Container maxWidth="md" sx={{ py: 8, textAlign: 'center' }}>
+      <Container maxWidth="md" sx={{ py: 8, textAlign: "center" }}>
         <Typography variant="h5" gutterBottom>
           Internship not found
         </Typography>
-        <Button variant="outlined" onClick={() => navigate('/company/dashboard')}>
+        <Button
+          variant="outlined"
+          onClick={() => navigate("/company/dashboard")}
+        >
           Back to Dashboard
         </Button>
       </Container>
-    )
+    );
   }
 
   const categories = [
-    'Software Development',
-    'Data Science',
-    'Marketing',
-    'Design',
-    'Finance',
-    'Human Resources',
-    'Sales',
-    'Operations',
-    'Research',
-    'Engineering',
-    'Product Management',
-    'Business Development'
-  ]
+    "Software Development",
+    "Data Science",
+    "Marketing",
+    "Design",
+    "Finance",
+    "Human Resources",
+    "Sales",
+    "Operations",
+    "Research",
+    "Engineering",
+    "Product Management",
+    "Business Development",
+  ];
 
   const industries = [
-    'Technology',
-    'Healthcare',
-    'Finance',
-    'Education',
-    'Retail',
-    'Manufacturing',
-    'Consulting',
-    'Media',
-    'Non-profit',
-    'Government',
-    'Automotive',
-    'Real Estate'
-  ]
+    "Technology",
+    "Healthcare",
+    "Finance",
+    "Education",
+    "Retail",
+    "Manufacturing",
+    "Consulting",
+    "Media",
+    "Non-profit",
+    "Government",
+    "Automotive",
+    "Real Estate",
+  ];
 
   return (
     <>
       <Helmet>
         <title>Edit Internship - InternQuest</title>
-        <meta name="description" content="Edit your internship posting details." />
+        <meta
+          name="description"
+          content="Edit your internship posting details."
+        />
       </Helmet>
 
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Box sx={{ mb: 4 }}>
-          <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
+          <Typography
+            variant="h4"
+            component="h1"
+            gutterBottom
+            fontWeight="bold"
+          >
             Edit Internship
           </Typography>
           <Typography variant="body1" color="text.secondary">
@@ -274,7 +293,9 @@ const EditInternship = () => {
                       <TextField
                         label="Internship Title *"
                         value={formData.title}
-                        onChange={(e) => handleInputChange('title', e.target.value)}
+                        onChange={(e) =>
+                          handleInputChange("title", e.target.value)
+                        }
                         fullWidth
                       />
                     </Grid>
@@ -285,7 +306,9 @@ const EditInternship = () => {
                         <Select
                           value={formData.category}
                           label="Category *"
-                          onChange={(e) => handleInputChange('category', e.target.value)}
+                          onChange={(e) =>
+                            handleInputChange("category", e.target.value)
+                          }
                         >
                           {categories.map((category) => (
                             <MenuItem key={category} value={category}>
@@ -302,11 +325,15 @@ const EditInternship = () => {
                         <Select
                           value={formData.type}
                           label="Type"
-                          onChange={(e) => handleInputChange('type', e.target.value)}
+                          onChange={(e) =>
+                            handleInputChange("type", e.target.value)
+                          }
                         >
                           <MenuItem value="internship">Internship</MenuItem>
                           <MenuItem value="co-op">Co-op</MenuItem>
-                          <MenuItem value="apprenticeship">Apprenticeship</MenuItem>
+                          <MenuItem value="apprenticeship">
+                            Apprenticeship
+                          </MenuItem>
                         </Select>
                       </FormControl>
                     </Grid>
@@ -315,7 +342,9 @@ const EditInternship = () => {
                       <TextField
                         label="Description *"
                         value={formData.description}
-                        onChange={(e) => handleInputChange('description', e.target.value)}
+                        onChange={(e) =>
+                          handleInputChange("description", e.target.value)
+                        }
                         multiline
                         rows={4}
                         fullWidth
@@ -326,7 +355,9 @@ const EditInternship = () => {
                       <TextField
                         label="Requirements"
                         value={formData.requirements}
-                        onChange={(e) => handleInputChange('requirements', e.target.value)}
+                        onChange={(e) =>
+                          handleInputChange("requirements", e.target.value)
+                        }
                         multiline
                         rows={3}
                         fullWidth
@@ -337,7 +368,9 @@ const EditInternship = () => {
                       <TextField
                         label="Responsibilities"
                         value={formData.responsibilities}
-                        onChange={(e) => handleInputChange('responsibilities', e.target.value)}
+                        onChange={(e) =>
+                          handleInputChange("responsibilities", e.target.value)
+                        }
                         multiline
                         rows={3}
                         fullWidth
@@ -361,7 +394,9 @@ const EditInternship = () => {
                       <Select
                         value={formData.location.type}
                         label="Location Type"
-                        onChange={(e) => handleLocationTypeChange(e.target.value)}
+                        onChange={(e) =>
+                          handleLocationTypeChange(e.target.value)
+                        }
                       >
                         <MenuItem value="onsite">On-site</MenuItem>
                         <MenuItem value="remote">Remote</MenuItem>
@@ -370,13 +405,15 @@ const EditInternship = () => {
                     </FormControl>
                   </Box>
 
-                  {formData.location.type !== 'remote' && (
+                  {formData.location.type !== "remote" && (
                     <Grid container spacing={2}>
                       <Grid item xs={12}>
                         <TextField
                           label="City"
                           value={formData.location.city}
-                          onChange={(e) => handleInputChange('location.city', e.target.value)}
+                          onChange={(e) =>
+                            handleInputChange("location.city", e.target.value)
+                          }
                           fullWidth
                           InputProps={{
                             startAdornment: (
@@ -391,7 +428,9 @@ const EditInternship = () => {
                         <TextField
                           label="State"
                           value={formData.location.state}
-                          onChange={(e) => handleInputChange('location.state', e.target.value)}
+                          onChange={(e) =>
+                            handleInputChange("location.state", e.target.value)
+                          }
                           fullWidth
                         />
                       </Grid>
@@ -399,7 +438,12 @@ const EditInternship = () => {
                         <TextField
                           label="Country"
                           value={formData.location.country}
-                          onChange={(e) => handleInputChange('location.country', e.target.value)}
+                          onChange={(e) =>
+                            handleInputChange(
+                              "location.country",
+                              e.target.value,
+                            )
+                          }
                           fullWidth
                         />
                       </Grid>
@@ -422,7 +466,12 @@ const EditInternship = () => {
                         label="Duration (months)"
                         type="number"
                         value={formData.duration.months}
-                        onChange={(e) => handleInputChange('duration.months', parseInt(e.target.value))}
+                        onChange={(e) =>
+                          handleInputChange(
+                            "duration.months",
+                            parseInt(e.target.value),
+                          )
+                        }
                         fullWidth
                         InputProps={{
                           startAdornment: (
@@ -438,7 +487,12 @@ const EditInternship = () => {
                         label="Positions Available"
                         type="number"
                         value={formData.positions}
-                        onChange={(e) => handleInputChange('positions', parseInt(e.target.value))}
+                        onChange={(e) =>
+                          handleInputChange(
+                            "positions",
+                            parseInt(e.target.value),
+                          )
+                        }
                         fullWidth
                         InputProps={{
                           startAdornment: (
@@ -454,7 +508,12 @@ const EditInternship = () => {
                         label="Start Date"
                         type="date"
                         value={formData.duration.startDate}
-                        onChange={(e) => handleInputChange('duration.startDate', e.target.value)}
+                        onChange={(e) =>
+                          handleInputChange(
+                            "duration.startDate",
+                            e.target.value,
+                          )
+                        }
                         fullWidth
                         InputLabelProps={{ shrink: true }}
                       />
@@ -464,7 +523,12 @@ const EditInternship = () => {
                         label="Application Deadline"
                         type="date"
                         value={formData.applicationDeadline}
-                        onChange={(e) => handleInputChange('applicationDeadline', e.target.value)}
+                        onChange={(e) =>
+                          handleInputChange(
+                            "applicationDeadline",
+                            e.target.value,
+                          )
+                        }
                         fullWidth
                         InputLabelProps={{ shrink: true }}
                       />
@@ -474,7 +538,9 @@ const EditInternship = () => {
                         label="Stipend Amount"
                         type="number"
                         value={formData.stipend.amount}
-                        onChange={(e) => handleInputChange('stipend.amount', e.target.value)}
+                        onChange={(e) =>
+                          handleInputChange("stipend.amount", e.target.value)
+                        }
                         fullWidth
                         InputProps={{
                           startAdornment: (
@@ -491,7 +557,9 @@ const EditInternship = () => {
                         <Select
                           value={formData.stipend.period}
                           label="Period"
-                          onChange={(e) => handleInputChange('stipend.period', e.target.value)}
+                          onChange={(e) =>
+                            handleInputChange("stipend.period", e.target.value)
+                          }
                         >
                           <MenuItem value="hourly">Hourly</MenuItem>
                           <MenuItem value="weekly">Weekly</MenuItem>
@@ -509,10 +577,15 @@ const EditInternship = () => {
             <Grid item xs={12}>
               <Card>
                 <CardContent>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                    <Typography variant="h6">
-                      Skills Required
-                    </Typography>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      mb: 2,
+                    }}
+                  >
+                    <Typography variant="h6">Skills Required</Typography>
                     <IconButton
                       onClick={() => setSkillDialogOpen(true)}
                       color="primary"
@@ -520,7 +593,7 @@ const EditInternship = () => {
                       <Add />
                     </IconButton>
                   </Box>
-                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                  <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
                     {formData.skills.map((skill, index) => (
                       <Chip
                         key={index}
@@ -543,10 +616,10 @@ const EditInternship = () => {
 
             {/* Submit Buttons */}
             <Grid item xs={12}>
-              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+              <Box sx={{ display: "flex", gap: 2, justifyContent: "flex-end" }}>
                 <Button
                   variant="outlined"
-                  onClick={() => navigate('/company/dashboard')}
+                  onClick={() => navigate("/company/dashboard")}
                   size="large"
                 >
                   Cancel
@@ -557,7 +630,7 @@ const EditInternship = () => {
                   size="large"
                   disabled={isLoading}
                 >
-                  {isLoading ? 'Updating...' : 'Update Internship'}
+                  {isLoading ? "Updating..." : "Update Internship"}
                 </Button>
               </Box>
             </Grid>
@@ -582,8 +655,8 @@ const EditInternship = () => {
               value={newSkill}
               onChange={(e) => setNewSkill(e.target.value)}
               onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  addSkill()
+                if (e.key === "Enter") {
+                  addSkill();
                 }
               }}
               placeholder="e.g., JavaScript, Python, React"
@@ -591,14 +664,18 @@ const EditInternship = () => {
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setSkillDialogOpen(false)}>Cancel</Button>
-            <Button onClick={addSkill} variant="contained" disabled={!newSkill.trim()}>
+            <Button
+              onClick={addSkill}
+              variant="contained"
+              disabled={!newSkill.trim()}
+            >
               Add
             </Button>
           </DialogActions>
         </Dialog>
       </Container>
     </>
-  )
-}
+  );
+};
 
-export default EditInternship
+export default EditInternship;

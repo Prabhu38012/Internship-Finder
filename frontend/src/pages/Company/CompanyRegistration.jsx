@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Container,
   Paper,
@@ -15,101 +15,104 @@ import {
   Step,
   StepLabel,
   Alert,
-  CircularProgress
-} from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
-import { motion } from 'framer-motion';
-import { companyAPI } from '../../services/api';
-import { setCredentials } from '../../store/slices/authSlice';
+  CircularProgress,
+} from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { motion } from "framer-motion";
+import { companyAPI } from "../../services/api";
+import { setCredentials } from "../../store/slices/authSlice";
 
 const industries = [
-  'Technology',
-  'Healthcare',
-  'Finance',
-  'Education',
-  'Manufacturing',
-  'Retail',
-  'Consulting',
-  'Media & Entertainment',
-  'Real Estate',
-  'Transportation',
-  'Energy',
-  'Non-Profit',
-  'Government',
-  'Other'
+  "Technology",
+  "Healthcare",
+  "Finance",
+  "Education",
+  "Manufacturing",
+  "Retail",
+  "Consulting",
+  "Media & Entertainment",
+  "Real Estate",
+  "Transportation",
+  "Energy",
+  "Non-Profit",
+  "Government",
+  "Other",
 ];
 
 const companySizes = [
-  '1-10',
-  '11-50',
-  '51-200',
-  '201-500',
-  '501-1000',
-  '1000+'
+  "1-10",
+  "11-50",
+  "51-200",
+  "201-500",
+  "501-1000",
+  "1000+",
 ];
 
-const steps = ['Company Details', 'Contact Information', 'Location & Verification'];
+const steps = [
+  "Company Details",
+  "Contact Information",
+  "Location & Verification",
+];
 
 const CompanyRegistration = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const [formData, setFormData] = useState({
     // Step 1: Company Details
-    companyName: '',
-    companyEmail: '',
-    password: '',
-    confirmPassword: '',
-    description: '',
-    industry: '',
-    companySize: '',
-    foundedYear: '',
-    website: '',
-    linkedinUrl: '',
-    
+    companyName: "",
+    companyEmail: "",
+    password: "",
+    confirmPassword: "",
+    description: "",
+    industry: "",
+    companySize: "",
+    foundedYear: "",
+    website: "",
+    linkedinUrl: "",
+
     // Step 2: Contact Information
-    hrName: '',
-    hrEmail: '',
-    hrPhone: '',
-    
+    hrName: "",
+    hrEmail: "",
+    hrPhone: "",
+
     // Step 3: Location
-    address: '',
-    city: '',
-    state: '',
-    country: 'India',
-    zipCode: ''
+    address: "",
+    city: "",
+    state: "",
+    country: "India",
+    zipCode: "",
   });
 
   const handleInputChange = (field) => (event) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: event.target.value
+      [field]: event.target.value,
     }));
-    setError('');
+    setError("");
   };
 
   const validateStep = (step) => {
     switch (step) {
       case 0:
-        return formData.companyName && 
-               formData.companyEmail && 
-               formData.password && 
-               formData.confirmPassword &&
-               formData.description &&
-               formData.industry &&
-               formData.companySize &&
-               formData.password === formData.confirmPassword;
+        return (
+          formData.companyName &&
+          formData.companyEmail &&
+          formData.password &&
+          formData.confirmPassword &&
+          formData.description &&
+          formData.industry &&
+          formData.companySize &&
+          formData.password === formData.confirmPassword
+        );
       case 1:
-        return formData.hrName && 
-               formData.hrEmail && 
-               formData.hrPhone;
+        return formData.hrName && formData.hrEmail && formData.hrPhone;
       case 2:
-        return formData.city && 
-               formData.state;
+        return formData.city && formData.state;
       default:
         return false;
     }
@@ -117,29 +120,29 @@ const CompanyRegistration = () => {
 
   const handleNext = () => {
     if (validateStep(activeStep)) {
-      setActiveStep(prev => prev + 1);
+      setActiveStep((prev) => prev + 1);
     } else {
-      setError('Please fill in all required fields');
+      setError("Please fill in all required fields");
     }
   };
 
   const handleBack = () => {
-    setActiveStep(prev => prev - 1);
+    setActiveStep((prev) => prev - 1);
   };
 
   const handleSubmit = async () => {
     if (!validateStep(activeStep)) {
-      setError('Please fill in all required fields');
+      setError("Please fill in all required fields");
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      setError("Passwords do not match");
       return;
     }
 
     setLoading(true);
-    setError('');
+    setError("");
 
     try {
       const registrationData = {
@@ -149,7 +152,9 @@ const CompanyRegistration = () => {
         description: formData.description,
         industry: formData.industry,
         companySize: formData.companySize,
-        foundedYear: formData.foundedYear ? parseInt(formData.foundedYear) : undefined,
+        foundedYear: formData.foundedYear
+          ? parseInt(formData.foundedYear)
+          : undefined,
         website: formData.website,
         linkedinUrl: formData.linkedinUrl,
         hrName: formData.hrName,
@@ -159,22 +164,27 @@ const CompanyRegistration = () => {
         city: formData.city,
         state: formData.state,
         country: formData.country,
-        zipCode: formData.zipCode
+        zipCode: formData.zipCode,
       };
 
       const response = await companyAPI.register(registrationData);
-      
+
       // Store authentication data
-      dispatch(setCredentials({
-        user: response.data.company,
-        token: response.data.token,
-        userType: 'company'
-      }));
+      dispatch(
+        setCredentials({
+          user: response.data.company,
+          token: response.data.token,
+          userType: "company",
+        }),
+      );
 
       // Navigate to company dashboard
-      navigate('/company/dashboard');
+      navigate("/company/dashboard");
     } catch (error) {
-      setError(error.response?.data?.message || 'Registration failed. Please try again.');
+      setError(
+        error.response?.data?.message ||
+          "Registration failed. Please try again.",
+      );
     } finally {
       setLoading(false);
     }
@@ -190,7 +200,7 @@ const CompanyRegistration = () => {
                 fullWidth
                 label="Company Name *"
                 value={formData.companyName}
-                onChange={handleInputChange('companyName')}
+                onChange={handleInputChange("companyName")}
                 required
               />
             </Grid>
@@ -200,7 +210,7 @@ const CompanyRegistration = () => {
                 label="Company Email *"
                 type="email"
                 value={formData.companyEmail}
-                onChange={handleInputChange('companyEmail')}
+                onChange={handleInputChange("companyEmail")}
                 required
               />
             </Grid>
@@ -210,7 +220,7 @@ const CompanyRegistration = () => {
                 label="Password *"
                 type="password"
                 value={formData.password}
-                onChange={handleInputChange('password')}
+                onChange={handleInputChange("password")}
                 required
               />
             </Grid>
@@ -220,10 +230,18 @@ const CompanyRegistration = () => {
                 label="Confirm Password *"
                 type="password"
                 value={formData.confirmPassword}
-                onChange={handleInputChange('confirmPassword')}
+                onChange={handleInputChange("confirmPassword")}
                 required
-                error={formData.password !== formData.confirmPassword && formData.confirmPassword !== ''}
-                helperText={formData.password !== formData.confirmPassword && formData.confirmPassword !== '' ? 'Passwords do not match' : ''}
+                error={
+                  formData.password !== formData.confirmPassword &&
+                  formData.confirmPassword !== ""
+                }
+                helperText={
+                  formData.password !== formData.confirmPassword &&
+                  formData.confirmPassword !== ""
+                    ? "Passwords do not match"
+                    : ""
+                }
               />
             </Grid>
             <Grid item xs={12} md={6}>
@@ -231,7 +249,7 @@ const CompanyRegistration = () => {
                 <InputLabel>Industry *</InputLabel>
                 <Select
                   value={formData.industry}
-                  onChange={handleInputChange('industry')}
+                  onChange={handleInputChange("industry")}
                   label="Industry *"
                 >
                   {industries.map((industry) => (
@@ -247,7 +265,7 @@ const CompanyRegistration = () => {
                 <InputLabel>Company Size *</InputLabel>
                 <Select
                   value={formData.companySize}
-                  onChange={handleInputChange('companySize')}
+                  onChange={handleInputChange("companySize")}
                   label="Company Size *"
                 >
                   {companySizes.map((size) => (
@@ -264,7 +282,7 @@ const CompanyRegistration = () => {
                 label="Founded Year"
                 type="number"
                 value={formData.foundedYear}
-                onChange={handleInputChange('foundedYear')}
+                onChange={handleInputChange("foundedYear")}
                 inputProps={{ min: 1800, max: new Date().getFullYear() }}
               />
             </Grid>
@@ -275,7 +293,7 @@ const CompanyRegistration = () => {
                 multiline
                 rows={4}
                 value={formData.description}
-                onChange={handleInputChange('description')}
+                onChange={handleInputChange("description")}
                 required
                 helperText="Describe your company, culture, and what makes it unique"
               />
@@ -285,7 +303,7 @@ const CompanyRegistration = () => {
                 fullWidth
                 label="Website"
                 value={formData.website}
-                onChange={handleInputChange('website')}
+                onChange={handleInputChange("website")}
                 placeholder="https://www.yourcompany.com"
               />
             </Grid>
@@ -294,7 +312,7 @@ const CompanyRegistration = () => {
                 fullWidth
                 label="LinkedIn URL"
                 value={formData.linkedinUrl}
-                onChange={handleInputChange('linkedinUrl')}
+                onChange={handleInputChange("linkedinUrl")}
                 placeholder="https://linkedin.com/company/yourcompany"
               />
             </Grid>
@@ -309,7 +327,8 @@ const CompanyRegistration = () => {
                 HR Contact Information
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                This person will be the primary contact for internship applications
+                This person will be the primary contact for internship
+                applications
               </Typography>
             </Grid>
             <Grid item xs={12} md={6}>
@@ -317,7 +336,7 @@ const CompanyRegistration = () => {
                 fullWidth
                 label="HR Contact Name *"
                 value={formData.hrName}
-                onChange={handleInputChange('hrName')}
+                onChange={handleInputChange("hrName")}
                 required
               />
             </Grid>
@@ -327,7 +346,7 @@ const CompanyRegistration = () => {
                 label="HR Email *"
                 type="email"
                 value={formData.hrEmail}
-                onChange={handleInputChange('hrEmail')}
+                onChange={handleInputChange("hrEmail")}
                 required
               />
             </Grid>
@@ -336,7 +355,7 @@ const CompanyRegistration = () => {
                 fullWidth
                 label="HR Phone Number *"
                 value={formData.hrPhone}
-                onChange={handleInputChange('hrPhone')}
+                onChange={handleInputChange("hrPhone")}
                 required
                 placeholder="+91 9876543210"
               />
@@ -357,7 +376,7 @@ const CompanyRegistration = () => {
                 fullWidth
                 label="Address"
                 value={formData.address}
-                onChange={handleInputChange('address')}
+                onChange={handleInputChange("address")}
                 multiline
                 rows={2}
               />
@@ -367,7 +386,7 @@ const CompanyRegistration = () => {
                 fullWidth
                 label="City *"
                 value={formData.city}
-                onChange={handleInputChange('city')}
+                onChange={handleInputChange("city")}
                 required
               />
             </Grid>
@@ -376,7 +395,7 @@ const CompanyRegistration = () => {
                 fullWidth
                 label="State *"
                 value={formData.state}
-                onChange={handleInputChange('state')}
+                onChange={handleInputChange("state")}
                 required
               />
             </Grid>
@@ -385,7 +404,7 @@ const CompanyRegistration = () => {
                 fullWidth
                 label="Country"
                 value={formData.country}
-                onChange={handleInputChange('country')}
+                onChange={handleInputChange("country")}
                 disabled
               />
             </Grid>
@@ -394,7 +413,7 @@ const CompanyRegistration = () => {
                 fullWidth
                 label="ZIP Code"
                 value={formData.zipCode}
-                onChange={handleInputChange('zipCode')}
+                onChange={handleInputChange("zipCode")}
               />
             </Grid>
           </Grid>
@@ -413,12 +432,13 @@ const CompanyRegistration = () => {
         transition={{ duration: 0.5 }}
       >
         <Paper elevation={3} sx={{ p: 4 }}>
-          <Box sx={{ mb: 4, textAlign: 'center' }}>
+          <Box sx={{ mb: 4, textAlign: "center" }}>
             <Typography variant="h4" component="h1" gutterBottom>
               Company Registration
             </Typography>
             <Typography variant="body1" color="text.secondary">
-              Join our platform to post internship opportunities and connect with talented students
+              Join our platform to post internship opportunities and connect
+              with talented students
             </Typography>
           </Box>
 
@@ -436,11 +456,9 @@ const CompanyRegistration = () => {
             </Alert>
           )}
 
-          <Box sx={{ mb: 4 }}>
-            {renderStepContent(activeStep)}
-          </Box>
+          <Box sx={{ mb: 4 }}>{renderStepContent(activeStep)}</Box>
 
-          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+          <Box sx={{ display: "flex", justifyContent: "space-between" }}>
             <Button
               disabled={activeStep === 0}
               onClick={handleBack}
@@ -457,7 +475,7 @@ const CompanyRegistration = () => {
                   disabled={loading || !validateStep(activeStep)}
                   startIcon={loading && <CircularProgress size={20} />}
                 >
-                  {loading ? 'Registering...' : 'Complete Registration'}
+                  {loading ? "Registering..." : "Complete Registration"}
                 </Button>
               ) : (
                 <Button
@@ -471,9 +489,9 @@ const CompanyRegistration = () => {
             </Box>
           </Box>
 
-          <Box sx={{ mt: 3, textAlign: 'center' }}>
+          <Box sx={{ mt: 3, textAlign: "center" }}>
             <Typography variant="body2" color="text.secondary">
-              Already have an account?{' '}
+              Already have an account?{" "}
               <Button
                 component="a"
                 href="/company/login"

@@ -1,106 +1,151 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import { BrowserRouter } from 'react-router-dom'
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
 
 // Suppress React Router v7 deprecation warnings and socket warnings during development
-const originalWarn = console.warn
-const originalError = console.error
+const originalWarn = console.warn;
+const originalError = console.error;
 
 console.warn = (...args) => {
-  const message = args[0]?.toString() || ''
+  const message = args[0]?.toString() || "";
 
   // Suppress React Router warnings
-  if (message.includes('React Router Future Flag Warning')) {
-    return
+  if (message.includes("React Router Future Flag Warning")) {
+    return;
   }
 
   // Suppress socket warnings during development when server might not be ready
-  if (message.includes('Socket not available for event:') ||
-    message.includes('Connection throttled') ||
-    message.includes('Connection attempt without token') ||
-    message.includes('Connection timeout') ||
-    message.includes('attempting reconnect') ||
-    message.includes('Socket not connected')) {
-    return
+  if (
+    message.includes("Socket not available for event:") ||
+    message.includes("Connection throttled") ||
+    message.includes("Connection attempt without token") ||
+    message.includes("Connection timeout") ||
+    message.includes("attempting reconnect") ||
+    message.includes("Socket not connected")
+  ) {
+    return;
   }
 
   // Suppress browser extension or external warnings
-  if (message.includes('PC_plat')) {
-    return
+  if (message.includes("PC_plat")) {
+    return;
   }
 
-  originalWarn.apply(console, args)
-}
+  originalWarn.apply(console, args);
+};
 
 console.error = (...args) => {
-  const message = args[0]?.toString() || ''
-  const stack = args[0]?.stack?.toString() || ''
+  const message = args[0]?.toString() || "";
+  const stack = args[0]?.stack?.toString() || "";
 
   // Suppress WebSocket connection errors during development
-  if (message.includes('WebSocket connection to') ||
-    message.includes('WebSocket is closed before the connection is established') ||
-    message.includes('socket.io') ||
-    message.includes('socketService') ||
-    message.includes('Connection error:') ||
-    message.includes('failed: WebSocket is closed') ||
-    message.includes('clientVersion=') ||
-    message.includes('XMLHttpRequest') ||
-    message.includes('XHR') ||
-    message.includes('transport=websocket')) {
-    return
+  if (
+    message.includes("WebSocket connection to") ||
+    message.includes(
+      "WebSocket is closed before the connection is established",
+    ) ||
+    message.includes("socket.io") ||
+    message.includes("socketService") ||
+    message.includes("Connection error:") ||
+    message.includes("failed: WebSocket is closed") ||
+    message.includes("clientVersion=") ||
+    message.includes("XMLHttpRequest") ||
+    message.includes("XHR") ||
+    message.includes("transport=websocket")
+  ) {
+    return;
   }
 
   // Suppress Chrome extension errors
-  if (message.includes('chrome-extension://') ||
-    stack.includes('chrome-extension://') ||
-    message.includes('extension')) {
-    return
+  if (
+    message.includes("chrome-extension://") ||
+    stack.includes("chrome-extension://") ||
+    message.includes("extension")
+  ) {
+    return;
   }
 
-  originalError.apply(console, args)
-}
+  originalError.apply(console, args);
+};
 
 // Suppress unhandled promise rejections from WebSocket
-window.addEventListener('unhandledrejection', (event) => {
-  const message = event.reason?.toString() || ''
-  if (message.includes('WebSocket') ||
-    message.includes('socket.io') ||
-    message.includes('Connection')) {
-    event.preventDefault()
+window.addEventListener("unhandledrejection", (event) => {
+  const message = event.reason?.toString() || "";
+  if (
+    message.includes("WebSocket") ||
+    message.includes("socket.io") ||
+    message.includes("Connection")
+  ) {
+    event.preventDefault();
   }
-})
+});
 
 // Suppress browser-level errors from WebSocket and extensions
-window.addEventListener('error', (event) => {
-  const message = event.message?.toString() || ''
-  const filename = event.filename?.toString() || ''
+window.addEventListener(
+  "error",
+  (event) => {
+    const message = event.message?.toString() || "";
+    const filename = event.filename?.toString() || "";
 
-  // Suppress WebSocket errors
-  if (message.includes('WebSocket') ||
-    message.includes('socket.io') ||
-    message.includes('socketService')) {
-    event.preventDefault()
-    return false
+    // Suppress WebSocket errors
+    if (
+      message.includes("WebSocket") ||
+      message.includes("socket.io") ||
+      message.includes("socketService")
+    ) {
+      event.preventDefault();
+      return false;
+    }
+
+    // Suppress Chrome extension errors
+    if (
+      filename.includes("chrome-extension://") ||
+      message.includes("chrome-extension://")
+    ) {
+      event.preventDefault();
+      return false;
+    }
+  },
+  true,
+);
+
+import { Provider } from "react-redux";
+import { QueryClient, QueryClientProvider } from "react-query";
+import { ThemeProvider, createTheme } from "@mui/material/styles";
+import CssBaseline from "@mui/material/CssBaseline";
+import { HelmetProvider } from "react-helmet-async";
+import { Toaster } from "react-hot-toast";
+
+import App from "./App.jsx";
+import { store } from "./store/store.js";
+import "./index.css";
+
+// ===== Web Vitals Tracking =====
+// Track Core Web Vitals for performance monitoring
+import { onCLS, onINP, onFCP, onLCP, onTTFB } from "web-vitals";
+
+const reportWebVitals = (metric) => {
+  // Log to console in development
+  if (import.meta.env.DEV) {
+    console.log(`[Web Vitals] ${metric.name}:`, Math.round(metric.value), "ms");
   }
 
-  // Suppress Chrome extension errors
-  if (filename.includes('chrome-extension://') ||
-    message.includes('chrome-extension://')) {
-    event.preventDefault()
-    return false
-  }
-}, true)
+  // Send to analytics in production
+  // Example: Google Analytics, custom endpoint, etc.
+  // if (import.meta.env.PROD) {
+  //   gtag('event', metric.name, {
+  //     value: Math.round(metric.value),
+  //     event_label: metric.id,
+  //   })
+  // }
+};
 
-import { Provider } from 'react-redux'
-import { QueryClient, QueryClientProvider } from 'react-query'
-import { ThemeProvider, createTheme } from '@mui/material/styles'
-import CssBaseline from '@mui/material/CssBaseline'
-import { HelmetProvider } from 'react-helmet-async'
-import { Toaster } from 'react-hot-toast'
-
-import App from './App.jsx'
-import { store } from './store/store.js'
-import './index.css'
+// Initialize web vitals tracking
+onCLS(reportWebVitals); // Cumulative Layout Shift
+onINP(reportWebVitals); // Interaction to Next Paint (replaced FID in v5)
+onFCP(reportWebVitals); // First Contentful Paint
+onLCP(reportWebVitals); // Largest Contentful Paint
+onTTFB(reportWebVitals); // Time to First Byte
 
 // Create React Query client
 const queryClient = new QueryClient({
@@ -111,46 +156,46 @@ const queryClient = new QueryClient({
       staleTime: 5 * 60 * 1000, // 5 minutes
     },
   },
-})
+});
 
 // Create Material-UI theme - Dark Mode
 const theme = createTheme({
   palette: {
-    mode: 'dark',
+    mode: "dark",
     primary: {
-      main: '#3b82f6',
-      light: '#60a5fa',
-      dark: '#2563eb',
+      main: "#3b82f6",
+      light: "#60a5fa",
+      dark: "#2563eb",
     },
     secondary: {
-      main: '#d946ef',
-      light: '#e879f9',
-      dark: '#c026d3',
+      main: "#d946ef",
+      light: "#e879f9",
+      dark: "#c026d3",
     },
     background: {
-      default: '#0f0f1a',
-      paper: '#1a1a2e',
+      default: "#0f0f1a",
+      paper: "#1a1a2e",
     },
     text: {
-      primary: '#f3f4f6',
-      secondary: '#9ca3af',
+      primary: "#f3f4f6",
+      secondary: "#9ca3af",
     },
-    divider: 'rgba(255, 255, 255, 0.08)',
+    divider: "rgba(255, 255, 255, 0.08)",
     action: {
-      hover: 'rgba(255, 255, 255, 0.05)',
-      selected: 'rgba(59, 130, 246, 0.15)',
+      hover: "rgba(255, 255, 255, 0.05)",
+      selected: "rgba(59, 130, 246, 0.15)",
     },
     success: {
-      main: '#22c55e',
+      main: "#22c55e",
     },
     error: {
-      main: '#ef4444',
+      main: "#ef4444",
     },
     warning: {
-      main: '#f59e0b',
+      main: "#f59e0b",
     },
     info: {
-      main: '#06b6d4',
+      main: "#06b6d4",
     },
   },
   typography: {
@@ -181,14 +226,14 @@ const theme = createTheme({
     MuiButton: {
       styleOverrides: {
         root: {
-          textTransform: 'none',
+          textTransform: "none",
           fontWeight: 500,
           borderRadius: 12,
         },
         contained: {
-          boxShadow: 'none',
-          '&:hover': {
-            boxShadow: '0 4px 12px rgba(59, 130, 246, 0.25)',
+          boxShadow: "none",
+          "&:hover": {
+            boxShadow: "0 4px 12px rgba(59, 130, 246, 0.25)",
           },
         },
       },
@@ -196,9 +241,9 @@ const theme = createTheme({
     MuiCard: {
       styleOverrides: {
         root: {
-          backgroundColor: '#1a1a2e',
-          border: '1px solid rgba(255, 255, 255, 0.05)',
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+          backgroundColor: "#1a1a2e",
+          border: "1px solid rgba(255, 255, 255, 0.05)",
+          boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)",
           borderRadius: 16,
         },
       },
@@ -206,8 +251,8 @@ const theme = createTheme({
     MuiPaper: {
       styleOverrides: {
         root: {
-          backgroundColor: '#1a1a2e',
-          backgroundImage: 'none',
+          backgroundColor: "#1a1a2e",
+          backgroundImage: "none",
         },
       },
     },
@@ -221,29 +266,29 @@ const theme = createTheme({
     MuiTableCell: {
       styleOverrides: {
         root: {
-          borderColor: 'rgba(255, 255, 255, 0.05)',
+          borderColor: "rgba(255, 255, 255, 0.05)",
         },
       },
     },
     MuiDrawer: {
       styleOverrides: {
         paper: {
-          backgroundColor: '#12121f',
-          borderColor: 'rgba(255, 255, 255, 0.05)',
+          backgroundColor: "#12121f",
+          borderColor: "rgba(255, 255, 255, 0.05)",
         },
       },
     },
     MuiTabs: {
       styleOverrides: {
         indicator: {
-          backgroundColor: '#3b82f6',
+          backgroundColor: "#3b82f6",
         },
       },
     },
     MuiTab: {
       styleOverrides: {
         root: {
-          textTransform: 'none',
+          textTransform: "none",
           fontWeight: 500,
         },
       },
@@ -251,7 +296,7 @@ const theme = createTheme({
     MuiLinearProgress: {
       styleOverrides: {
         root: {
-          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          backgroundColor: "rgba(59, 130, 246, 0.1)",
           borderRadius: 4,
         },
         bar: {
@@ -260,9 +305,9 @@ const theme = createTheme({
       },
     },
   },
-})
+});
 
-ReactDOM.createRoot(document.getElementById('root')).render(
+ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <HelmetProvider>
       <Provider store={store}>
@@ -276,21 +321,21 @@ ReactDOM.createRoot(document.getElementById('root')).render(
                 toastOptions={{
                   duration: 4000,
                   style: {
-                    background: '#363636',
-                    color: '#fff',
+                    background: "#363636",
+                    color: "#fff",
                   },
                   success: {
                     duration: 3000,
                     iconTheme: {
-                      primary: '#10b981',
-                      secondary: '#fff',
+                      primary: "#10b981",
+                      secondary: "#fff",
                     },
                   },
                   error: {
                     duration: 5000,
                     iconTheme: {
-                      primary: '#ef4444',
-                      secondary: '#fff',
+                      primary: "#ef4444",
+                      secondary: "#fff",
                     },
                   },
                 }}
@@ -301,4 +346,4 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       </Provider>
     </HelmetProvider>
   </React.StrictMode>,
-)
+);

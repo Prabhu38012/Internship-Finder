@@ -1,46 +1,70 @@
-import React, { useEffect } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
-import { useDispatch, useSelector } from 'react-redux'
-import { Helmet } from 'react-helmet-async'
+import React, { useEffect, lazy, Suspense } from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { Helmet } from "react-helmet-async";
 
-// Components
-import Layout from './components/Layout/Layout'
-import ProtectedRoute from './components/Auth/ProtectedRoute'
-import LoadingSpinner from './components/UI/LoadingSpinner'
+// Components - Always loaded (small, needed for layout)
+import Layout from "./components/Layout/Layout";
+import ProtectedRoute from "./components/Auth/ProtectedRoute";
+import LoadingSpinner from "./components/UI/LoadingSpinner";
+import { DashboardSkeleton } from "./components/UI/Skeleton";
 
-// Pages
-import Home from './pages/Home/Home'
-import Login from './pages/Auth/Login'
-import Register from './pages/Auth/Register'
-import InternshipList from './pages/Internships/InternshipList'
-import InternshipDetail from './pages/Internships/InternshipDetail'
-import Dashboard from './pages/Dashboard/Dashboard'
-import Profile from './pages/Profile/Profile'
-import Applications from './pages/Applications/Applications'
-import ApplicationDetail from './pages/Applications/ApplicationDetail'
-import CreateInternship from './pages/Internships/CreateInternship'
-import EditInternship from './pages/Internships/EditInternship'
-import CompanyDashboard from './pages/Company/CompanyDashboard'
-import ApplicationManagement from './pages/Company/ApplicationManagement'
-import CompanyRegistration from './pages/Company/CompanyRegistration'
-import PostInternship from './pages/Company/PostInternship'
-import AdminDashboard from './pages/Admin/AdminDashboard'
-import NotFound from './pages/NotFound/NotFound'
-import WishlistPage from './components/Wishlist/WishlistPage'
-import AIDashboard from './pages/AI/AIDashboard'
-import Messages from './pages/Messages/Messages'
+// ===== EAGER LOADED PAGES (Critical path) =====
+// These load immediately - needed for first paint
+import Home from "./pages/Home/Home";
+import Login from "./pages/Auth/Login";
+import Register from "./pages/Auth/Register";
+import NotFound from "./pages/NotFound/NotFound";
+
+// ===== LAZY LOADED PAGES (Code splitting) =====
+// These load on-demand to reduce initial bundle size
+const InternshipList = lazy(() => import("./pages/Internships/InternshipList"));
+const InternshipDetail = lazy(
+  () => import("./pages/Internships/InternshipDetail"),
+);
+const Dashboard = lazy(() => import("./pages/Dashboard/Dashboard"));
+const Profile = lazy(() => import("./pages/Profile/Profile"));
+const Applications = lazy(() => import("./pages/Applications/Applications"));
+const ApplicationDetail = lazy(
+  () => import("./pages/Applications/ApplicationDetail"),
+);
+const CreateInternship = lazy(
+  () => import("./pages/Internships/CreateInternship"),
+);
+const EditInternship = lazy(() => import("./pages/Internships/EditInternship"));
+const CompanyDashboard = lazy(() => import("./pages/Company/CompanyDashboard"));
+const ApplicationManagement = lazy(
+  () => import("./pages/Company/ApplicationManagement"),
+);
+const CompanyRegistration = lazy(
+  () => import("./pages/Company/CompanyRegistration"),
+);
+const PostInternship = lazy(() => import("./pages/Company/PostInternship"));
+const AdminDashboard = lazy(() => import("./pages/Admin/AdminDashboard"));
+const WishlistPage = lazy(() => import("./components/Wishlist/WishlistPage"));
+const AIDashboard = lazy(() => import("./pages/AI/AIDashboard"));
+const Messages = lazy(() => import("./pages/Messages/Messages"));
 
 // Redux actions
-import { getMe, setInitialized, clearAuth } from './store/slices/authSlice'
+import { getMe, setInitialized, clearAuth } from "./store/slices/authSlice";
 // Socket hook
-import useSocket from './hooks/useSocket'
+import useSocket from "./hooks/useSocket";
+
+// Page loading fallback component
+const PageSkeleton = () => (
+  <div className="p-6">
+    <DashboardSkeleton />
+  </div>
+);
 
 function App() {
-  const dispatch = useDispatch()
-  const { user, token, isLoading, isInitialized } = useSelector((state) => state.auth)
-  
+  const dispatch = useDispatch();
+  const { user, token, isLoading, isInitialized } = useSelector(
+    (state) => state.auth,
+  );
+
   // Initialize socket connection
-  useSocket(token)
+  useSocket(token);
 
   useEffect(() => {
     // Initialize auth state on app load
@@ -49,83 +73,103 @@ function App() {
         dispatch(getMe())
           .unwrap()
           .catch(() => {
-            dispatch(clearAuth())
+            dispatch(clearAuth());
           })
           .finally(() => {
-            dispatch(setInitialized())
-          })
+            dispatch(setInitialized());
+          });
       } else {
-        dispatch(setInitialized())
+        dispatch(setInitialized());
       }
     }
-  }, [dispatch, token, user, isInitialized])
+  }, [dispatch, token, user, isInitialized]);
 
   if (!isInitialized || (token && !user && isLoading)) {
-    return <LoadingSpinner />
+    return <LoadingSpinner />;
   }
 
   return (
     <>
       <Helmet>
         <title>InternQuest - Find Your Dream Internship</title>
-        <meta name="description" content="Connect with top companies and find amazing internship opportunities. Build your career with InternQuest." />
+        <meta
+          name="description"
+          content="Connect with top companies and find amazing internship opportunities. Build your career with InternQuest."
+        />
       </Helmet>
 
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Home />} />
-          <Route path="internships" element={<InternshipList />} />
-          <Route path="internships/:id" element={<InternshipDetail />} />
-          
-          {/* Auth Routes - Redirect if already logged in */}
-          <Route 
-            path="login" 
-            element={user ? <Navigate to="/dashboard" replace /> : <Login />} 
-          />
-          <Route 
-            path="register" 
-            element={user ? <Navigate to="/dashboard" replace /> : <Register />} 
-          />
+      {/* Suspense boundary for lazy-loaded routes */}
+      <Suspense fallback={<PageSkeleton />}>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<Layout />}>
+            <Route index element={<Home />} />
+            <Route path="internships" element={<InternshipList />} />
+            <Route path="internships/:id" element={<InternshipDetail />} />
 
-          {/* Protected Routes */}
-          <Route element={<ProtectedRoute />}>
-            {/* Common Protected Routes */}
-            <Route path="dashboard" element={<Dashboard />} />
-            <Route path="profile" element={<Profile />} />
-            <Route path="applications" element={<Applications />} />
-            <Route path="applications/:id" element={<ApplicationDetail />} />
-            <Route path="ai" element={<AIDashboard />} />
+            {/* Auth Routes - Redirect if already logged in */}
+            <Route
+              path="login"
+              element={user ? <Navigate to="/dashboard" replace /> : <Login />}
+            />
+            <Route
+              path="register"
+              element={
+                user ? <Navigate to="/dashboard" replace /> : <Register />
+              }
+            />
 
-            {/* Student Routes */}
-            <Route element={<ProtectedRoute allowedRoles={['student']} />}>
-              <Route path="wishlist" element={<WishlistPage />} />
+            {/* Protected Routes */}
+            <Route element={<ProtectedRoute />}>
+              {/* Common Protected Routes */}
+              <Route path="dashboard" element={<Dashboard />} />
+              <Route path="profile" element={<Profile />} />
+              <Route path="applications" element={<Applications />} />
+              <Route path="applications/:id" element={<ApplicationDetail />} />
+              <Route path="ai" element={<AIDashboard />} />
+
+              {/* Student Routes */}
+              <Route element={<ProtectedRoute allowedRoles={["student"]} />}>
+                <Route path="wishlist" element={<WishlistPage />} />
+              </Route>
+
+              {/* Messages Routes (accessible to all authenticated users) */}
+              <Route path="messages" element={<Messages />} />
+
+              {/* Company Routes */}
+              <Route element={<ProtectedRoute allowedRoles={["company"]} />}>
+                <Route
+                  path="company/dashboard"
+                  element={<CompanyDashboard />}
+                />
+                <Route
+                  path="company/applications"
+                  element={<ApplicationManagement />}
+                />
+                <Route
+                  path="company/register"
+                  element={<CompanyRegistration />}
+                />
+                <Route path="internships/create" element={<PostInternship />} />
+                <Route
+                  path="internships/edit/:id"
+                  element={<EditInternship />}
+                />
+              </Route>
+
+              {/* Admin Routes */}
+              <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
+                <Route path="admin" element={<AdminDashboard />} />
+              </Route>
             </Route>
 
-            {/* Messages Routes (accessible to all authenticated users) */}
-            <Route path="messages" element={<Messages />} />
-
-            {/* Company Routes */}
-            <Route element={<ProtectedRoute allowedRoles={['company']} />}>
-              <Route path="company/dashboard" element={<CompanyDashboard />} />
-              <Route path="company/applications" element={<ApplicationManagement />} />
-              <Route path="company/register" element={<CompanyRegistration />} />
-              <Route path="internships/create" element={<PostInternship />} />
-              <Route path="internships/edit/:id" element={<EditInternship />} />
-            </Route>
-
-            {/* Admin Routes */}
-            <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
-              <Route path="admin" element={<AdminDashboard />} />
-            </Route>
+            {/* 404 Route */}
+            <Route path="*" element={<NotFound />} />
           </Route>
-
-          {/* 404 Route */}
-          <Route path="*" element={<NotFound />} />
-        </Route>
-      </Routes>
+        </Routes>
+      </Suspense>
     </>
-  )
+  );
 }
 
-export default App
+export default App;

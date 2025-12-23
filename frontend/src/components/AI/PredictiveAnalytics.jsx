@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Box,
   Card,
@@ -14,39 +14,39 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  TextField
-} from '@mui/material';
+  TextField,
+} from "@mui/material";
 import {
   TrendingUp,
   CheckCircle,
   Timeline,
   Assessment,
-  Psychology
-} from '@mui/icons-material';
-import aiService from '../../services/aiService';
+  Psychology,
+} from "@mui/icons-material";
+import aiService from "../../services/aiService";
 
 const PredictiveAnalytics = () => {
   const [prediction, setPrediction] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [internshipId, setInternshipId] = useState('');
+  const [internshipId, setInternshipId] = useState("");
 
   const fetchPrediction = async () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const trimmedId = internshipId.trim();
       if (!trimmedId) {
         setLoading(false);
-        setError('Please enter an internship ID to analyze your chances.');
+        setError("Please enter an internship ID to analyze your chances.");
         return;
       }
 
       const response = await aiService.predictSuccess(trimmedId);
 
       if (!response.success) {
-        throw new Error(response.message || 'Failed to predict success rate');
+        throw new Error(response.message || "Failed to predict success rate");
       }
 
       const data = response.data;
@@ -55,29 +55,29 @@ const PredictiveAnalytics = () => {
         confidence: data.confidence,
         factors: data.factors || {},
         recommendations: data.recommendations || [],
-        dataPoints: data.dataPoints
+        dataPoints: data.dataPoints,
       };
 
       setPrediction(mappedPrediction);
       setLoading(false);
     } catch (err) {
-      setError(err.message || 'Failed to predict success rate');
+      setError(err.message || "Failed to predict success rate");
       setLoading(false);
     }
   };
 
   const getSuccessColor = (probability) => {
-    if (probability >= 0.7) return 'success';
-    if (probability >= 0.4) return 'warning';
-    return 'error';
+    if (probability >= 0.7) return "success";
+    if (probability >= 0.4) return "warning";
+    return "error";
   };
 
   const getSuccessLabel = (probability) => {
-    if (probability >= 0.8) return 'Very High';
-    if (probability >= 0.6) return 'High';
-    if (probability >= 0.4) return 'Medium';
-    if (probability >= 0.2) return 'Low';
-    return 'Very Low';
+    if (probability >= 0.8) return "Very High";
+    if (probability >= 0.6) return "High";
+    if (probability >= 0.4) return "Medium";
+    if (probability >= 0.2) return "Low";
+    return "Very Low";
   };
 
   const getFactorIcon = (factor) => {
@@ -86,26 +86,26 @@ const PredictiveAnalytics = () => {
       experience: <Timeline />,
       education: <Assessment />,
       timing: <TrendingUp />,
-      competition: <Psychology />
+      competition: <Psychology />,
     };
     return icons[factor] || <Assessment />;
   };
 
   const getFactorLabel = (factor) => {
     const labels = {
-      skillMatch: 'Skill Match',
-      experience: 'Experience Level',
-      education: 'Education Match',
-      timing: 'Application Timing',
-      competition: 'Competition Level'
+      skillMatch: "Skill Match",
+      experience: "Experience Level",
+      education: "Education Match",
+      timing: "Application Timing",
+      competition: "Competition Level",
     };
     return labels[factor] || factor;
   };
 
   const getFactorColor = (score) => {
-    if (score >= 0.7) return 'success';
-    if (score >= 0.4) return 'warning';
-    return 'error';
+    if (score >= 0.7) return "success";
+    if (score >= 0.4) return "warning";
+    return "error";
   };
 
   return (
@@ -113,13 +113,14 @@ const PredictiveAnalytics = () => {
       <Card>
         <CardContent>
           <Box display="flex" alignItems="center" mb={2}>
-            <Psychology sx={{ mr: 2, fontSize: 40, color: 'primary.main' }} />
+            <Psychology sx={{ mr: 2, fontSize: 40, color: "primary.main" }} />
             <Box>
               <Typography variant="h5" component="h2" gutterBottom>
                 Application Success Predictor
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Get personalized insights about your application success rate based on your profile, skills, and historical data.
+                Get personalized insights about your application success rate
+                based on your profile, skills, and historical data.
               </Typography>
             </Box>
           </Box>
@@ -128,10 +129,10 @@ const PredictiveAnalytics = () => {
             <Box
               sx={{
                 mt: 2,
-                display: 'flex',
-                flexDirection: { xs: 'column', sm: 'row' },
-                alignItems: { xs: 'stretch', sm: 'center' },
-                gap: 2
+                display: "flex",
+                flexDirection: { xs: "column", sm: "row" },
+                alignItems: { xs: "stretch", sm: "center" },
+                gap: 2,
               }}
             >
               <TextField
@@ -155,7 +156,12 @@ const PredictiveAnalytics = () => {
           )}
 
           {loading && (
-            <Box display="flex" alignItems="center" justifyContent="center" py={4}>
+            <Box
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              py={4}
+            >
               <CircularProgress sx={{ mr: 2 }} />
               <Typography>Analyzing your profile and market data...</Typography>
             </Box>
@@ -199,7 +205,11 @@ const PredictiveAnalytics = () => {
                           justifyContent="center"
                           flexDirection="column"
                         >
-                          <Typography variant="h4" component="div" color="text.primary">
+                          <Typography
+                            variant="h4"
+                            component="div"
+                            color="text.primary"
+                          >
                             {Math.round(prediction.probability * 100)}%
                           </Typography>
                         </Box>
@@ -226,14 +236,22 @@ const PredictiveAnalytics = () => {
                         variant="determinate"
                         value={prediction.confidence * 100}
                         sx={{ height: 10, borderRadius: 5 }}
-                        color={prediction.confidence >= 0.7 ? 'success' : 'warning'}
+                        color={
+                          prediction.confidence >= 0.7 ? "success" : "warning"
+                        }
                       />
                     </Box>
                     <Typography variant="body2" color="text.secondary">
-                      {Math.round(prediction.confidence * 100)}% confidence in this prediction
+                      {Math.round(prediction.confidence * 100)}% confidence in
+                      this prediction
                     </Typography>
-                    <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-                      Based on {prediction.dataPoints || 'available'} similar applications
+                    <Typography
+                      variant="caption"
+                      display="block"
+                      sx={{ mt: 1 }}
+                    >
+                      Based on {prediction.dataPoints || "available"} similar
+                      applications
                     </Typography>
                   </CardContent>
                 </Card>
@@ -247,56 +265,60 @@ const PredictiveAnalytics = () => {
                       Key Success Factors
                     </Typography>
                     <List>
-                      {Object.entries(prediction.factors || {}).map(([factor, score]) => (
-                        <ListItem key={factor}>
-                          <ListItemIcon>
-                            {getFactorIcon(factor)}
-                          </ListItemIcon>
-                          <ListItemText
-                            primary={getFactorLabel(factor)}
-                            secondary={
-                              <React.Fragment>
-                                <LinearProgress
-                                  variant="determinate"
-                                  value={score * 100}
-                                  color={getFactorColor(score)}
-                                  sx={{ mt: 1, height: 6, borderRadius: 3 }}
-                                />
-                                <Typography variant="caption" sx={{ mt: 0.5, display: 'block' }}>
-                                  {Math.round(score * 100)}% match
-                                </Typography>
-                              </React.Fragment>
-                            }
-                          />
-                        </ListItem>
-                      ))}
+                      {Object.entries(prediction.factors || {}).map(
+                        ([factor, score]) => (
+                          <ListItem key={factor}>
+                            <ListItemIcon>{getFactorIcon(factor)}</ListItemIcon>
+                            <ListItemText
+                              primary={getFactorLabel(factor)}
+                              secondary={
+                                <React.Fragment>
+                                  <LinearProgress
+                                    variant="determinate"
+                                    value={score * 100}
+                                    color={getFactorColor(score)}
+                                    sx={{ mt: 1, height: 6, borderRadius: 3 }}
+                                  />
+                                  <Typography
+                                    variant="caption"
+                                    sx={{ mt: 0.5, display: "block" }}
+                                  >
+                                    {Math.round(score * 100)}% match
+                                  </Typography>
+                                </React.Fragment>
+                              }
+                            />
+                          </ListItem>
+                        ),
+                      )}
                     </List>
                   </CardContent>
                 </Card>
               </Grid>
 
               {/* Recommendations */}
-              {prediction.recommendations && prediction.recommendations.length > 0 && (
-                <Grid item xs={12}>
-                  <Card elevation={3}>
-                    <CardContent>
-                      <Typography variant="h6" gutterBottom>
-                        AI Recommendations
-                      </Typography>
-                      <List>
-                        {prediction.recommendations.map((rec, index) => (
-                          <ListItem key={index}>
-                            <ListItemIcon>
-                              <TrendingUp color="primary" />
-                            </ListItemIcon>
-                            <ListItemText primary={rec} />
-                          </ListItem>
-                        ))}
-                      </List>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              )}
+              {prediction.recommendations &&
+                prediction.recommendations.length > 0 && (
+                  <Grid item xs={12}>
+                    <Card elevation={3}>
+                      <CardContent>
+                        <Typography variant="h6" gutterBottom>
+                          AI Recommendations
+                        </Typography>
+                        <List>
+                          {prediction.recommendations.map((rec, index) => (
+                            <ListItem key={index}>
+                              <ListItemIcon>
+                                <TrendingUp color="primary" />
+                              </ListItemIcon>
+                              <ListItemText primary={rec} />
+                            </ListItem>
+                          ))}
+                        </List>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                )}
             </Grid>
           )}
         </CardContent>

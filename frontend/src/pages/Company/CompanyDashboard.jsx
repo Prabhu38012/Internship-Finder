@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
-import { Link, useNavigate } from 'react-router-dom'
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Container,
   Grid,
@@ -21,8 +21,8 @@ import {
   Menu,
   MenuItem,
   Avatar,
-  LinearProgress
-} from '@mui/material'
+  LinearProgress,
+} from "@mui/material";
 import {
   Add,
   Edit,
@@ -34,125 +34,141 @@ import {
   People,
   TrendingUp,
   Schedule,
-  LocationOn
-} from '@mui/icons-material'
-import { Helmet } from 'react-helmet-async'
-import { format } from 'date-fns'
-import toast from 'react-hot-toast'
+  LocationOn,
+} from "@mui/icons-material";
+import { Helmet } from "react-helmet-async";
+import { format } from "date-fns";
+import toast from "react-hot-toast";
 
-import { getMyInternships, deleteInternship } from '../../store/slices/internshipSlice'
-import { getCompanyApplications } from '../../store/slices/applicationSlice'
-import LoadingSpinner from '../../components/UI/LoadingSpinner'
-import { companyAPI, internshipAPI } from '../../services/api'
-import { useSocket } from '../../hooks/useSocket'
+import {
+  getMyInternships,
+  deleteInternship,
+} from "../../store/slices/internshipSlice";
+import { getCompanyApplications } from "../../store/slices/applicationSlice";
+import LoadingSpinner from "../../components/UI/LoadingSpinner";
+import { companyAPI, internshipAPI } from "../../services/api";
+import { useSocket } from "../../hooks/useSocket";
 
 const CompanyDashboard = () => {
-  const dispatch = useDispatch()
-  const navigate = useNavigate()
-  
-  const { user } = useSelector((state) => state.auth)
-  const { myInternships, isLoading } = useSelector((state) => state.internships)
-  const { companyApplications } = useSelector((state) => state.applications)
-  
-  const [anchorEl, setAnchorEl] = useState(null)
-  const [selectedInternship, setSelectedInternship] = useState(null)
-  const [dashboardData, setDashboardData] = useState(null)
-  const [realTimeStats, setRealTimeStats] = useState({})
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
-  const { socket } = useSocket()
+  const { user } = useSelector((state) => state.auth);
+  const { myInternships, isLoading } = useSelector(
+    (state) => state.internships,
+  );
+  const { companyApplications } = useSelector((state) => state.applications);
+
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedInternship, setSelectedInternship] = useState(null);
+  const [dashboardData, setDashboardData] = useState(null);
+  const [realTimeStats, setRealTimeStats] = useState({});
+
+  const { socket } = useSocket();
 
   useEffect(() => {
-    dispatch(getMyInternships())
-    dispatch(getCompanyApplications({ limit: 10 }))
-    loadDashboardData()
-  }, [dispatch])
+    dispatch(getMyInternships());
+    dispatch(getCompanyApplications({ limit: 10 }));
+    loadDashboardData();
+  }, [dispatch]);
 
   useEffect(() => {
     if (socket) {
       // Listen for real-time application updates
-      socket.on('new_application', (data) => {
+      socket.on("new_application", (data) => {
         if (data.companyId === user?.id) {
-          toast.success(`New application received for ${data.internshipTitle}`)
-          setRealTimeStats(prev => ({
+          toast.success(`New application received for ${data.internshipTitle}`);
+          setRealTimeStats((prev) => ({
             ...prev,
             totalApplications: (prev.totalApplications || 0) + 1,
-            pendingApplications: (prev.pendingApplications || 0) + 1
-          }))
+            pendingApplications: (prev.pendingApplications || 0) + 1,
+          }));
           // Refresh applications
-          dispatch(getCompanyApplications({ limit: 10 }))
+          dispatch(getCompanyApplications({ limit: 10 }));
         }
-      })
+      });
 
       // Listen for application status updates
-      socket.on('application_status_updated', (data) => {
+      socket.on("application_status_updated", (data) => {
         if (data.companyId === user?.id) {
-          dispatch(getCompanyApplications({ limit: 10 }))
+          dispatch(getCompanyApplications({ limit: 10 }));
         }
-      })
+      });
 
       return () => {
-        socket.off('new_application')
-        socket.off('application_status_updated')
-      }
+        socket.off("new_application");
+        socket.off("application_status_updated");
+      };
     }
-  }, [socket, user?.id, dispatch])
+  }, [socket, user?.id, dispatch]);
 
   const loadDashboardData = async () => {
     try {
-      const response = await companyAPI.getDashboard()
-      setDashboardData(response.data)
+      const response = await companyAPI.getDashboard();
+      setDashboardData(response.data);
     } catch (error) {
-      console.error('Failed to load dashboard data:', error)
+      console.error("Failed to load dashboard data:", error);
     }
-  }
+  };
 
   const handleMenuOpen = (event, internship) => {
-    setAnchorEl(event.currentTarget)
-    setSelectedInternship(internship)
-  }
+    setAnchorEl(event.currentTarget);
+    setSelectedInternship(internship);
+  };
 
   const handleMenuClose = () => {
-    setAnchorEl(null)
-    setSelectedInternship(null)
-  }
+    setAnchorEl(null);
+    setSelectedInternship(null);
+  };
 
   const handleEdit = () => {
     if (selectedInternship) {
-      navigate(`/internships/edit/${selectedInternship._id}`)
+      navigate(`/internships/edit/${selectedInternship._id}`);
     }
-    handleMenuClose()
-  }
+    handleMenuClose();
+  };
 
   const handleDelete = () => {
     if (selectedInternship) {
-      if (window.confirm('Are you sure you want to delete this internship?')) {
+      if (window.confirm("Are you sure you want to delete this internship?")) {
         dispatch(deleteInternship(selectedInternship._id))
           .unwrap()
           .then(() => {
-            toast.success('Internship deleted successfully')
+            toast.success("Internship deleted successfully");
           })
           .catch((error) => {
-            toast.error(error || 'Failed to delete internship')
-          })
+            toast.error(error || "Failed to delete internship");
+          });
       }
     }
-    handleMenuClose()
-  }
+    handleMenuClose();
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'active': return 'success'
-      case 'draft': return 'warning'
-      case 'closed': return 'error'
-      case 'expired': return 'default'
-      default: return 'default'
+      case "active":
+        return "success";
+      case "draft":
+        return "warning";
+      case "closed":
+        return "error";
+      case "expired":
+        return "default";
+      default:
+        return "default";
     }
-  }
+  };
 
-  const StatCard = ({ title, value, icon, color = 'primary', subtitle }) => (
+  const StatCard = ({ title, value, icon, color = "primary", subtitle }) => (
     <Card>
       <CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
           <Box>
             <Typography color="textSecondary" gutterBottom variant="overline">
               {title}
@@ -172,29 +188,52 @@ const CompanyDashboard = () => {
         </Box>
       </CardContent>
     </Card>
-  )
+  );
 
   if (isLoading) {
-    return <LoadingSpinner message="Loading company dashboard..." />
+    return <LoadingSpinner message="Loading company dashboard..." />;
   }
 
-  const activeInternships = myInternships?.filter(i => i.status === 'active') || []
-  const totalApplications = realTimeStats.totalApplications ?? (myInternships?.reduce((sum, i) => sum + (i.applicationsCount || 0), 0) || 0)
-  const pendingApplications = realTimeStats.pendingApplications ?? (companyApplications?.filter(a => a.status === 'pending').length || 0)
-  const totalViews = dashboardData?.totalViews ?? (myInternships?.reduce((sum, i) => sum + (i.views || 0), 0) || 0)
+  const activeInternships =
+    myInternships?.filter((i) => i.status === "active") || [];
+  const totalApplications =
+    realTimeStats.totalApplications ??
+    (myInternships?.reduce((sum, i) => sum + (i.applicationsCount || 0), 0) ||
+      0);
+  const pendingApplications =
+    realTimeStats.pendingApplications ??
+    (companyApplications?.filter((a) => a.status === "pending").length || 0);
+  const totalViews =
+    dashboardData?.totalViews ??
+    (myInternships?.reduce((sum, i) => sum + (i.views || 0), 0) || 0);
 
   return (
     <>
       <Helmet>
         <title>Company Dashboard - InternQuest</title>
-        <meta name="description" content="Manage your company's internship postings and applications." />
+        <meta
+          name="description"
+          content="Manage your company's internship postings and applications."
+        />
       </Helmet>
 
       <Container maxWidth="xl" sx={{ py: 4 }}>
         {/* Header */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 4,
+          }}
+        >
           <Box>
-            <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
+            <Typography
+              variant="h4"
+              component="h1"
+              gutterBottom
+              fontWeight="bold"
+            >
               Company Dashboard
             </Typography>
             <Typography variant="body1" color="text.secondary">
@@ -253,10 +292,15 @@ const CompanyDashboard = () => {
           <Grid item xs={12} lg={8}>
             <Card>
               <CardContent>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                  <Typography variant="h6">
-                    Your Internships
-                  </Typography>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    mb: 2,
+                  }}
+                >
+                  <Typography variant="h6">Your Internships</Typography>
                   <Button
                     component={Link}
                     to="/internships/create"
@@ -287,19 +331,28 @@ const CompanyDashboard = () => {
                               <Typography variant="subtitle2" fontWeight="bold">
                                 {internship.title}
                               </Typography>
-                              <Typography variant="caption" color="text.secondary">
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                              >
                                 {internship.category}
                               </Typography>
                             </Box>
                           </TableCell>
                           <TableCell>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1,
+                              }}
+                            >
                               <LocationOn fontSize="small" color="action" />
                               <Typography variant="body2">
-                                {internship.location?.type === 'remote' 
-                                  ? 'Remote' 
-                                  : internship.location?.city || 'Not specified'
-                                }
+                                {internship.location?.type === "remote"
+                                  ? "Remote"
+                                  : internship.location?.city ||
+                                    "Not specified"}
                               </Typography>
                             </Box>
                           </TableCell>
@@ -310,14 +363,14 @@ const CompanyDashboard = () => {
                           </TableCell>
                           <TableCell>
                             <Chip
-                              label={internship.status || 'active'}
+                              label={internship.status || "active"}
                               size="small"
                               color={getStatusColor(internship.status)}
                             />
                           </TableCell>
                           <TableCell>
                             <Typography variant="body2">
-                              {format(new Date(internship.createdAt), 'MMM dd')}
+                              {format(new Date(internship.createdAt), "MMM dd")}
                             </Typography>
                           </TableCell>
                           <TableCell align="right">
@@ -342,11 +395,15 @@ const CompanyDashboard = () => {
                 </TableContainer>
 
                 {myInternships?.length === 0 && (
-                  <Box sx={{ p: 4, textAlign: 'center' }}>
+                  <Box sx={{ p: 4, textAlign: "center" }}>
                     <Typography variant="h6" gutterBottom>
                       No internships posted yet
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mb: 2 }}
+                    >
                       Start by creating your first internship posting
                     </Typography>
                     <Button
@@ -367,10 +424,15 @@ const CompanyDashboard = () => {
           <Grid item xs={12} lg={4}>
             <Card>
               <CardContent>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                  <Typography variant="h6">
-                    Recent Applications
-                  </Typography>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    mb: 2,
+                  }}
+                >
+                  <Typography variant="h6">Recent Applications</Typography>
                   <Button
                     component={Link}
                     to="/company/applications"
@@ -380,19 +442,26 @@ const CompanyDashboard = () => {
                   </Button>
                 </Box>
 
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                   {companyApplications?.slice(0, 5).map((application) => (
                     <Box
                       key={application._id}
                       sx={{
                         p: 2,
-                        border: '1px solid',
-                        borderColor: 'divider',
+                        border: "1px solid",
+                        borderColor: "divider",
                         borderRadius: 1,
-                        '&:hover': { bgcolor: 'action.hover' }
+                        "&:hover": { bgcolor: "action.hover" },
                       }}
                     >
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 2,
+                          mb: 1,
+                        }}
+                      >
                         <Avatar
                           src={application.applicant?.avatar}
                           sx={{ width: 32, height: 32 }}
@@ -410,17 +479,25 @@ const CompanyDashboard = () => {
                         <Chip
                           label={application.status}
                           size="small"
-                          color={application.status === 'pending' ? 'warning' : 'default'}
+                          color={
+                            application.status === "pending"
+                              ? "warning"
+                              : "default"
+                          }
                         />
                       </Box>
                       <Typography variant="caption" color="text.secondary">
-                        Applied {format(new Date(application.createdAt), 'MMM dd, yyyy')}
+                        Applied{" "}
+                        {format(
+                          new Date(application.createdAt),
+                          "MMM dd, yyyy",
+                        )}
                       </Typography>
                     </Box>
                   ))}
 
                   {companyApplications?.length === 0 && (
-                    <Box sx={{ textAlign: 'center', py: 2 }}>
+                    <Box sx={{ textAlign: "center", py: 2 }}>
                       <Typography variant="body2" color="text.secondary">
                         No applications received yet
                       </Typography>
@@ -437,7 +514,9 @@ const CompanyDashboard = () => {
                   <Typography variant="h6" gutterBottom>
                     Quick Actions
                   </Typography>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+                  >
                     <Button
                       variant="contained"
                       startIcon={<Add />}
@@ -478,7 +557,9 @@ const CompanyDashboard = () => {
           open={Boolean(anchorEl)}
           onClose={handleMenuClose}
         >
-          <MenuItem onClick={() => navigate(`/internships/${selectedInternship?._id}`)}>
+          <MenuItem
+            onClick={() => navigate(`/internships/${selectedInternship?._id}`)}
+          >
             <Visibility sx={{ mr: 1 }} />
             View Details
           </MenuItem>
@@ -486,14 +567,14 @@ const CompanyDashboard = () => {
             <Edit sx={{ mr: 1 }} />
             Edit
           </MenuItem>
-          <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>
+          <MenuItem onClick={handleDelete} sx={{ color: "error.main" }}>
             <Delete sx={{ mr: 1 }} />
             Delete
           </MenuItem>
         </Menu>
       </Container>
     </>
-  )
-}
+  );
+};
 
-export default CompanyDashboard
+export default CompanyDashboard;
