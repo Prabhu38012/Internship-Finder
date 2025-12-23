@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <!-- Diamond Shape -->
+  <path 
+    d="M50 5 L95 50 L50 95 L5 50 Z" 
+    stroke="url(#diamondGradient)" 
+    stroke-width="4" 
+    fill="none"
+  />
+  
+  <!-- Left Arrow -->
+  <path 
+    d="M30 60 L30 35 L22 43 M30 35 L38 43" 
+    stroke="url(#arrowGradient1)" 
+    stroke-width="3" 
+    stroke-linecap="round" 
+    stroke-linejoin="round"
+    fill="none"
+  />
+  
+  <!-- Center Arrow (taller) -->
+  <path 
+    d="M50 68 L50 25 L40 37 M50 25 L60 37" 
+    stroke="url(#arrowGradient2)" 
+    stroke-width="4" 
+    stroke-linecap="round" 
+    stroke-linejoin="round"
+    fill="none"
+  />
+  
+  <!-- Right Arrow -->
+  <path 
+    d="M70 60 L70 35 L62 43 M70 35 L78 43" 
+    stroke="url(#arrowGradient1)" 
+    stroke-width="3" 
+    stroke-linecap="round" 
+    stroke-linejoin="round"
+    fill="none"
+  />
+  
+  <!-- Gradients -->
+  <defs>
+    <linearGradient id="diamondGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#60a5fa" />
+    </linearGradient>
+    <linearGradient id="arrowGradient1" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#60a5fa" />
+      <stop offset="100%" stop-color="#93c5fd" />
+    </linearGradient>
+    <linearGradient id="arrowGradient2" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#60a5fa" />
+    </linearGradient>
+  </defs>
+</svg>

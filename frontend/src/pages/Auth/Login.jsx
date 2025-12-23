@@ -107,14 +107,15 @@ const Login = () => {
         borderColor: "rgba(255, 255, 255, 0.3)",
       },
       "&.Mui-focused fieldset": {
-        borderColor: "#3b82f6",
+        borderColor: "rgba(255, 255, 255, 0.3)",
+        borderWidth: 1,
       },
     },
     "& .MuiInputLabel-root": {
       color: "rgba(255, 255, 255, 0.5)",
     },
     "& .MuiInputLabel-root.Mui-focused": {
-      color: "#3b82f6",
+      color: "rgba(255, 255, 255, 0.7)",
     },
   };
 
@@ -135,7 +136,7 @@ const Login = () => {
           backgroundColor: "#0a0a0f",
         }}
       >
-        {/* Left Side - Image Slideshow */}
+        {/* Left Side - Logo Panel */}
         <Box
           sx={{
             display: { xs: "none", md: "flex" },
@@ -150,140 +151,138 @@ const Login = () => {
               borderRadius: 4,
               overflow: "hidden",
               position: "relative",
+              background: "linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              p: 4,
             }}
           >
-            {/* Slideshow Images */}
-            {slides.map((slide, index) => (
-              <Box
-                key={index}
-                component="img"
-                src={slide.image}
-                alt={slide.title}
-                sx={{
-                  position: "absolute",
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                  opacity: currentSlide === index ? 1 : 0,
-                  transition: "opacity 1s ease-in-out",
-                }}
-              />
-            ))}
-
-            {/* Dark Overlay */}
+            {/* Header */}
             <Box
               sx={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                background:
-                  "linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.5) 100%)",
-              }}
-            />
-
-            {/* Overlay Content */}
-            <Box
-              sx={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
                 display: "flex",
-                flexDirection: "column",
                 justifyContent: "space-between",
-                p: 4,
-                zIndex: 2,
+                alignItems: "center",
               }}
             >
-              {/* Logo */}
-              <Box
+              <Typography
+                variant="h5"
+                sx={{ color: "white", fontWeight: "bold" }}
+              >
+                InternQuest
+              </Typography>
+              <Button
+                component={Link}
+                to="/"
+                variant="outlined"
+                size="small"
                 sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
+                  color: "white",
+                  borderColor: "rgba(255,255,255,0.3)",
+                  borderRadius: 3,
+                  textTransform: "none",
+                  "&:hover": {
+                    borderColor: "white",
+                    backgroundColor: "rgba(255,255,255,0.1)",
+                  },
                 }}
               >
-                <Typography
-                  variant="h5"
-                  sx={{ color: "white", fontWeight: "bold" }}
-                >
-                  InternQuest
-                </Typography>
-                <Button
-                  component={Link}
-                  to="/"
-                  variant="outlined"
-                  size="small"
-                  sx={{
-                    color: "white",
-                    borderColor: "rgba(255,255,255,0.3)",
-                    borderRadius: 3,
-                    textTransform: "none",
-                    "&:hover": {
-                      borderColor: "white",
-                      backgroundColor: "rgba(255,255,255,0.1)",
-                    },
-                  }}
-                >
-                  Back to website →
-                </Button>
-              </Box>
-
-              {/* Tagline - Changes with slide */}
-              <Box sx={{ textAlign: "center", mb: 6 }}>
-                <Typography
-                  variant="h3"
-                  sx={{
-                    color: "white",
-                    fontWeight: 600,
-                    mb: 1,
-                    transition: "opacity 0.5s ease-in-out",
-                  }}
-                >
-                  {slides[currentSlide].title}
-                </Typography>
-                <Typography
-                  variant="h5"
-                  sx={{
-                    color: "rgba(255,255,255,0.9)",
-                    fontWeight: 400,
-                    transition: "opacity 0.5s ease-in-out",
-                  }}
-                >
-                  {slides[currentSlide].subtitle}
-                </Typography>
-              </Box>
-
-              {/* Dots - Clickable */}
-              <Box sx={{ display: "flex", justifyContent: "center", gap: 1 }}>
-                {slides.map((_, index) => (
-                  <Box
-                    key={index}
-                    onClick={() => setCurrentSlide(index)}
-                    sx={{
-                      width: currentSlide === index ? 24 : 8,
-                      height: 8,
-                      borderRadius: 4,
-                      bgcolor:
-                        currentSlide === index
-                          ? "white"
-                          : "rgba(255,255,255,0.3)",
-                      cursor: "pointer",
-                      transition: "all 0.3s ease",
-                      "&:hover": {
-                        bgcolor:
-                          currentSlide === index
-                            ? "white"
-                            : "rgba(255,255,255,0.5)",
-                      },
-                    }}
-                  />
-                ))}
-              </Box>
+                Back to website →
+              </Button>
             </Box>
+
+            {/* Center - Large Logo */}
+            <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+              {/* APEX-style Diamond Logo */}
+              <svg
+                width="180"
+                height="180"
+                viewBox="0 0 100 100"
+                fill="none"
+              >
+                {/* Diamond Shape */}
+                <path
+                  d="M50 5 L95 50 L50 95 L5 50 Z"
+                  stroke="url(#loginDiamondGradient)"
+                  strokeWidth="3"
+                  fill="none"
+                />
+
+                {/* Left Arrow */}
+                <path
+                  d="M30 60 L30 35 L22 43 M30 35 L38 43"
+                  stroke="url(#loginArrowGradient1)"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  fill="none"
+                />
+
+                {/* Center Arrow (taller) */}
+                <path
+                  d="M50 68 L50 25 L40 37 M50 25 L60 37"
+                  stroke="url(#loginArrowGradient2)"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  fill="none"
+                />
+
+                {/* Right Arrow */}
+                <path
+                  d="M70 60 L70 35 L62 43 M70 35 L78 43"
+                  stroke="url(#loginArrowGradient1)"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  fill="none"
+                />
+
+                {/* Gradients */}
+                <defs>
+                  <linearGradient id="loginDiamondGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#3b82f6" />
+                    <stop offset="100%" stopColor="#60a5fa" />
+                  </linearGradient>
+                  <linearGradient id="loginArrowGradient1" x1="0%" y1="100%" x2="0%" y2="0%">
+                    <stop offset="0%" stopColor="#60a5fa" />
+                    <stop offset="100%" stopColor="#93c5fd" />
+                  </linearGradient>
+                  <linearGradient id="loginArrowGradient2" x1="0%" y1="100%" x2="0%" y2="0%">
+                    <stop offset="0%" stopColor="#3b82f6" />
+                    <stop offset="100%" stopColor="#60a5fa" />
+                  </linearGradient>
+                </defs>
+              </svg>
+
+              {/* Brand Name */}
+              <Typography
+                variant="h2"
+                sx={{
+                  color: "white",
+                  fontWeight: 700,
+                  letterSpacing: "0.05em",
+                }}
+              >
+                INTERN<span style={{ color: "#60a5fa" }}>QUEST</span>
+              </Typography>
+
+              {/* Tagline */}
+              <Typography
+                variant="h6"
+                sx={{
+                  color: "rgba(255,255,255,0.7)",
+                  fontWeight: 400,
+                  textAlign: "center",
+                }}
+              >
+                Find Your Dream Internship
+              </Typography>
+            </Box>
+
+            {/* Footer spacer */}
+            <Box />
           </Box>
         </Box>
 
