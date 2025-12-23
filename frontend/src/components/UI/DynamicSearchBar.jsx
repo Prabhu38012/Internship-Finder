@@ -22,7 +22,7 @@ const DynamicSearchBar = ({ placeholder = "Search internships, companies, skills
   const navigate = useNavigate()
   const location = useLocation()
   const dispatch = useDispatch()
-  
+
   const [searchValue, setSearchValue] = useState('')
   const [focused, setFocused] = useState(false)
 
@@ -30,7 +30,7 @@ const DynamicSearchBar = ({ placeholder = "Search internships, companies, skills
     if (value?.trim()) {
       dispatch(addToSearchHistory(value.trim()))
       dispatch(setFilters({ search: value.trim() }))
-      
+
       if (location.pathname !== '/internships') {
         navigate('/internships')
       }

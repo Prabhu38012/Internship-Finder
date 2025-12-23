@@ -3,12 +3,12 @@ import { Card, CardContent, Box } from '@mui/material'
 import { motion } from 'framer-motion'
 import { useInView } from 'react-intersection-observer'
 
-const AnimatedCard = ({ 
-  children, 
-  delay = 0, 
+const AnimatedCard = ({
+  children,
+  delay = 0,
   direction = 'up',
   hover = true,
-  ...cardProps 
+  ...cardProps
 }) => {
   const [ref, inView] = useInView({
     triggerOnce: true,

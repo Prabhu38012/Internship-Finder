@@ -52,10 +52,13 @@ router.get('/', [
     }
 
     if (req.query.remote === 'true') {
+      // Show only remote internships
       query['location.type'] = 'remote';
-    } else if (req.query.remote === 'false') {
+    } else if (req.query.remote === 'onsite') {
+      // Show only onsite internships (explicit filter)
       query['location.type'] = { $ne: 'remote' };
     }
+    // Note: remote=false or no remote param shows ALL internships (no filter)
 
     if (req.query.location && req.query.remote !== 'true') {
       query.$or = [
@@ -184,6 +187,20 @@ router.get('/:id', optionalAuth, async (req, res) => {
 
     // Increment views
     await internship.incrementViews();
+
+    // Emit real-time view notification to company (for activity feed)
+    if (req.user && req.user.role === 'student') {
+      const io = req.app.get('io');
+      if (io) {
+        io.to(`user_${internship.company._id || internship.company}`).emit('company_activity', {
+          type: 'internship_viewed',
+          userName: req.user.name,
+          internshipTitle: internship.title,
+          timestamp: new Date(),
+          companyId: internship.company._id || internship.company
+        });
+      }
+    }
 
     // Add user-specific data if authenticated
     if (req.user) {

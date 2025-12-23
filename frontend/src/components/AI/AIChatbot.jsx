@@ -66,7 +66,7 @@ const AIChatbot = ({ isOpen, onClose, isMinimized, onToggleMinimize }) => {
 
     try {
       const response = await aiService.getChatbotResponse(message);
-      
+
       const botMessage = {
         id: Date.now() + 1,
         text: response.data.message,
@@ -204,7 +204,7 @@ const AIChatbot = ({ isOpen, onClose, isMinimized, onToggleMinimize }) => {
                     >
                       {message.sender === 'user' ? <Person /> : <Chat />}
                     </Avatar>
-                    
+
                     <Box>
                       <Paper
                         elevation={1}
@@ -220,7 +220,7 @@ const AIChatbot = ({ isOpen, onClose, isMinimized, onToggleMinimize }) => {
                           {message.text}
                         </Typography>
                       </Paper>
-                      
+
                       {message.suggestions && message.suggestions.length > 0 && (
                         <Box mt={1} display="flex" flexWrap="wrap" gap={0.5}>
                           {message.suggestions.map((suggestion, idx) => (
@@ -236,7 +236,7 @@ const AIChatbot = ({ isOpen, onClose, isMinimized, onToggleMinimize }) => {
                           ))}
                         </Box>
                       )}
-                      
+
                       <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
                         {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </Typography>
@@ -244,7 +244,7 @@ const AIChatbot = ({ isOpen, onClose, isMinimized, onToggleMinimize }) => {
                   </Box>
                 </Box>
               ))}
-              
+
               {isLoading && (
                 <Box display="flex" justifyContent="flex-start" mb={2}>
                   <Box display="flex" alignItems="center">
@@ -260,7 +260,7 @@ const AIChatbot = ({ isOpen, onClose, isMinimized, onToggleMinimize }) => {
                   </Box>
                 </Box>
               )}
-              
+
               <div ref={messagesEndRef} />
             </Box>
 

@@ -18,10 +18,10 @@ const SearchBar = ({ placeholder = "Search internships, companies, skills..." })
   const navigate = useNavigate()
   const location = useLocation()
   const dispatch = useDispatch()
-  
+
   const { searchHistory } = useSelector((state) => state.ui)
   const { filters } = useSelector((state) => state.internships)
-  
+
   const [searchValue, setSearchValue] = useState(filters.search || '')
   const [open, setOpen] = useState(false)
 
@@ -33,7 +33,7 @@ const SearchBar = ({ placeholder = "Search internships, companies, skills..." })
     if (value?.trim()) {
       dispatch(addToSearchHistory(value.trim()))
       dispatch(setFilters({ search: value.trim() }))
-      
+
       // Navigate to internships page if not already there
       if (location.pathname !== '/internships') {
         navigate('/internships')

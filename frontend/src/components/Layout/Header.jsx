@@ -1,315 +1,133 @@
 import React, { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
-import {
-  AppBar,
-  Toolbar,
-  Typography,
-  Button,
-  Box,
-  IconButton,
-  Menu,
-  MenuItem,
-  Avatar,
-  Badge,
-  Divider,
-  ListItemIcon,
-  ListItemText,
-  Container,
-  useTheme,
-  useMediaQuery
-} from '@mui/material'
-import {
-  NotificationsOutlined,
-  AccountCircleOutlined,
-  MenuOutlined,
-  WorkOutline,
-  DashboardOutlined,
-  LogoutOutlined,
-  FavoriteOutlined,
-  AutoAwesome,
-  MessageOutlined
-} from '@mui/icons-material'
+import { Search, Bell, MessageSquare, User, Menu, X } from 'lucide-react'
 import { logout } from '../../store/slices/authSlice'
-import { setSidebarOpen } from '../../store/slices/uiSlice'
-import DynamicSearchBar from '../UI/DynamicSearchBar'
 import NotificationCenter from '../Notifications/NotificationCenter'
 import NotificationBell from '../Notifications/NotificationBell'
 
 const Header = () => {
-  const theme = useTheme()
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'))
   const navigate = useNavigate()
   const location = useLocation()
   const dispatch = useDispatch()
-  
-  const { user, token } = useSelector((state) => state.auth)
-  const { unreadCount } = useSelector((state) => state.notifications)
-  
-  const [anchorEl, setAnchorEl] = useState(null)
-  const [notificationAnchor, setNotificationAnchor] = useState(null)
+  const { user } = useSelector((state) => state.auth)
+  const [searchQuery, setSearchQuery] = useState('')
   const [notificationCenterOpen, setNotificationCenterOpen] = useState(false)
+  const [showProfileMenu, setShowProfileMenu] = useState(false)
 
-  const handleProfileMenuOpen = (event) => {
-    setAnchorEl(event.currentTarget)
-  }
-
-  const handleProfileMenuClose = () => {
-    setAnchorEl(null)
-  }
-
-  const handleNotificationMenuOpen = (event) => {
-    setNotificationAnchor(event.currentTarget)
-  }
-
-  const handleNotificationMenuClose = () => {
-    setNotificationAnchor(null)
-  }
-
-  const handleLogout = () => {
-    dispatch(logout())
-    handleProfileMenuClose()
-    navigate('/')
-  }
-
-  const handleNavigation = (path) => {
-    navigate(path)
-    handleProfileMenuClose()
-  }
-
-  const isActive = (path) => {
-    return location.pathname === path || location.pathname.startsWith(path + '/')
+  const handleSearch = (e) => {
+    e.preventDefault()
+    if (searchQuery.trim()) {
+      navigate(`/internships?search=${encodeURIComponent(searchQuery)}`)
+    }
   }
 
   return (
-    <AppBar position="sticky" sx={{ backgroundColor: 'white', color: 'text.primary', boxShadow: 1 }}>
-      <Container maxWidth="xl">
-        <Toolbar sx={{ justifyContent: 'space-between', py: 1 }}>
-          {/* Logo and Brand */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            {isMobile && user && (
-              <IconButton
-                edge="start"
-                color="inherit"
-                onClick={() => dispatch(setSidebarOpen(true))}
-              >
-                <MenuOutlined />
-              </IconButton>
-            )}
-            
-            <Link to="/" className="flex items-center gap-2 no-underline">
-              <WorkOutline sx={{ fontSize: 32, color: 'primary.main' }} />
-              <Typography
-                variant="h6"
-                component="div"
-                sx={{
-                  fontWeight: 'bold',
-                  color: 'primary.main',
-                  display: { xs: 'none', sm: 'block' }
-                }}
-              >
-                InternQuest
-              </Typography>
-            </Link>
-          </Box>
+    <header className="sticky top-0 z-40 bg-dark-800/90 backdrop-blur-xl border-b border-dark-600">
+      <div className="px-6 py-4">
+        <div className="flex items-center justify-between gap-4">
+          {/* Search Bar */}
+          <form onSubmit={handleSearch} className="flex-1 max-w-xl">
+            <div className="search-bar">
+              <Search className="w-5 h-5 text-gray-500" />
+              <input
+                type="text"
+                placeholder="Search for internships, companies..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="flex-1 bg-transparent border-none outline-none text-gray-200 placeholder-gray-500"
+              />
+            </div>
+          </form>
 
-          {/* Search Bar - Only on internships pages */}
-          {(location.pathname === '/internships' || location.pathname === '/') && (
-            <Box sx={{ flex: 1, maxWidth: 600, mx: 3, display: { xs: 'none', md: 'block' } }}>
-              <DynamicSearchBar />
-            </Box>
-          )}
-
-          {/* Navigation Links and Actions */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            {!user ? (
-              // Guest Navigation
+          {/* Right Side Actions */}
+          <div className="flex items-center gap-3">
+            {user ? (
               <>
-                <Button
-                  color="inherit"
-                  component={Link}
-                  to="/internships"
-                  sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
+                {/* Messages */}
+                <Link
+                  to="/messages"
+                  className="p-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-dark-700 transition-all"
                 >
-                  Browse Internships
-                </Button>
-                <Button
-                  color="inherit"
-                  component={Link}
-                  to="/login"
-                  variant="outlined"
-                  size="small"
-                >
-                  Login
-                </Button>
-                <Button
-                  component={Link}
-                  to="/register"
-                  variant="contained"
-                  size="small"
-                >
-                  Sign Up
-                </Button>
-              </>
-            ) : (
-              // Authenticated User Navigation
-              <>
-                {!isMobile && (
-                  <>
-                    <Button
-                      color="inherit"
-                      component={Link}
-                      to="/internships"
-                      sx={{ 
-                        color: isActive('/internships') ? 'primary.main' : 'text.primary',
-                        fontWeight: isActive('/internships') ? 600 : 400
-                      }}
-                    >
-                      Browse
-                    </Button>
-                    <Button
-                      color="inherit"
-                      component={Link}
-                      to="/dashboard"
-                      sx={{ 
-                        color: isActive('/dashboard') ? 'primary.main' : 'text.primary',
-                        fontWeight: isActive('/dashboard') ? 600 : 400
-                      }}
-                    >
-                      Dashboard
-                    </Button>
-                    {user.role === 'student' && (
-                      <>
-                        <Button
-                          color="inherit"
-                          component={Link}
-                          to="/wishlist"
-                          sx={{ 
-                            color: isActive('/wishlist') ? 'primary.main' : 'text.primary',
-                            fontWeight: isActive('/wishlist') ? 600 : 400
-                          }}
-                        >
-                          Wishlist
-                        </Button>
-                        <Button
-                          color="inherit"
-                          component={Link}
-                          to="/ai"
-                          sx={{ 
-                            color: isActive('/ai') ? 'primary.main' : 'text.primary',
-                            fontWeight: isActive('/ai') ? 600 : 400
-                          }}
-                        >
-                          AI Assistant
-                        </Button>
-                      </>
-                    )}
-                    
-                    {/* Messages Button - Available to all authenticated users */}
-                    <IconButton
-                      color="inherit"
-                      component={Link}
-                      to="/messages"
-                      sx={{ 
-                        color: isActive('/messages') ? 'primary.main' : 'text.primary'
-                      }}
-                    >
-                      <MessageOutlined />
-                    </IconButton>
-                    {user.role === 'company' && (
-                      <Button
-                        color="inherit"
-                        component={Link}
-                        to="/internships/create"
-                        variant="outlined"
-                        size="small"
-                      >
-                        Post Internship
-                      </Button>
-                    )}
-                  </>
-                )}
+                  <MessageSquare className="w-5 h-5" />
+                </Link>
 
                 {/* Notifications */}
-                <NotificationBell 
+                <NotificationBell
                   onOpenCenter={() => setNotificationCenterOpen(true)}
                   onNavigate={navigate}
                 />
 
-                {/* Profile Menu */}
-                <IconButton
-                  edge="end"
-                  onClick={handleProfileMenuOpen}
-                  color="inherit"
-                >
-                  {user.avatar ? (
-                    <Avatar src={user.avatar} sx={{ width: 32, height: 32 }} />
-                  ) : (
-                    <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main' }}>
-                      {user.name?.charAt(0)?.toUpperCase()}
-                    </Avatar>
-                  )}
-                </IconButton>
+                {/* Profile */}
+                <div className="relative">
+                  <button
+                    onClick={() => setShowProfileMenu(!showProfileMenu)}
+                    className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-dark-700 transition-all"
+                  >
+                    {user.avatar ? (
+                      <img
+                        src={user.avatar}
+                        alt={user.name}
+                        className="w-8 h-8 rounded-lg object-cover"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-lg bg-primary-500 flex items-center justify-center text-white font-semibold">
+                        {user.name?.charAt(0)?.toUpperCase()}
+                      </div>
+                    )}
+                  </button>
 
-                {/* Profile Dropdown Menu */}
-                <Menu
-                  anchorEl={anchorEl}
-                  open={Boolean(anchorEl)}
-                  onClose={handleProfileMenuClose}
-                  onClick={handleProfileMenuClose}
-                  PaperProps={{
-                    elevation: 3,
-                    sx: {
-                      mt: 1.5,
-                      minWidth: 200,
-                      '& .MuiMenuItem-root': {
-                        px: 2,
-                        py: 1,
-                      },
-                    },
-                  }}
+                  {/* Profile Dropdown */}
+                  {showProfileMenu && (
+                    <div className="absolute right-0 top-12 w-48 bg-dark-700 border border-dark-500 rounded-xl shadow-xl py-2 z-50">
+                      <Link
+                        to="/profile"
+                        className="block px-4 py-2 text-gray-300 hover:text-white hover:bg-dark-600 transition-colors"
+                        onClick={() => setShowProfileMenu(false)}
+                      >
+                        Profile
+                      </Link>
+                      <Link
+                        to="/dashboard"
+                        className="block px-4 py-2 text-gray-300 hover:text-white hover:bg-dark-600 transition-colors"
+                        onClick={() => setShowProfileMenu(false)}
+                      >
+                        Dashboard
+                      </Link>
+                      <hr className="my-2 border-dark-500" />
+                      <button
+                        onClick={() => {
+                          dispatch(logout())
+                          setShowProfileMenu(false)
+                          navigate('/')
+                        }}
+                        className="block w-full text-left px-4 py-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors"
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  className="px-4 py-2 text-gray-300 hover:text-white font-medium transition-colors"
                 >
-                  <MenuItem onClick={() => handleNavigation('/profile')}>
-                    <AccountCircleOutlined sx={{ mr: 2 }} />
-                    Profile
-                  </MenuItem>
-                  <MenuItem onClick={() => handleNavigation('/dashboard')}>
-                    <DashboardOutlined sx={{ mr: 2 }} />
-                    Dashboard
-                  </MenuItem>
-                  <MenuItem onClick={() => handleNavigation('/messages')}>
-                    <MessageOutlined sx={{ mr: 2 }} />
-                    Messages
-                  </MenuItem>
-                  {user.role === 'student' && (
-                    <>
-                      <MenuItem onClick={() => handleNavigation('/wishlist')}>
-                        <FavoriteOutlined sx={{ mr: 2 }} />
-                        Wishlist
-                      </MenuItem>
-                      <MenuItem onClick={() => handleNavigation('/ai')}>
-                        <AutoAwesome sx={{ mr: 2 }} />
-                        AI Assistant
-                      </MenuItem>
-                    </>
-                  )}
-                  {user.role === 'company' && (
-                    <MenuItem onClick={() => handleNavigation('/company')}>
-                      <WorkOutline sx={{ mr: 2 }} />
-                      Company Dashboard
-                    </MenuItem>
-                  )}
-                  <MenuItem onClick={handleLogout}>
-                    <LogoutOutlined sx={{ mr: 2 }} />
-                    Logout
-                  </MenuItem>
-                </Menu>
-
+                  SIGN IN
+                </Link>
+                <Link
+                  to="/register"
+                  className="px-5 py-2 bg-primary-500 hover:bg-primary-600 text-white font-medium rounded-lg transition-colors"
+                >
+                  REGISTER
+                </Link>
               </>
             )}
-          </Box>
-        </Toolbar>
-      </Container>
+          </div>
+        </div>
+      </div>
 
       {/* Notification Center Drawer */}
       <NotificationCenter
@@ -317,7 +135,7 @@ const Header = () => {
         onClose={() => setNotificationCenterOpen(false)}
         onNavigate={navigate}
       />
-    </AppBar>
+    </header>
   )
 }
 

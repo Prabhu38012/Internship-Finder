@@ -8,64 +8,64 @@ const originalError = console.error
 
 console.warn = (...args) => {
   const message = args[0]?.toString() || ''
-  
+
   // Suppress React Router warnings
   if (message.includes('React Router Future Flag Warning')) {
     return
   }
-  
+
   // Suppress socket warnings during development when server might not be ready
   if (message.includes('Socket not available for event:') ||
-      message.includes('Connection throttled') ||
-      message.includes('Connection attempt without token') ||
-      message.includes('Connection timeout') ||
-      message.includes('attempting reconnect') ||
-      message.includes('Socket not connected')) {
+    message.includes('Connection throttled') ||
+    message.includes('Connection attempt without token') ||
+    message.includes('Connection timeout') ||
+    message.includes('attempting reconnect') ||
+    message.includes('Socket not connected')) {
     return
   }
-  
+
   // Suppress browser extension or external warnings
   if (message.includes('PC_plat')) {
     return
   }
-  
+
   originalWarn.apply(console, args)
 }
 
 console.error = (...args) => {
   const message = args[0]?.toString() || ''
   const stack = args[0]?.stack?.toString() || ''
-  
+
   // Suppress WebSocket connection errors during development
   if (message.includes('WebSocket connection to') ||
-      message.includes('WebSocket is closed before the connection is established') ||
-      message.includes('socket.io') ||
-      message.includes('socketService') ||
-      message.includes('Connection error:') ||
-      message.includes('failed: WebSocket is closed') ||
-      message.includes('clientVersion=') ||
-      message.includes('XMLHttpRequest') ||
-      message.includes('XHR') ||
-      message.includes('transport=websocket')) {
+    message.includes('WebSocket is closed before the connection is established') ||
+    message.includes('socket.io') ||
+    message.includes('socketService') ||
+    message.includes('Connection error:') ||
+    message.includes('failed: WebSocket is closed') ||
+    message.includes('clientVersion=') ||
+    message.includes('XMLHttpRequest') ||
+    message.includes('XHR') ||
+    message.includes('transport=websocket')) {
     return
   }
-  
+
   // Suppress Chrome extension errors
-  if (message.includes('chrome-extension://') || 
-      stack.includes('chrome-extension://') ||
-      message.includes('extension')) {
+  if (message.includes('chrome-extension://') ||
+    stack.includes('chrome-extension://') ||
+    message.includes('extension')) {
     return
   }
-  
+
   originalError.apply(console, args)
 }
 
 // Suppress unhandled promise rejections from WebSocket
 window.addEventListener('unhandledrejection', (event) => {
   const message = event.reason?.toString() || ''
-  if (message.includes('WebSocket') || 
-      message.includes('socket.io') ||
-      message.includes('Connection')) {
+  if (message.includes('WebSocket') ||
+    message.includes('socket.io') ||
+    message.includes('Connection')) {
     event.preventDefault()
   }
 })
@@ -74,18 +74,18 @@ window.addEventListener('unhandledrejection', (event) => {
 window.addEventListener('error', (event) => {
   const message = event.message?.toString() || ''
   const filename = event.filename?.toString() || ''
-  
+
   // Suppress WebSocket errors
-  if (message.includes('WebSocket') || 
-      message.includes('socket.io') ||
-      message.includes('socketService')) {
+  if (message.includes('WebSocket') ||
+    message.includes('socket.io') ||
+    message.includes('socketService')) {
     event.preventDefault()
     return false
   }
-  
+
   // Suppress Chrome extension errors
-  if (filename.includes('chrome-extension://') || 
-      message.includes('chrome-extension://')) {
+  if (filename.includes('chrome-extension://') ||
+    message.includes('chrome-extension://')) {
     event.preventDefault()
     return false
   }
@@ -113,22 +113,44 @@ const queryClient = new QueryClient({
   },
 })
 
-// Create Material-UI theme
+// Create Material-UI theme - Dark Mode
 const theme = createTheme({
   palette: {
+    mode: 'dark',
     primary: {
-      main: '#a855f7',
-      light: '#c084fc',
-      dark: '#7e22ce',
+      main: '#3b82f6',
+      light: '#60a5fa',
+      dark: '#2563eb',
     },
     secondary: {
-      main: '#e879f9',
-      light: '#f0abfc',
+      main: '#d946ef',
+      light: '#e879f9',
       dark: '#c026d3',
     },
     background: {
-      default: '#faf5ff',
-      paper: '#ffffff',
+      default: '#0f0f1a',
+      paper: '#1a1a2e',
+    },
+    text: {
+      primary: '#f3f4f6',
+      secondary: '#9ca3af',
+    },
+    divider: 'rgba(255, 255, 255, 0.08)',
+    action: {
+      hover: 'rgba(255, 255, 255, 0.05)',
+      selected: 'rgba(59, 130, 246, 0.15)',
+    },
+    success: {
+      main: '#22c55e',
+    },
+    error: {
+      main: '#ef4444',
+    },
+    warning: {
+      main: '#f59e0b',
+    },
+    info: {
+      main: '#06b6d4',
     },
   },
   typography: {
@@ -153,7 +175,7 @@ const theme = createTheme({
     },
   },
   shape: {
-    borderRadius: 8,
+    borderRadius: 12,
   },
   components: {
     MuiButton: {
@@ -161,13 +183,79 @@ const theme = createTheme({
         root: {
           textTransform: 'none',
           fontWeight: 500,
+          borderRadius: 12,
+        },
+        contained: {
+          boxShadow: 'none',
+          '&:hover': {
+            boxShadow: '0 4px 12px rgba(59, 130, 246, 0.25)',
+          },
         },
       },
     },
     MuiCard: {
       styleOverrides: {
         root: {
-          boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
+          backgroundColor: '#1a1a2e',
+          border: '1px solid rgba(255, 255, 255, 0.05)',
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+          borderRadius: 16,
+        },
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          backgroundColor: '#1a1a2e',
+          backgroundImage: 'none',
+        },
+      },
+    },
+    MuiChip: {
+      styleOverrides: {
+        root: {
+          borderRadius: 8,
+        },
+      },
+    },
+    MuiTableCell: {
+      styleOverrides: {
+        root: {
+          borderColor: 'rgba(255, 255, 255, 0.05)',
+        },
+      },
+    },
+    MuiDrawer: {
+      styleOverrides: {
+        paper: {
+          backgroundColor: '#12121f',
+          borderColor: 'rgba(255, 255, 255, 0.05)',
+        },
+      },
+    },
+    MuiTabs: {
+      styleOverrides: {
+        indicator: {
+          backgroundColor: '#3b82f6',
+        },
+      },
+    },
+    MuiTab: {
+      styleOverrides: {
+        root: {
+          textTransform: 'none',
+          fontWeight: 500,
+        },
+      },
+    },
+    MuiLinearProgress: {
+      styleOverrides: {
+        root: {
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          borderRadius: 4,
+        },
+        bar: {
+          borderRadius: 4,
         },
       },
     },

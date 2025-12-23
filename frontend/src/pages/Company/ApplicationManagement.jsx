@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import {
   Container,
   Grid,
@@ -32,7 +33,8 @@ import {
   Tab,
   Badge,
   Tooltip,
-  Divider
+  Divider,
+  Checkbox
 } from '@mui/material';
 import {
   Visibility,
@@ -45,7 +47,8 @@ import {
   Schedule,
   FilterList,
   Search,
-  Refresh
+  Refresh,
+  Compare
 } from '@mui/icons-material';
 import { Helmet } from 'react-helmet-async';
 import { format } from 'date-fns';
@@ -55,12 +58,14 @@ import { getCompanyApplications, updateApplicationStatus } from '../../store/sli
 import { internshipAPI } from '../../services/api';
 import LoadingSpinner from '../../components/UI/LoadingSpinner';
 import { useSocket } from '../../hooks/useSocket';
+import CandidateComparison from '../../components/Company/CandidateComparison';
 
 const ApplicationManagement = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
   const { companyApplications, isLoading } = useSelector((state) => state.applications);
-  
+
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [statusDialog, setStatusDialog] = useState(false);
@@ -71,7 +76,12 @@ const ApplicationManagement = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [realTimeUpdates, setRealTimeUpdates] = useState([]);
 
-  const socket = useSocket();
+  // Candidate comparison state
+  const [selectedForComparison, setSelectedForComparison] = useState([]);
+  const [comparisonOpen, setComparisonOpen] = useState(false);
+
+  const token = localStorage.getItem('token');
+  const { socket } = useSocket(token);
 
   useEffect(() => {
     dispatch(getCompanyApplications());
@@ -134,7 +144,7 @@ const ApplicationManagement = () => {
 
     try {
       await internshipAPI.updateApplicationStatus(selectedApplication._id, newStatus);
-      
+
       // Emit real-time update
       if (socket) {
         socket.emit('application_status_updated', {
@@ -153,6 +163,68 @@ const ApplicationManagement = () => {
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to update status');
     }
+  };
+
+  // Handler for View Full Profile
+  const handleViewProfile = () => {
+    if (selectedApplication?.applicant?._id) {
+      navigate(`/applications/${selectedApplication._id}`);
+    }
+    handleMenuClose();
+  };
+
+  // Handler for Download Resume
+  const handleDownloadResume = () => {
+    if (selectedApplication?.applicant?.studentProfile?.resume) {
+      const resumeUrl = selectedApplication.applicant.studentProfile.resume.startsWith('http')
+        ? selectedApplication.applicant.studentProfile.resume
+        : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${selectedApplication.applicant.studentProfile.resume}`;
+      window.open(resumeUrl, '_blank');
+      toast.success('Opening resume...');
+    } else {
+      toast.error('Resume not available for this applicant');
+    }
+    handleMenuClose();
+  };
+
+  // Handler for Send Message
+  const handleSendMessage = () => {
+    if (selectedApplication?.applicant?.email) {
+      window.location.href = `mailto:${selectedApplication.applicant.email}?subject=Regarding your application for ${selectedApplication.internship?.title}`;
+    } else {
+      toast.error('Email not available for this applicant');
+    }
+    handleMenuClose();
+  };
+
+  // Handler for toggling candidate selection for comparison
+  const handleToggleComparison = (application) => {
+    setSelectedForComparison(prev => {
+      const isSelected = prev.find(a => a._id === application._id);
+      if (isSelected) {
+        return prev.filter(a => a._id !== application._id);
+      } else if (prev.length < 3) {
+        return [...prev, application];
+      } else {
+        toast.error('You can compare up to 3 candidates at a time');
+        return prev;
+      }
+    });
+  };
+
+  // Handler to open comparison modal
+  const handleOpenComparison = () => {
+    if (selectedForComparison.length < 2) {
+      toast.error('Select at least 2 candidates to compare');
+      return;
+    }
+    setComparisonOpen(true);
+  };
+
+  // Handler for status update from comparison modal
+  const handleComparisonStatusUpdate = () => {
+    dispatch(getCompanyApplications());
+    setSelectedForComparison([]);
   };
 
   const getStatusColor = (status) => {
@@ -187,12 +259,12 @@ const ApplicationManagement = () => {
   };
 
   const filteredApplications = companyApplications?.filter(app => {
-    const matchesSearch = !searchTerm || 
+    const matchesSearch = !searchTerm ||
       app.applicant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       app.internship.title.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     const matchesStatus = filterStatus === 'all' || app.status === filterStatus;
-    
+
     return matchesSearch && matchesStatus;
   }) || [];
 
@@ -220,13 +292,26 @@ const ApplicationManagement = () => {
               Track and manage internship applications in real-time
             </Typography>
           </Box>
-          <Button
-            variant="outlined"
-            startIcon={<Refresh />}
-            onClick={() => dispatch(getCompanyApplications())}
-          >
-            Refresh
-          </Button>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            {selectedForComparison.length > 0 && (
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<Compare />}
+                onClick={handleOpenComparison}
+                disabled={selectedForComparison.length < 2}
+              >
+                Compare ({selectedForComparison.length})
+              </Button>
+            )}
+            <Button
+              variant="outlined"
+              startIcon={<Refresh />}
+              onClick={() => dispatch(getCompanyApplications())}
+            >
+              Refresh
+            </Button>
+          </Box>
         </Box>
 
         {/* Real-time Updates */}
@@ -238,10 +323,10 @@ const ApplicationManagement = () => {
               </Typography>
               {realTimeUpdates.slice(-3).map((update, index) => (
                 <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
-                  <Chip 
-                    size="small" 
-                    label={update.type} 
-                    color={update.type === 'new' ? 'success' : 'info'} 
+                  <Chip
+                    size="small"
+                    label={update.type}
+                    color={update.type === 'new' ? 'success' : 'info'}
                   />
                   <Typography variant="body2">
                     {update.message}
@@ -319,6 +404,11 @@ const ApplicationManagement = () => {
               <Table>
                 <TableHead>
                   <TableRow>
+                    <TableCell padding="checkbox">
+                      <Tooltip title="Select for comparison">
+                        <Compare fontSize="small" sx={{ color: 'text.secondary' }} />
+                      </Tooltip>
+                    </TableCell>
                     <TableCell>Applicant</TableCell>
                     <TableCell>Internship</TableCell>
                     <TableCell>Applied Date</TableCell>
@@ -330,6 +420,17 @@ const ApplicationManagement = () => {
                 <TableBody>
                   {filteredApplications.map((application) => (
                     <TableRow key={application._id} hover>
+                      <TableCell padding="checkbox">
+                        <Checkbox
+                          checked={!!selectedForComparison.find(a => a._id === application._id)}
+                          onChange={() => handleToggleComparison(application)}
+                          disabled={!selectedForComparison.find(a => a._id === application._id) && selectedForComparison.length >= 3}
+                          sx={{
+                            color: 'primary.main',
+                            '&.Mui-checked': { color: 'primary.main' }
+                          }}
+                        />
+                      </TableCell>
                       <TableCell>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                           <Avatar
@@ -406,7 +507,7 @@ const ApplicationManagement = () => {
                   No applications found
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {searchTerm || filterStatus !== 'all' 
+                  {searchTerm || filterStatus !== 'all'
                     ? 'Try adjusting your search or filter criteria'
                     : 'Applications will appear here once students start applying'
                   }
@@ -422,11 +523,11 @@ const ApplicationManagement = () => {
           open={Boolean(anchorEl)}
           onClose={handleMenuClose}
         >
-          <MenuItem onClick={() => {}}>
+          <MenuItem onClick={handleViewProfile}>
             <Visibility sx={{ mr: 1 }} />
             View Full Profile
           </MenuItem>
-          <MenuItem onClick={() => {}}>
+          <MenuItem onClick={handleDownloadResume}>
             <Download sx={{ mr: 1 }} />
             Download Resume
           </MenuItem>
@@ -435,7 +536,7 @@ const ApplicationManagement = () => {
             <CheckCircle sx={{ mr: 1 }} />
             Update Status
           </MenuItem>
-          <MenuItem onClick={() => {}}>
+          <MenuItem onClick={handleSendMessage}>
             <Email sx={{ mr: 1 }} />
             Send Message
           </MenuItem>
@@ -473,8 +574,8 @@ const ApplicationManagement = () => {
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setStatusDialog(false)}>Cancel</Button>
-            <Button 
-              onClick={handleStatusSubmit} 
+            <Button
+              onClick={handleStatusSubmit}
               variant="contained"
               disabled={!newStatus}
             >
@@ -482,6 +583,15 @@ const ApplicationManagement = () => {
             </Button>
           </DialogActions>
         </Dialog>
+
+        {/* Candidate Comparison Modal */}
+        <CandidateComparison
+          open={comparisonOpen}
+          onClose={() => setComparisonOpen(false)}
+          candidates={selectedForComparison}
+          internshipTitle={selectedForComparison[0]?.internship?.title || 'Internship'}
+          onStatusUpdate={handleComparisonStatusUpdate}
+        />
       </Container>
     </>
   );

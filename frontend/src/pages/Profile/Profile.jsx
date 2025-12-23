@@ -42,18 +42,19 @@ import toast from 'react-hot-toast'
 import { updateProfile } from '../../store/slices/authSlice'
 import userService from '../../services/userService'
 import LoadingSpinner from '../../components/UI/LoadingSpinner'
+import { getResumeUrl } from '../../utils/fileUtils'
 
 const Profile = () => {
   const dispatch = useDispatch()
   const { user, isLoading } = useSelector((state) => state.auth)
-  
+
   const [editMode, setEditMode] = useState(false)
   const [avatarDialogOpen, setAvatarDialogOpen] = useState(false)
   const [skillDialogOpen, setSkillDialogOpen] = useState(false)
   const [newSkill, setNewSkill] = useState('')
   const [selectedFile, setSelectedFile] = useState(null)
   const [uploading, setUploading] = useState(false)
-  
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -165,7 +166,7 @@ const Profile = () => {
 
   const handleResumeUpload = async (file) => {
     const token = localStorage.getItem('token')
-    
+
     try {
       setUploading(true)
       await userService.uploadResume(file, token)
@@ -188,7 +189,7 @@ const Profile = () => {
   }
 
   const removeSkill = (skillToRemove) => {
-    handleInputChange('studentProfile.skills', 
+    handleInputChange('studentProfile.skills',
       formData.studentProfile.skills.filter(skill => skill !== skillToRemove)
     )
   }
@@ -233,7 +234,7 @@ const Profile = () => {
                       <PhotoCamera fontSize="small" />
                     </IconButton>
                   </Box>
-                  
+
                   <Box sx={{ flex: 1 }}>
                     <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
                       {user?.name}
@@ -262,7 +263,7 @@ const Profile = () => {
                       )}
                     </Box>
                   </Box>
-                  
+
                   <Button
                     variant={editMode ? "contained" : "outlined"}
                     startIcon={<Edit />}
@@ -270,7 +271,7 @@ const Profile = () => {
                   >
                     {editMode ? 'Save Changes' : 'Edit Profile'}
                   </Button>
-                  
+
                   {editMode && (
                     <Button
                       variant="outlined"
@@ -469,7 +470,7 @@ const Profile = () => {
                       {user?.studentProfile?.resume ? (
                         <Button
                           startIcon={<Download />}
-                          href={user.studentProfile.resume}
+                          href={getResumeUrl(user.studentProfile.resume)}
                           target="_blank"
                           rel="noopener noreferrer"
                         >
@@ -480,7 +481,7 @@ const Profile = () => {
                           No resume uploaded
                         </Typography>
                       )}
-                      
+
                       <input
                         accept=".pdf,.doc,.docx"
                         style={{ display: 'none' }}

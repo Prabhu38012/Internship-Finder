@@ -44,15 +44,16 @@ import toast from 'react-hot-toast'
 
 import { getApplication, updateApplicationStatus } from '../../store/slices/applicationSlice'
 import LoadingSpinner from '../../components/UI/LoadingSpinner'
+import { getResumeUrl } from '../../utils/fileUtils'
 
 const ApplicationDetail = () => {
   const { id } = useParams()
   const navigate = useNavigate()
   const dispatch = useDispatch()
-  
+
   const { application, isLoading } = useSelector((state) => state.applications)
   const { user } = useSelector((state) => state.auth)
-  
+
   const [statusDialogOpen, setStatusDialogOpen] = useState(false)
   const [newStatus, setNewStatus] = useState('')
   const [statusNote, setStatusNote] = useState('')
@@ -148,7 +149,7 @@ const ApplicationDetail = () => {
                       size="large"
                     />
                   </Box>
-                  
+
                   {canUpdateStatus && (
                     <Button
                       variant="outlined"
@@ -248,7 +249,6 @@ const ApplicationDetail = () => {
                   </Box>
                 )}
 
-                {/* Resume */}
                 <Box sx={{ mb: 4 }}>
                   <Typography variant="h6" gutterBottom>
                     Resume
@@ -256,7 +256,7 @@ const ApplicationDetail = () => {
                   <Button
                     variant="outlined"
                     startIcon={<Download />}
-                    href={application.resume}
+                    href={getResumeUrl(application.resume)}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -338,8 +338,8 @@ const ApplicationDetail = () => {
                       Location
                     </Typography>
                     <Typography variant="body2">
-                      {application.internship.location?.type === 'remote' 
-                        ? 'Remote' 
+                      {application.internship.location?.type === 'remote'
+                        ? 'Remote'
                         : `${application.internship.location?.city}`
                       }
                     </Typography>
@@ -420,7 +420,7 @@ const ApplicationDetail = () => {
                   <MenuItem value="rejected">Rejected</MenuItem>
                 </Select>
               </FormControl>
-              
+
               <TextField
                 label="Note (Optional)"
                 multiline

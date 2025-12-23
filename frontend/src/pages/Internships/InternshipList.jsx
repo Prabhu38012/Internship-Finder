@@ -1,49 +1,25 @@
 import React, { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { useSearchParams } from 'react-router-dom'
-import {
-  Container,
-  Grid,
-  Card,
-  CardContent,
-  Typography,
-  Chip,
-  Button,
-  Box,
-  Pagination,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  TextField,
-  Drawer,
-  IconButton,
-  useTheme,
-  useMediaQuery
-} from '@mui/material'
-import {
-  LocationOn,
-  Business,
-  Schedule,
-  AttachMoney,
-  FilterList,
-  Close,
-  BookmarkBorder,
-  Bookmark,
-  Language,
-  OpenInNew
-} from '@mui/icons-material'
+import { useSearchParams, Link } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
-import { Link } from 'react-router-dom'
 import { format } from 'date-fns'
+import {
+  MapPin,
+  Building2,
+  Clock,
+  DollarSign,
+  Filter,
+  X,
+  Bookmark,
+  Globe,
+  ExternalLink,
+  Star,
+  ChevronRight,
+  Search
+} from 'lucide-react'
 
 import { getInternships, getInternshipsWithExternal, setFilters, setPagination, toggleSaveInternship } from '../../store/slices/internshipSlice'
 import LoadingSpinner from '../../components/UI/LoadingSpinner'
-import DynamicSearchBar from '../../components/UI/DynamicSearchBar'
-import DynamicFilters from '../../components/UI/DynamicFilters'
-import AnimatedCard from '../../components/UI/AnimatedCard'
-import InfiniteScrollList from '../../components/UI/InfiniteScrollList'
-import useSocket from '../../hooks/useSocket'
 import WishlistButton from '../../components/Wishlist/WishlistButton'
 
 const categories = [
@@ -66,8 +42,6 @@ const categories = [
 ]
 
 const InternshipList = () => {
-  const theme = useTheme()
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'))
   const dispatch = useDispatch()
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -77,11 +51,7 @@ const InternshipList = () => {
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [localFilters, setLocalFilters] = useState(filters)
   const [includeExternal, setIncludeExternal] = useState(false)
-  const [hasNextPage, setHasNextPage] = useState(true)
-  const [isLoadingMore, setIsLoadingMore] = useState(false)
-
-  // Initialize socket connection for real-time updates
-  const { socket } = useSocket()
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     // Initialize filters from URL params
@@ -97,6 +67,7 @@ const InternshipList = () => {
 
     dispatch(setFilters(urlFilters))
     setLocalFilters(urlFilters)
+    setSearchQuery(urlFilters.search)
   }, [searchParams, dispatch])
 
   useEffect(() => {
@@ -117,6 +88,12 @@ const InternshipList = () => {
   const handleFilterChange = (field, value) => {
     const newFilters = { ...localFilters, [field]: value }
     setLocalFilters(newFilters)
+  }
+
+  const handleSearch = (e) => {
+    e.preventDefault()
+    handleFilterChange('search', searchQuery)
+    applyFilters()
   }
 
   const applyFilters = () => {
@@ -145,34 +122,13 @@ const InternshipList = () => {
       stipendMax: '',
     }
     setLocalFilters(clearedFilters)
+    setSearchQuery('')
     dispatch(setFilters(clearedFilters))
     setSearchParams({})
   }
 
-  const handlePageChange = (event, page) => {
+  const handlePageChange = (page) => {
     dispatch(setPagination({ page }))
-  }
-
-  const loadMoreInternships = async () => {
-    if (isLoadingMore || !hasNextPage) return
-
-    setIsLoadingMore(true)
-    try {
-      const nextPage = pagination.page + 1
-      const params = {
-        ...filters,
-        page: nextPage,
-        limit: pagination.limit
-      }
-
-      await dispatch(getInternships(params))
-
-      setHasNextPage(nextPage < pagination.pages)
-    } catch (error) {
-      console.error('Error loading more internships:', error)
-    } finally {
-      setIsLoadingMore(false)
-    }
   }
 
   const handleSaveInternship = (internshipId) => {
@@ -181,106 +137,6 @@ const InternshipList = () => {
     }
   }
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'active': return 'success'
-      case 'urgent': return 'error'
-      case 'featured': return 'primary'
-      default: return 'default'
-    }
-  }
-
-  const FilterDrawer = () => (
-    <Box sx={{ width: 300, p: 3 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h6">Filters</Typography>
-        <IconButton onClick={() => setFiltersOpen(false)}>
-          <Close />
-        </IconButton>
-      </Box>
-
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <FormControl fullWidth>
-          <InputLabel>Category</InputLabel>
-          <Select
-            value={localFilters.category}
-            label="Category"
-            onChange={(e) => handleFilterChange('category', e.target.value)}
-          >
-            <MenuItem value="">All Categories</MenuItem>
-            {categories.map((category) => (
-              <MenuItem key={category} value={category}>
-                {category}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        <TextField
-          fullWidth
-          label="Location"
-          value={localFilters.location}
-          onChange={(e) => handleFilterChange('location', e.target.value)}
-          placeholder="City, State, or Country"
-        />
-
-        <FormControl fullWidth>
-          <InputLabel>Type</InputLabel>
-          <Select
-            value={localFilters.type}
-            label="Type"
-            onChange={(e) => handleFilterChange('type', e.target.value)}
-          >
-            <MenuItem value="">All Types</MenuItem>
-            <MenuItem value="internship">Internship</MenuItem>
-            <MenuItem value="project">Project</MenuItem>
-            <MenuItem value="full-time">Full-time</MenuItem>
-            <MenuItem value="part-time">Part-time</MenuItem>
-          </Select>
-        </FormControl>
-
-        <FormControl fullWidth>
-          <InputLabel>Work Mode</InputLabel>
-          <Select
-            value={localFilters.remote ? 'remote' : 'onsite'}
-            label="Work Mode"
-            onChange={(e) => handleFilterChange('remote', e.target.value === 'remote')}
-          >
-            <MenuItem value="">All Modes</MenuItem>
-            <MenuItem value="remote">Remote</MenuItem>
-            <MenuItem value="onsite">On-site</MenuItem>
-          </Select>
-        </FormControl>
-
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <TextField
-            label="Min Stipend"
-            type="number"
-            value={localFilters.stipendMin}
-            onChange={(e) => handleFilterChange('stipendMin', e.target.value)}
-            sx={{ flex: 1 }}
-          />
-          <TextField
-            label="Max Stipend"
-            type="number"
-            value={localFilters.stipendMax}
-            onChange={(e) => handleFilterChange('stipendMax', e.target.value)}
-            sx={{ flex: 1 }}
-          />
-        </Box>
-
-        <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
-          <Button variant="contained" onClick={applyFilters} fullWidth>
-            Apply Filters
-          </Button>
-          <Button variant="outlined" onClick={clearFilters} fullWidth>
-            Clear
-          </Button>
-        </Box>
-      </Box>
-    </Box>
-  )
-
   return (
     <>
       <Helmet>
@@ -288,276 +144,404 @@ const InternshipList = () => {
         <meta name="description" content="Browse and search through thousands of internship opportunities from top companies." />
       </Helmet>
 
-      <Container maxWidth="xl" sx={{ py: 4 }}>
-        {/* Header */}
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
-            Find Your Perfect Internship
-          </Typography>
+      <div className="min-h-screen p-6 md:p-8">
+        <div className="max-w-6xl mx-auto">
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-white mb-2">Find Your Perfect Internship</h1>
+            <p className="text-gray-400">{pagination.total} opportunities available</p>
+          </div>
 
           {/* Search and Filter Bar */}
-          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 3, flexWrap: 'wrap' }}>
-            <Box sx={{ flex: 1, maxWidth: 600 }}>
-              <DynamicSearchBar />
-            </Box>
-            <Button
-              variant={includeExternal ? "contained" : "outlined"}
-              startIcon={<Language />}
+          <div className="flex flex-col md:flex-row gap-4 mb-6">
+            <form onSubmit={handleSearch} className="flex-1">
+              <div className="search-bar">
+                <Search className="w-5 h-5 text-gray-500" />
+                <input
+                  type="text"
+                  placeholder="Search internships..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="flex-1 bg-transparent border-none outline-none text-gray-200 placeholder-gray-500"
+                />
+              </div>
+            </form>
+
+            <button
               onClick={() => setIncludeExternal(!includeExternal)}
-              sx={{ minWidth: 160 }}
-              color={includeExternal ? "secondary" : "inherit"}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all ${includeExternal
+                ? 'bg-secondary-500 text-white'
+                : 'bg-dark-700 text-gray-300 border border-dark-500 hover:bg-dark-600'
+                }`}
             >
+              <Globe className="w-4 h-4" />
               {includeExternal ? 'External ON' : 'Include External'}
-            </Button>
-            <Button
-              variant="outlined"
-              startIcon={<FilterList />}
+            </button>
+
+            <button
               onClick={() => setFiltersOpen(true)}
-              sx={{ minWidth: 120 }}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium bg-dark-700 text-gray-300 border border-dark-500 hover:bg-dark-600 transition-all"
             >
+              <Filter className="w-4 h-4" />
               Filters
-            </Button>
-          </Box>
+            </button>
+          </div>
 
           {/* Active Filters */}
           {Object.entries(filters).some(([key, value]) => value && key !== 'page' && key !== 'limit') && (
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
+            <div className="flex flex-wrap gap-2 mb-6">
               {Object.entries(filters).map(([key, value]) => {
                 if (!value || key === 'page' || key === 'limit') return null
                 return (
-                  <Chip
+                  <span
                     key={key}
-                    label={`${key}: ${value}`}
-                    onDelete={() => handleFilterChange(key, key === 'remote' ? false : '')}
-                    size="small"
-                  />
+                    className="inline-flex items-center gap-1 px-3 py-1 bg-dark-600 border border-dark-500 rounded-full text-sm text-gray-300"
+                  >
+                    {key}: {value.toString()}
+                    <button
+                      onClick={() => handleFilterChange(key, key === 'remote' ? false : '')}
+                      className="ml-1 text-gray-400 hover:text-white"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
                 )
               })}
-              <Button size="small" onClick={clearFilters}>
+              <button
+                onClick={clearFilters}
+                className="text-primary-400 hover:text-primary-300 text-sm font-medium"
+              >
                 Clear All
-              </Button>
-            </Box>
+              </button>
+            </div>
           )}
 
-          {/* Results Count */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-            <Typography variant="body2" color="text.secondary">
-              {pagination.total} internships found
-            </Typography>
-            {includeExternal && (
-              <Chip
-                label="Including external sources"
-                size="small"
-                color="secondary"
-                icon={<Language fontSize="small" />}
-              />
-            )}
-          </Box>
-        </Box>
-
-        {/* Content */}
-        {isLoading ? (
-          <LoadingSpinner message="Loading internships..." />
-        ) : (
-          <>
-            {/* Internship Cards */}
-            <Grid container spacing={3}>
-              {internships.map((internship, index) => (
-                <Grid item xs={12} md={6} lg={4} key={internship._id || internship.id}>
-                  <AnimatedCard
-                    delay={index * 0.1}
-                    direction="up"
-                    hover={true}
-                    sx={{ height: 360, display: 'flex', flexDirection: 'column' }}
+          {/* Content */}
+          {isLoading ? (
+            <LoadingSpinner message="Loading internships..." />
+          ) : (
+            <>
+              {/* Internship Cards Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {internships.map((internship) => (
+                  <div
+                    key={internship._id || internship.id}
+                    className="dark-card dark-card-hover group relative"
                   >
-                    <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                      {/* Header */}
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                        <Box sx={{ flex: 1 }}>
-                          <Typography
-                            variant="h6"
-                            component="h3"
-                            sx={{
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              display: '-webkit-box',
-                              WebkitLineClamp: 2,
-                              WebkitBoxOrient: 'vertical',
-                              lineHeight: 1.3,
-                              minHeight: '2.6em'
-                            }}
-                          >
-                            {internship.title}
-                          </Typography>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                            <Business fontSize="small" color="action" />
-                            <Typography variant="body2" color="text.secondary">
-                              {internship.companyName || internship.company?.name || internship.company}
-                            </Typography>
-                            {internship.company?.companyProfile?.verified && (
-                              <Chip label="Verified" size="small" color="primary" />
-                            )}
-                          </Box>
-                        </Box>
-
-                        <Box sx={{ display: 'flex', gap: 1 }}>
-                          {user && user.role === 'student' && (
-                            <WishlistButton
-                              internship={internship}
-                              size="small"
-                            />
+                    {/* Header */}
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-white group-hover:text-primary-400 transition-colors line-clamp-2 mb-1">
+                          {internship.title}
+                        </h3>
+                        <div className="flex items-center gap-2 text-gray-400 text-sm">
+                          <Building2 className="w-4 h-4" />
+                          <span>{internship.companyName || internship.company?.name || internship.company}</span>
+                          {internship.company?.companyProfile?.verified && (
+                            <span className="badge badge-primary text-xs">Verified</span>
                           )}
-                          {user && user.role === 'student' && !internship.isExternal && (
-                            <IconButton
-                              onClick={() => handleSaveInternship(internship._id)}
-                              color={internship.isSaved ? 'primary' : 'default'}
-                              size="small"
-                            >
-                              {internship.isSaved ? <Bookmark /> : <BookmarkBorder />}
-                            </IconButton>
-                          )}
-                        </Box>
-                      </Box>
+                        </div>
+                      </div>
 
-                      {/* Details */}
-                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mb: 2 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <LocationOn fontSize="small" color="action" />
-                          <Typography variant="body2">
-                            {internship.location.type === 'remote' ? 'Remote' :
-                              `${internship.location.city}, ${internship.location.state}`}
-                          </Typography>
-                        </Box>
-
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Schedule fontSize="small" color="action" />
-                          <Typography variant="body2">
-                            {internship.duration}
-                          </Typography>
-                        </Box>
-
-                        {internship.stipend?.amount > 0 && (
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <AttachMoney fontSize="small" color="action" />
-                            <Typography variant="body2">
-                              {internship.stipend.currency === 'INR' ? '₹' : '$'}{internship.stipend.amount}/{internship.stipend.period}
-                            </Typography>
-                          </Box>
-                        )}
-                      </Box>
-
-                      {/* Description */}
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{
-                          mb: 2,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          display: '-webkit-box',
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: 'vertical',
-                          minHeight: '2.8em',
-                          flex: 1
-                        }}
-                      >
-                        {internship.description ? internship.description.substring(0, 120) : 'No description available'}
-                      </Typography>
-
-                      {/* Tags */}
-                      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
-                        {internship.isExternal && (
-                          <Chip
-                            label={internship.source}
-                            size="small"
-                            color="secondary"
-                            icon={<Language fontSize="small" />}
-                          />
-                        )}
-                        <Chip label={internship.category || 'Other'} size="small" />
-                        <Chip label={internship.type} size="small" variant="outlined" />
-                        {internship.urgent && (
-                          <Chip label="Urgent" size="small" color="error" />
+                      {/* Actions */}
+                      <div className="flex gap-1">
+                        {user && user.role === 'student' && (
+                          <WishlistButton internship={internship} size="small" />
                         )}
                         {internship.featured && (
-                          <Chip label="Featured" size="small" color="primary" />
+                          <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
                         )}
-                      </Box>
+                      </div>
+                    </div>
 
-                      {/* Footer */}
-                      <Box sx={{ mt: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Typography variant="caption" color="text.secondary">
-                          {internship.applicationDeadline ?
-                            `Deadline: ${format(new Date(internship.applicationDeadline), 'MMM dd, yyyy')}` :
-                            `Posted: ${internship.postedDate ? format(new Date(internship.postedDate), 'MMM dd, yyyy') : 'Recently'}`
-                          }
-                        </Typography>
-                        {internship.isExternal ? (
-                          <Button
-                            component="a"
-                            href={internship.applyUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            variant="contained"
-                            size="small"
-                            endIcon={<OpenInNew />}
-                            color="secondary"
-                          >
-                            Apply
-                          </Button>
-                        ) : (
-                          <Button
-                            component={Link}
-                            to={`/internships/${internship._id}`}
-                            variant="contained"
-                            size="small"
-                          >
-                            View Details
-                          </Button>
-                        )}
-                      </Box>
-                    </CardContent>
-                  </AnimatedCard>
-                </Grid>
-              ))}
-            </Grid>
+                    {/* Details */}
+                    <div className="space-y-2 mb-4">
+                      <div className="flex items-center gap-2 text-gray-400 text-sm">
+                        <MapPin className="w-4 h-4" />
+                        <span>
+                          {internship.location?.type === 'remote' ? 'Remote' :
+                            `${internship.location?.city || ''}, ${internship.location?.state || ''}`}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-gray-400 text-sm">
+                        <Clock className="w-4 h-4" />
+                        <span>{internship.duration}</span>
+                      </div>
+                      {internship.stipend?.amount > 0 && (
+                        <div className="flex items-center gap-2 text-gray-400 text-sm">
+                          <DollarSign className="w-4 h-4" />
+                          <span>
+                            {internship.stipend.currency === 'INR' ? '₹' : '$'}
+                            {internship.stipend.amount}/{internship.stipend.period}
+                          </span>
+                        </div>
+                      )}
+                    </div>
 
-            {/* Pagination */}
-            {pagination.pages > 1 && (
-              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-                <Pagination
-                  count={pagination.pages}
-                  page={pagination.page}
-                  onChange={handlePageChange}
-                  color="primary"
-                  size="large"
-                />
-              </Box>
-            )}
+                    {/* Description */}
+                    <p className="text-gray-500 text-sm line-clamp-2 mb-4">
+                      {internship.description ? internship.description.substring(0, 100) + '...' : 'No description available'}
+                    </p>
 
-            {/* No Results */}
-            {internships.length === 0 && !isLoading && (
-              <Box sx={{ textAlign: 'center', py: 8 }}>
-                <Typography variant="h6" gutterBottom>
-                  No internships found
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  Try adjusting your search criteria or filters
-                </Typography>
-                <Button variant="outlined" onClick={clearFilters}>
-                  Clear Filters
-                </Button>
-              </Box>
-            )}
-          </>
-        )}
+                    {/* Tags */}
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {internship.isExternal && (
+                        <span className="badge badge-primary">
+                          <Globe className="w-3 h-3 mr-1" />
+                          {internship.source}
+                        </span>
+                      )}
+                      <span className="badge badge-gray">{internship.category || 'Other'}</span>
+                      <span className="badge badge-gray">{internship.type}</span>
+                      {internship.urgent && (
+                        <span className="badge badge-error">Urgent</span>
+                      )}
+                    </div>
 
-        {/* Dynamic Filter Drawer */}
-        <DynamicFilters
-          open={filtersOpen}
-          onClose={() => setFiltersOpen(false)}
-        />
-      </Container>
+                    {/* Footer */}
+                    <div className="flex items-center justify-between pt-4 border-t border-dark-500">
+                      <span className="text-xs text-gray-500">
+                        {internship.applicationDeadline ?
+                          `Deadline: ${format(new Date(internship.applicationDeadline), 'MMM dd, yyyy')}` :
+                          `Posted: ${internship.postedDate ? format(new Date(internship.postedDate), 'MMM dd, yyyy') : 'Recently'}`
+                        }
+                      </span>
+                      {internship.isExternal ? (
+                        <a
+                          href={internship.applyUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 px-4 py-2 bg-secondary-500 hover:bg-secondary-600 text-white rounded-lg text-sm font-medium transition-colors"
+                        >
+                          Apply
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      ) : (
+                        <Link
+                          to={`/internships/${internship._id}`}
+                          className="flex items-center gap-1 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg text-sm font-medium transition-colors"
+                        >
+                          View
+                          <ChevronRight className="w-4 h-4" />
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Pagination */}
+              {pagination.pages > 1 && (
+                <div className="flex justify-center items-center gap-2 mt-8">
+                  {/* Previous Button */}
+                  <button
+                    onClick={() => handlePageChange(pagination.page - 1)}
+                    disabled={pagination.page === 1}
+                    className={`px-3 py-2 rounded-lg font-medium transition-all ${pagination.page === 1
+                      ? 'bg-dark-800 text-gray-600 cursor-not-allowed'
+                      : 'bg-dark-700 text-gray-400 hover:bg-dark-600 hover:text-white'
+                      }`}
+                  >
+                    ← Prev
+                  </button>
+
+                  {/* Page Numbers with ellipsis */}
+                  {(() => {
+                    const currentPage = pagination.page;
+                    const totalPages = pagination.pages;
+                    const pages = [];
+
+                    // Always show first page
+                    pages.push(1);
+
+                    // Calculate range around current page
+                    let startPage = Math.max(2, currentPage - 1);
+                    let endPage = Math.min(totalPages - 1, currentPage + 1);
+
+                    // Add ellipsis after first page if needed
+                    if (startPage > 2) {
+                      pages.push('...');
+                    }
+
+                    // Add pages around current
+                    for (let i = startPage; i <= endPage; i++) {
+                      pages.push(i);
+                    }
+
+                    // Add ellipsis before last page if needed
+                    if (endPage < totalPages - 1) {
+                      pages.push('...');
+                    }
+
+                    // Always show last page if more than 1 page
+                    if (totalPages > 1) {
+                      pages.push(totalPages);
+                    }
+
+                    return pages.map((page, index) => (
+                      page === '...' ? (
+                        <span key={`ellipsis-${index}`} className="px-2 text-gray-500">...</span>
+                      ) : (
+                        <button
+                          key={page}
+                          onClick={() => handlePageChange(page)}
+                          className={`w-10 h-10 rounded-lg font-medium transition-all ${pagination.page === page
+                            ? 'bg-primary-500 text-white'
+                            : 'bg-dark-700 text-gray-400 hover:bg-dark-600 hover:text-white'
+                            }`}
+                        >
+                          {page}
+                        </button>
+                      )
+                    ));
+                  })()}
+
+                  {/* Next Button */}
+                  <button
+                    onClick={() => handlePageChange(pagination.page + 1)}
+                    disabled={pagination.page === pagination.pages}
+                    className={`px-3 py-2 rounded-lg font-medium transition-all ${pagination.page === pagination.pages
+                      ? 'bg-dark-800 text-gray-600 cursor-not-allowed'
+                      : 'bg-dark-700 text-gray-400 hover:bg-dark-600 hover:text-white'
+                      }`}
+                  >
+                    Next →
+                  </button>
+                </div>
+              )}
+
+              {/* No Results */}
+              {internships.length === 0 && !isLoading && (
+                <div className="text-center py-16">
+                  <h3 className="text-xl font-semibold text-white mb-2">No internships found</h3>
+                  <p className="text-gray-400 mb-4">Try adjusting your search criteria or filters</p>
+                  <button
+                    onClick={clearFilters}
+                    className="px-6 py-2 bg-dark-700 hover:bg-dark-600 text-white rounded-lg transition-colors"
+                  >
+                    Clear Filters
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Filter Drawer */}
+          {filtersOpen && (
+            <div className="fixed inset-0 z-50 flex justify-end">
+              <div className="absolute inset-0 bg-black/50" onClick={() => setFiltersOpen(false)} />
+              <div className="relative w-80 bg-dark-800 border-l border-dark-600 h-full overflow-y-auto p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-bold text-white">Filters</h2>
+                  <button
+                    onClick={() => setFiltersOpen(false)}
+                    className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-dark-700 transition-all"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  {/* Category */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Category</label>
+                    <select
+                      value={localFilters.category}
+                      onChange={(e) => handleFilterChange('category', e.target.value)}
+                      className="input-dark"
+                    >
+                      <option value="">All Categories</option>
+                      {categories.map((category) => (
+                        <option key={category} value={category}>{category}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Location */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Location</label>
+                    <input
+                      type="text"
+                      value={localFilters.location}
+                      onChange={(e) => handleFilterChange('location', e.target.value)}
+                      placeholder="City, State, or Country"
+                      className="input-dark"
+                    />
+                  </div>
+
+                  {/* Type */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Type</label>
+                    <select
+                      value={localFilters.type}
+                      onChange={(e) => handleFilterChange('type', e.target.value)}
+                      className="input-dark"
+                    >
+                      <option value="">All Types</option>
+                      <option value="internship">Internship</option>
+                      <option value="project">Project</option>
+                      <option value="full-time">Full-time</option>
+                      <option value="part-time">Part-time</option>
+                    </select>
+                  </div>
+
+                  {/* Work Mode */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Work Mode</label>
+                    <select
+                      value={localFilters.remote ? 'remote' : ''}
+                      onChange={(e) => handleFilterChange('remote', e.target.value === 'remote')}
+                      className="input-dark"
+                    >
+                      <option value="">All Modes</option>
+                      <option value="remote">Remote</option>
+                      <option value="onsite">On-site</option>
+                    </select>
+                  </div>
+
+                  {/* Stipend Range */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Min Stipend</label>
+                      <input
+                        type="number"
+                        value={localFilters.stipendMin}
+                        onChange={(e) => handleFilterChange('stipendMin', e.target.value)}
+                        className="input-dark"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Max Stipend</label>
+                      <input
+                        type="number"
+                        value={localFilters.stipendMax}
+                        onChange={(e) => handleFilterChange('stipendMax', e.target.value)}
+                        className="input-dark"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-3 pt-4">
+                    <button
+                      onClick={applyFilters}
+                      className="flex-1 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-medium transition-colors"
+                    >
+                      Apply Filters
+                    </button>
+                    <button
+                      onClick={clearFilters}
+                      className="flex-1 py-3 bg-dark-600 hover:bg-dark-500 text-white rounded-xl font-medium transition-colors"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </>
   )
 }

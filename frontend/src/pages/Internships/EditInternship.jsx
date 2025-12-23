@@ -41,8 +41,8 @@ const EditInternship = () => {
   const { id } = useParams()
   const navigate = useNavigate()
   const dispatch = useDispatch()
-  const { currentInternship, isLoading } = useSelector((state) => state.internships)
-  
+  const { internship, isLoading } = useSelector((state) => state.internships)
+
   const [skillDialogOpen, setSkillDialogOpen] = useState(false)
   const [newSkill, setNewSkill] = useState('')
   const [formData, setFormData] = useState({
@@ -88,47 +88,47 @@ const EditInternship = () => {
   }, [dispatch, id])
 
   useEffect(() => {
-    if (currentInternship) {
+    if (internship) {
       setFormData({
-        title: currentInternship.title || '',
-        description: currentInternship.description || '',
-        requirements: currentInternship.requirements || '',
-        responsibilities: currentInternship.responsibilities || '',
-        type: currentInternship.type || 'internship',
-        category: currentInternship.category || '',
+        title: internship.title || '',
+        description: internship.description || '',
+        requirements: internship.requirements || '',
+        responsibilities: internship.responsibilities || '',
+        type: internship.type || 'internship',
+        category: internship.category || '',
         location: {
-          type: currentInternship.location?.type || 'onsite',
-          city: currentInternship.location?.city || '',
-          state: currentInternship.location?.state || '',
-          country: currentInternship.location?.country || '',
-          address: currentInternship.location?.address || ''
+          type: internship.location?.type || 'onsite',
+          city: internship.location?.city || '',
+          state: internship.location?.state || '',
+          country: internship.location?.country || '',
+          address: internship.location?.address || ''
         },
-        remote: currentInternship.remote || false,
+        remote: internship.remote || false,
         duration: {
-          months: currentInternship.duration?.months || 3,
-          startDate: currentInternship.duration?.startDate ? 
-            new Date(currentInternship.duration.startDate).toISOString().split('T')[0] : '',
-          endDate: currentInternship.duration?.endDate ? 
-            new Date(currentInternship.duration.endDate).toISOString().split('T')[0] : ''
+          months: internship.duration?.months || 3,
+          startDate: internship.duration?.startDate ?
+            new Date(internship.duration.startDate).toISOString().split('T')[0] : '',
+          endDate: internship.duration?.endDate ?
+            new Date(internship.duration.endDate).toISOString().split('T')[0] : ''
         },
         stipend: {
-          amount: currentInternship.stipend?.amount || '',
-          currency: currentInternship.stipend?.currency || 'USD',
-          period: currentInternship.stipend?.period || 'monthly'
+          amount: internship.stipend?.amount || '',
+          currency: internship.stipend?.currency || 'USD',
+          period: internship.stipend?.period || 'monthly'
         },
-        skills: currentInternship.skills || [],
-        applicationDeadline: currentInternship.applicationDeadline ? 
-          new Date(currentInternship.applicationDeadline).toISOString().split('T')[0] : '',
-        positions: currentInternship.positions || 1,
-        benefits: currentInternship.benefits || [],
+        skills: internship.skills || [],
+        applicationDeadline: internship.applicationDeadline ?
+          new Date(internship.applicationDeadline).toISOString().split('T')[0] : '',
+        positions: internship.positions || 1,
+        benefits: internship.benefits || [],
         companyInfo: {
-          name: currentInternship.companyInfo?.name || '',
-          website: currentInternship.companyInfo?.website || '',
-          industry: currentInternship.companyInfo?.industry || ''
+          name: internship.companyInfo?.name || '',
+          website: internship.companyInfo?.website || '',
+          industry: internship.companyInfo?.industry || ''
         }
       })
     }
-  }, [currentInternship])
+  }, [internship])
 
   const handleInputChange = (field, value) => {
     if (field.includes('.')) {
@@ -179,7 +179,7 @@ const EditInternship = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    
+
     if (!formData.title || !formData.description || !formData.category) {
       toast.error('Please fill in all required fields')
       return
@@ -189,7 +189,7 @@ const EditInternship = () => {
       .unwrap()
       .then(() => {
         toast.success('Internship updated successfully!')
-        navigate('/company')
+        navigate('/company/dashboard')
       })
       .catch((error) => {
         toast.error(error || 'Failed to update internship')
@@ -200,13 +200,13 @@ const EditInternship = () => {
     return <LoadingSpinner message="Loading internship details..." />
   }
 
-  if (!currentInternship) {
+  if (!internship) {
     return (
       <Container maxWidth="md" sx={{ py: 8, textAlign: 'center' }}>
         <Typography variant="h5" gutterBottom>
           Internship not found
         </Typography>
-        <Button variant="outlined" onClick={() => navigate('/company')}>
+        <Button variant="outlined" onClick={() => navigate('/company/dashboard')}>
           Back to Dashboard
         </Button>
       </Container>
@@ -278,7 +278,7 @@ const EditInternship = () => {
                         fullWidth
                       />
                     </Grid>
-                    
+
                     <Grid item xs={12} md={6}>
                       <FormControl fullWidth>
                         <InputLabel>Category *</InputLabel>
@@ -546,7 +546,7 @@ const EditInternship = () => {
               <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
                 <Button
                   variant="outlined"
-                  onClick={() => navigate('/company')}
+                  onClick={() => navigate('/company/dashboard')}
                   size="large"
                 >
                   Cancel
