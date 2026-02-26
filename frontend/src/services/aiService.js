@@ -41,18 +41,32 @@ class AIService {
     }
   }
 
-  // Get chatbot response
-  async getChatbotResponse(message) {
+  // Get chatbot response with conversation history
+  async getChatbotResponse(message, conversationHistory = []) {
     try {
       const response = await axios.post(
         `${API_URL}/ai/chatbot`,
-        { message },
+        { message, conversationHistory },
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         },
       );
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  }
+
+  // Get proactive welcome guidance
+  async getWelcomeGuidance() {
+    try {
+      const response = await axios.get(`${API_URL}/ai/chatbot/welcome`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
       return response.data;
     } catch (error) {
       throw error.response?.data || error.message;

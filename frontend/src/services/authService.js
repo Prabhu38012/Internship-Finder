@@ -54,6 +54,24 @@ const authService = {
     return response.data;
   },
 
+  // Forgot password - send OTP to email
+  forgotPassword: async (email) => {
+    const response = await api.post("/auth/forgot-password", { email });
+    return response.data;
+  },
+
+  // Verify OTP
+  verifyOTP: async (email, otp) => {
+    const response = await api.post("/auth/verify-otp", { email, otp });
+    return response.data;
+  },
+
+  // Reset password with OTP
+  resetPassword: async (email, otp, newPassword) => {
+    const response = await api.post("/auth/reset-password", { email, otp, newPassword });
+    return response.data;
+  },
+
   // Logout user
   logout: async () => {
     localStorage.removeItem("token");

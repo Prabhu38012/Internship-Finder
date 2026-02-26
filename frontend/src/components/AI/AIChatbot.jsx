@@ -1,45 +1,135 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   Box,
-  Card,
-  CardContent,
   TextField,
-  Button,
   Typography,
   Avatar,
   Paper,
   Chip,
-  CircularProgress,
   IconButton,
   Fade,
+  Tooltip,
+  Alert,
+  Button,
 } from "@mui/material";
 import {
   Send,
-  Chat,
+  SmartToy,
   Person,
   Close,
   Minimize,
   Refresh,
+  AutoAwesome,
+  Search,
+  Assessment,
+  TrendingUp,
+  Psychology,
+  Edit,
+  Description,
+  ArrowForward,
+  LightbulbOutlined,
 } from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
 import aiService from "../../services/aiService";
 
+// Simple markdown-like formatter for bot messages
+const FormattedMessage = ({ text }) => {
+  if (!text) return null;
+  const lines = text.split("\n");
+
+  return (
+    <Box sx={{ color: "#212121", fontSize: "0.875rem", lineHeight: 1.6 }}>
+      {lines.map((line, idx) => {
+        let formatted = line.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+
+        // Bullet points
+        if (formatted.startsWith("- ") || formatted.startsWith("\u2022 ")) {
+          return (
+            <div
+              key={idx}
+              style={{ paddingLeft: 16, marginBottom: 3, display: "flex", alignItems: "flex-start", color: "#212121" }}
+            >
+              <span style={{ marginRight: 6, color: "#212121" }}>{"\u2022"}</span>
+              <span style={{ color: "#212121" }} dangerouslySetInnerHTML={{ __html: formatted.slice(2) }} />
+            </div>
+          );
+        }
+
+        // Numbered lists
+        const numberedMatch = formatted.match(/^(\d+)\.\s/);
+        if (numberedMatch) {
+          return (
+            <div
+              key={idx}
+              style={{ paddingLeft: 16, marginBottom: 3, display: "flex", alignItems: "flex-start", color: "#212121" }}
+            >
+              <span style={{ marginRight: 6, fontWeight: 600, color: "#212121" }}>
+                {numberedMatch[1]}.
+              </span>
+              <span
+                style={{ color: "#212121" }}
+                dangerouslySetInnerHTML={{
+                  __html: formatted.slice(numberedMatch[0].length),
+                }}
+              />
+            </div>
+          );
+        }
+
+        // Empty lines
+        if (formatted.trim() === "") {
+          return <div key={idx} style={{ height: 8 }} />;
+        }
+
+        return (
+          <div
+            key={idx}
+            style={{ marginBottom: 3, color: "#212121" }}
+            dangerouslySetInnerHTML={{ __html: formatted }}
+          />
+        );
+      })}
+    </Box>
+  );
+};
+
+// Action button with icon mapping
+const ActionButton = ({ action, onClick }) => {
+  const iconMap = {
+    search: <Search fontSize="small" />,
+    auto_awesome: <AutoAwesome fontSize="small" />,
+    assessment: <Assessment fontSize="small" />,
+    trending_up: <TrendingUp fontSize="small" />,
+    psychology: <Psychology fontSize="small" />,
+    person: <Person fontSize="small" />,
+    edit: <Edit fontSize="small" />,
+    description: <Description fontSize="small" />,
+  };
+
+  return (
+    <Button
+      variant="outlined"
+      size="small"
+      startIcon={iconMap[action.icon] || <ArrowForward fontSize="small" />}
+      onClick={() => onClick(action.route)}
+      sx={{
+        textTransform: "none",
+        borderRadius: 2,
+        fontSize: "0.75rem",
+        py: 0.5,
+      }}
+    >
+      {action.label}
+    </Button>
+  );
+};
+
 const AIChatbot = ({ isOpen, onClose, isMinimized, onToggleMinimize }) => {
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      text: "Hi! I'm your AI career assistant. I can help you find internships, improve your applications, and provide career advice. What would you like to know?",
-      sender: "bot",
-      timestamp: new Date(),
-      suggestions: [
-        "Find internships matching my skills",
-        "How to improve my resume?",
-        "What skills should I learn?",
-        "Career advice for my field",
-      ],
-    },
-  ]);
+  const navigate = useNavigate();
+  const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -49,6 +139,66 @@ const AIChatbot = ({ isOpen, onClose, isMinimized, onToggleMinimize }) => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Fetch personalized welcome message when chatbot opens
+  const initializeChatbot = useCallback(async () => {
+    if (isInitialized) return;
+
+    try {
+      const response = await aiService.getWelcomeGuidance();
+      const welcomeData = response.data;
+
+      setMessages([
+        {
+          id: 1,
+          text: welcomeData.message,
+          sender: "bot",
+          timestamp: new Date(),
+          suggestions: welcomeData.suggestions || [],
+          actions: welcomeData.actions || [],
+          guidance: welcomeData.guidance,
+          type: "welcome",
+        },
+      ]);
+    } catch (error) {
+      setMessages([
+        {
+          id: 1,
+          text: "\uD83D\uDC4B Hi! I'm your AI Career Assistant. I can help you find internships, improve your applications, develop skills, and plan your career.\n\nWhat would you like to explore?",
+          sender: "bot",
+          timestamp: new Date(),
+          suggestions: [
+            "Find internships for my skills",
+            "How to improve my resume?",
+            "What skills should I learn?",
+            "Guide me through the platform",
+          ],
+          actions: [
+            { label: "AI Dashboard", route: "/ai", icon: "auto_awesome" },
+            { label: "Browse Internships", route: "/internships", icon: "search" },
+          ],
+          type: "welcome",
+        },
+      ]);
+    }
+    setIsInitialized(true);
+  }, [isInitialized]);
+
+  useEffect(() => {
+    if (isOpen && !isMinimized) {
+      initializeChatbot();
+    }
+  }, [isOpen, isMinimized, initializeChatbot]);
+
+  // Build conversation history from messages
+  const getConversationHistory = () => {
+    return messages
+      .filter((m) => m.type !== "welcome")
+      .map((m) => ({
+        sender: m.sender,
+        text: m.text,
+      }));
+  };
 
   const handleSendMessage = async (message = inputMessage) => {
     if (!message.trim() || isLoading) return;
@@ -65,7 +215,11 @@ const AIChatbot = ({ isOpen, onClose, isMinimized, onToggleMinimize }) => {
     setIsLoading(true);
 
     try {
-      const response = await aiService.getChatbotResponse(message);
+      const conversationHistory = getConversationHistory();
+      const response = await aiService.getChatbotResponse(
+        message,
+        conversationHistory
+      );
 
       const botMessage = {
         id: Date.now() + 1,
@@ -73,17 +227,26 @@ const AIChatbot = ({ isOpen, onClose, isMinimized, onToggleMinimize }) => {
         sender: "bot",
         timestamp: new Date(),
         type: response.data.type,
+        confidence: response.data.confidence,
         suggestions: response.data.suggestions || [],
+        actions: response.data.actions || [],
+        guidance: response.data.guidance,
       };
 
       setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
       const errorMessage = {
         id: Date.now() + 1,
-        text: "I'm sorry, I'm having trouble processing your request right now. Please try again.",
+        text: "I'm sorry, I'm having trouble processing your request right now. Please try again or rephrase your question.",
         sender: "bot",
         timestamp: new Date(),
         isError: true,
+        suggestions: [
+          "Find internships",
+          "Resume help",
+          "Career advice",
+          "Skill recommendations",
+        ],
       };
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
@@ -95,6 +258,11 @@ const AIChatbot = ({ isOpen, onClose, isMinimized, onToggleMinimize }) => {
     handleSendMessage(suggestion);
   };
 
+  const handleActionClick = (route) => {
+    navigate(route);
+    if (onClose) onClose();
+  };
+
   const handleKeyPress = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -103,20 +271,12 @@ const AIChatbot = ({ isOpen, onClose, isMinimized, onToggleMinimize }) => {
   };
 
   const clearChat = () => {
-    setMessages([
-      {
-        id: 1,
-        text: "Chat cleared! How can I help you today?",
-        sender: "bot",
-        timestamp: new Date(),
-        suggestions: [
-          "Find internships matching my skills",
-          "How to improve my resume?",
-          "What skills should I learn?",
-          "Career advice for my field",
-        ],
-      },
-    ]);
+    setIsInitialized(false);
+    setMessages([]);
+    setTimeout(() => {
+      setIsInitialized(false);
+      initializeChatbot();
+    }, 100);
   };
 
   if (!isOpen) return null;
@@ -129,48 +289,78 @@ const AIChatbot = ({ isOpen, onClose, isMinimized, onToggleMinimize }) => {
           position: "fixed",
           bottom: 20,
           right: 20,
-          width: isMinimized ? 300 : 400,
-          height: isMinimized ? 60 : 600,
+          width: isMinimized ? 320 : 420,
+          height: isMinimized ? 60 : 640,
           zIndex: 1300,
-          borderRadius: 2,
+          borderRadius: 3,
           overflow: "hidden",
           display: "flex",
           flexDirection: "column",
+          border: "1px solid",
+          borderColor: "divider",
         }}
       >
         {/* Header */}
         <Box
           sx={{
-            bgcolor: "primary.main",
+            background: "linear-gradient(135deg, #1976d2 0%, #1565c0 100%)",
             color: "white",
-            p: 2,
+            p: 1.5,
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
           }}
         >
           <Box display="flex" alignItems="center">
-            <Chat sx={{ mr: 1 }} />
-            <Typography variant="h6">AI Assistant</Typography>
+            <Avatar
+              sx={{
+                width: 32,
+                height: 32,
+                bgcolor: "rgba(255,255,255,0.2)",
+                mr: 1,
+              }}
+            >
+              <SmartToy fontSize="small" />
+            </Avatar>
+            <Box>
+              <Typography variant="subtitle1" fontWeight={600} lineHeight={1.2}>
+                AI Career Assistant
+              </Typography>
+              {!isMinimized && (
+                <Typography variant="caption" sx={{ opacity: 0.85 }}>
+                  Powered by InternQuest AI
+                </Typography>
+              )}
+            </Box>
           </Box>
           <Box>
-            <IconButton
-              size="small"
-              onClick={clearChat}
-              sx={{ color: "white", mr: 1 }}
-            >
-              <Refresh />
-            </IconButton>
-            <IconButton
-              size="small"
-              onClick={onToggleMinimize}
-              sx={{ color: "white", mr: 1 }}
-            >
-              <Minimize />
-            </IconButton>
-            <IconButton size="small" onClick={onClose} sx={{ color: "white" }}>
-              <Close />
-            </IconButton>
+            <Tooltip title="Clear chat">
+              <IconButton
+                size="small"
+                onClick={clearChat}
+                sx={{ color: "white", mr: 0.5 }}
+              >
+                <Refresh fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title={isMinimized ? "Expand" : "Minimize"}>
+              <IconButton
+                size="small"
+                onClick={onToggleMinimize}
+                sx={{ color: "white", mr: 0.5 }}
+              >
+                <Minimize fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Close">
+              <IconButton
+                size="small"
+                onClick={onClose}
+                sx={{ color: "white" }}
+              >
+                <Close fontSize="small" />
+              </IconButton>
+            </Tooltip>
           </Box>
         </Box>
 
@@ -181,8 +371,13 @@ const AIChatbot = ({ isOpen, onClose, isMinimized, onToggleMinimize }) => {
               sx={{
                 flex: 1,
                 overflow: "auto",
-                p: 1,
-                bgcolor: "grey.50",
+                p: 1.5,
+                bgcolor: "#f8f9fa",
+                "&::-webkit-scrollbar": { width: 6 },
+                "&::-webkit-scrollbar-thumb": {
+                  bgcolor: "rgba(0,0,0,0.15)",
+                  borderRadius: 3,
+                },
               }}
             >
               {messages.map((message) => (
@@ -199,28 +394,33 @@ const AIChatbot = ({ isOpen, onClose, isMinimized, onToggleMinimize }) => {
                     sx={{
                       display: "flex",
                       alignItems: "flex-start",
-                      maxWidth: "80%",
+                      maxWidth: "88%",
                       flexDirection:
                         message.sender === "user" ? "row-reverse" : "row",
                     }}
                   >
                     <Avatar
                       sx={{
-                        width: 32,
-                        height: 32,
-                        mx: 1,
+                        width: 30,
+                        height: 30,
+                        mx: 0.75,
                         bgcolor:
                           message.sender === "user"
                             ? "primary.main"
-                            : "secondary.main",
+                            : "#7c4dff",
+                        fontSize: "0.85rem",
                       }}
                     >
-                      {message.sender === "user" ? <Person /> : <Chat />}
+                      {message.sender === "user" ? (
+                        <Person fontSize="small" />
+                      ) : (
+                        <SmartToy fontSize="small" />
+                      )}
                     </Avatar>
 
-                    <Box>
+                    <Box sx={{ minWidth: 0 }}>
                       <Paper
-                        elevation={1}
+                        elevation={0}
                         sx={{
                           p: 1.5,
                           bgcolor:
@@ -231,21 +431,74 @@ const AIChatbot = ({ isOpen, onClose, isMinimized, onToggleMinimize }) => {
                             message.sender === "user"
                               ? "white"
                               : "text.primary",
-                          borderRadius: 2,
+                          borderRadius: 2.5,
+                          borderTopRightRadius:
+                            message.sender === "user" ? 4 : 20,
+                          borderTopLeftRadius:
+                            message.sender === "user" ? 20 : 4,
                           ...(message.isError && {
-                            bgcolor: "error.light",
-                            color: "white",
+                            bgcolor: "#fff3f0",
+                            border: "1px solid #ffcdd2",
+                            color: "error.dark",
                           }),
+                          boxShadow: "0 1px 2px rgba(0,0,0,0.06)",
                         }}
                       >
-                        <Typography
-                          variant="body2"
-                          sx={{ whiteSpace: "pre-wrap" }}
-                        >
-                          {message.text}
-                        </Typography>
+                        {message.sender === "bot" ? (
+                          <FormattedMessage text={message.text} />
+                        ) : (
+                          <Typography
+                            variant="body2"
+                            sx={{ whiteSpace: "pre-wrap" }}
+                          >
+                            {message.text}
+                          </Typography>
+                        )}
                       </Paper>
 
+                      {/* Guidance alert */}
+                      {message.guidance && (
+                        <Alert
+                          severity="info"
+                          icon={<LightbulbOutlined fontSize="small" />}
+                          sx={{
+                            mt: 1,
+                            py: 0,
+                            fontSize: "0.75rem",
+                            "& .MuiAlert-message": { py: 0.75 },
+                          }}
+                          action={
+                            message.guidance.action ? (
+                              <Button
+                                size="small"
+                                onClick={() =>
+                                  handleActionClick(message.guidance.action.route)
+                                }
+                                sx={{ fontSize: "0.7rem", textTransform: "none" }}
+                              >
+                                {message.guidance.action.label}
+                              </Button>
+                            ) : null
+                          }
+                        >
+                          {message.guidance.message}
+                        </Alert>
+                      )}
+
+                      {/* Action buttons */}
+                      {message.actions && message.actions.length > 0 && (
+                        <Box mt={1} display="flex" flexWrap="wrap" gap={0.75}>
+                          {message.actions.map((action, idx) => (
+                            <ActionButton
+                              key={idx}
+                              action={action}
+                              onClick={handleActionClick}
+                            />
+                          ))}
+                        </Box>
+                      )}
+
+                      {/* Suggestion chips */}
                       {message.suggestions &&
                         message.suggestions.length > 0 && (
                           <Box mt={1} display="flex" flexWrap="wrap" gap={0.5}>
@@ -259,7 +512,16 @@ const AIChatbot = ({ isOpen, onClose, isMinimized, onToggleMinimize }) => {
                                 onClick={() =>
                                   handleSuggestionClick(suggestion)
                                 }
-                                sx={{ fontSize: "0.75rem" }}
+                                sx={{
+                                  fontSize: "0.72rem",
+                                  height: 26,
+                                  borderColor: "primary.light",
+                                  color: "primary.main",
+                                  "&:hover": {
+                                    bgcolor: "primary.50",
+                                    borderColor: "primary.main",
+                                  },
+                                }}
                               />
                             ))}
                           </Box>
@@ -268,7 +530,7 @@ const AIChatbot = ({ isOpen, onClose, isMinimized, onToggleMinimize }) => {
                       <Typography
                         variant="caption"
                         color="text.secondary"
-                        sx={{ mt: 0.5, display: "block" }}
+                        sx={{ mt: 0.5, display: "block", fontSize: "0.65rem" }}
                       >
                         {message.timestamp.toLocaleTimeString([], {
                           hour: "2-digit",
@@ -285,18 +547,57 @@ const AIChatbot = ({ isOpen, onClose, isMinimized, onToggleMinimize }) => {
                   <Box display="flex" alignItems="center">
                     <Avatar
                       sx={{
-                        width: 32,
-                        height: 32,
-                        mr: 1,
-                        bgcolor: "secondary.main",
+                        width: 30,
+                        height: 30,
+                        mr: 0.75,
+                        bgcolor: "#7c4dff",
                       }}
                     >
-                      <Chat />
+                      <SmartToy fontSize="small" />
                     </Avatar>
-                    <Paper elevation={1} sx={{ p: 1.5, borderRadius: 2 }}>
-                      <Box display="flex" alignItems="center">
-                        <CircularProgress size={16} sx={{ mr: 1 }} />
-                        <Typography variant="body2">Thinking...</Typography>
+                    <Paper
+                      elevation={0}
+                      sx={{
+                        p: 1.5,
+                        borderRadius: 2.5,
+                        borderTopLeftRadius: 4,
+                        bgcolor: "white",
+                        boxShadow: "0 1px 2px rgba(0,0,0,0.06)",
+                      }}
+                    >
+                      <Box display="flex" alignItems="center" gap={1}>
+                        <Box display="flex" alignItems="center" gap={0.5}>
+                          {[0, 1, 2].map((i) => (
+                            <Box
+                              key={i}
+                              sx={{
+                                width: 7,
+                                height: 7,
+                                borderRadius: "50%",
+                                bgcolor: "primary.main",
+                                animation: "pulse 1.4s infinite ease-in-out",
+                                animationDelay: `${i * 0.2}s`,
+                                "@keyframes pulse": {
+                                  "0%, 80%, 100%": {
+                                    transform: "scale(0.4)",
+                                    opacity: 0.4,
+                                  },
+                                  "40%": {
+                                    transform: "scale(1)",
+                                    opacity: 1,
+                                  },
+                                },
+                              }}
+                            />
+                          ))}
+                        </Box>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          fontSize="0.8rem"
+                        >
+                          Thinking...
+                        </Typography>
                       </Box>
                     </Paper>
                   </Box>
@@ -309,32 +610,45 @@ const AIChatbot = ({ isOpen, onClose, isMinimized, onToggleMinimize }) => {
             {/* Input */}
             <Box
               sx={{
-                p: 2,
+                p: 1.5,
                 bgcolor: "white",
                 borderTop: 1,
                 borderColor: "divider",
               }}
             >
-              <Box display="flex" gap={1}>
+              <Box display="flex" gap={1} alignItems="flex-end">
                 <TextField
                   fullWidth
                   size="small"
-                  placeholder="Ask me anything about internships or careers..."
+                  placeholder="Ask about internships, careers, skills..."
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
                   disabled={isLoading}
                   multiline
                   maxRows={3}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 2.5,
+                      fontSize: "0.875rem",
+                    },
+                  }}
                 />
-                <Button
-                  variant="contained"
+                <IconButton
+                  color="primary"
                   onClick={() => handleSendMessage()}
                   disabled={!inputMessage.trim() || isLoading}
-                  sx={{ minWidth: "auto", px: 2 }}
+                  sx={{
+                    bgcolor: "primary.main",
+                    color: "white",
+                    width: 38,
+                    height: 38,
+                    "&:hover": { bgcolor: "primary.dark" },
+                    "&:disabled": { bgcolor: "grey.300", color: "grey.500" },
+                  }}
                 >
-                  <Send />
-                </Button>
+                  <Send fontSize="small" />
+                </IconButton>
               </Box>
             </Box>
           </>

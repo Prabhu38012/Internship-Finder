@@ -113,6 +113,28 @@ const emailTemplates = {
     `
   }),
 
+  passwordResetOTP: (name, otp) => ({
+    subject: 'InternQuest - Password Reset OTP',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="text-align: center; margin-bottom: 30px;">
+          <h1 style="color: #2563eb; margin-bottom: 5px;">InternQuest</h1>
+          <p style="color: #64748b; font-size: 14px;">Password Reset</p>
+        </div>
+        <div style="background: #f8fafc; border-radius: 12px; padding: 30px; text-align: center;">
+          <p style="color: #334155; font-size: 16px; margin-bottom: 5px;">Hi ${name},</p>
+          <p style="color: #64748b; font-size: 14px; margin-bottom: 25px;">We received a request to reset your password. Use the OTP below to verify your identity:</p>
+          <div style="background: #1e293b; border-radius: 8px; padding: 20px; margin: 20px 0;">
+            <span style="font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #3b82f6;">${otp}</span>
+          </div>
+          <p style="color: #ef4444; font-size: 13px; margin-top: 15px;">This OTP expires in <strong>10 minutes</strong>.</p>
+          <p style="color: #94a3b8; font-size: 12px; margin-top: 20px;">If you didn't request this, please ignore this email. Your password will remain unchanged.</p>
+        </div>
+        <p style="color: #94a3b8; font-size: 12px; text-align: center; margin-top: 20px;">Best regards,<br>The InternQuest Team</p>
+      </div>
+    `
+  }),
+
   deadlineReminder: (applicantName, internshipTitle, deadline) => ({
     subject: `Application Deadline Reminder - ${internshipTitle}`,
     html: `

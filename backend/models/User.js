@@ -108,6 +108,15 @@ const userSchema = new mongoose.Schema({
       default: 'public'
     }
   },
+  // Password Reset OTP
+  resetPasswordOTP: {
+    type: String,
+    select: false
+  },
+  resetPasswordOTPExpires: {
+    type: Date,
+    select: false
+  },
   // Activity tracking
   lastLogin: Date,
   isActive: {

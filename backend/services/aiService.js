@@ -98,42 +98,354 @@ class AIService {
   }
 
   // 3. Chatbot Assistant - Help students find relevant internships
-  async getChatbotResponse(message, userContext = {}) {
+  async getChatbotResponse(message, userContext = {}, conversationHistory = []) {
     try {
-      const cacheKey = `chatbot_${Buffer.from(message).toString('base64').slice(0, 50)}`;
-      const cached = aiCache.get(cacheKey);
-      if (cached) return cached;
-
       const intent = this.analyzeIntent(message);
-      let response;
       
-      switch (intent.type) {
-        case 'job_search':
-          response = await this.handleJobSearchIntent(message, userContext);
-          break;
-        case 'career_advice':
-          response = await this.handleCareerAdviceIntent(message, userContext);
-          break;
-        case 'application_help':
-          response = await this.handleApplicationHelpIntent(message, userContext);
-          break;
-        case 'skill_development':
-          response = await this.handleSkillDevelopmentIntent(message, userContext);
-          break;
-        default:
-          response = await this.handleGeneralIntent(message, userContext);
+      // Build rich system prompt with platform awareness
+      const systemPrompt = this.buildSystemPrompt(userContext, intent);
+      
+      // Build conversation messages for OpenAI
+      const messages = [
+        { role: 'system', content: systemPrompt },
+        ...this.formatConversationHistory(conversationHistory),
+        { role: 'user', content: message }
+      ];
+
+      let response;
+      try {
+        const completion = await openai.chat.completions.create({
+          model: 'gpt-3.5-turbo',
+          messages,
+          max_tokens: 500,
+          temperature: 0.7,
+          presence_penalty: 0.3,
+          frequency_penalty: 0.3
+        });
+        
+        const aiReply = completion.choices[0].message.content;
+        
+        response = {
+          message: aiReply,
+          type: intent.type,
+          confidence: intent.confidence,
+          suggestions: this.generateContextualSuggestions(intent, userContext),
+          actions: this.generateProactiveActions(intent, userContext),
+          guidance: this.generateUserGuidance(userContext)
+        };
+      } catch (apiError) {
+        console.warn('OpenAI API error, using enhanced fallback:', apiError.message);
+        response = this.getEnhancedFallbackResponse(intent, message, userContext);
       }
 
-      aiCache.set(cacheKey, response);
       return response;
     } catch (error) {
       console.error('Error in getChatbotResponse:', error);
       return {
         message: "I'm sorry, I'm having trouble processing your request right now. Please try again later.",
         type: 'error',
-        suggestions: ['Try rephrasing your question', 'Contact support if the issue persists']
+        suggestions: ['Try rephrasing your question', 'Contact support if the issue persists'],
+        actions: [],
+        guidance: null
       };
     }
+  }
+
+  // Build comprehensive system prompt for ChatGPT
+  buildSystemPrompt(userContext, intent) {
+    const profileSummary = userContext.skills?.length > 0
+      ? `Their skills include: ${userContext.skills.join(', ')}.`
+      : 'They have not added skills to their profile yet.';
+
+    const interestSummary = userContext.interests?.length > 0
+      ? `Their interests are: ${userContext.interests.join(', ')}.`
+      : 'They have not specified interests yet.';
+
+    const applicationSummary = userContext.applicationStats
+      ? `They have submitted ${userContext.applicationStats.total} applications (${userContext.applicationStats.accepted} accepted, ${userContext.applicationStats.pending} pending, ${userContext.applicationStats.rejected} rejected).`
+      : 'No application history available yet.';
+
+    const profileComplete = userContext.profileCompleteness
+      ? `Profile completeness: ${userContext.profileCompleteness}%.`
+      : '';
+
+    return `You are InternQuest AI Assistant — an expert career coach and internship advisor built into the InternQuest platform. Your role is to provide accurate, actionable, and personalized guidance.
+
+PLATFORM FEATURES (guide users to these):
+- Browse Internships: Search and filter live internship listings
+- AI Recommendations: Smart job matching based on user skills and interests
+- Resume Analyzer: Upload resume for AI-powered skill extraction and scoring
+- Success Predictor: Predict application success probability for any internship
+- Market Insights: View in-demand skills, top categories, and salary trends
+- Application Tracker: Track all submitted applications and their statuses
+- Wishlist: Save internships for later review
+- Messaging: Direct communication with companies
+- Profile: Manage skills, bio, education, and experience
+
+USER CONTEXT:
+- Role: ${userContext.role || 'student'}
+- Experience Level: ${userContext.experienceLevel || 'entry'}
+- ${profileSummary}
+- ${interestSummary}
+- ${applicationSummary}
+- ${profileComplete}
+
+INSTRUCTIONS:
+1. Always give specific, actionable advice — never vague platitudes
+2. Proactively suggest relevant platform features the user should try
+3. If the user's profile is incomplete, encourage them to complete it with specific steps
+4. Reference the user's actual skills and interests when giving advice
+5. When discussing internships, mention using the AI Recommendations or Browse features
+6. For resume questions, mention the Resume Analyzer tool
+7. Keep responses concise but thorough (2-4 paragraphs max)
+8. Use bullet points and clear formatting for step-by-step instructions
+9. End responses with a clear next step or call-to-action
+10. If you detect the user is confused or new, provide a guided walkthrough of the platform`;
+  }
+
+  // Format conversation history for multi-turn context
+  formatConversationHistory(history) {
+    if (!history || !Array.isArray(history)) return [];
+    // Keep last 10 messages for context window management
+    return history.slice(-10).map(msg => ({
+      role: msg.sender === 'user' ? 'user' : 'assistant',
+      content: msg.text
+    }));
+  }
+
+  // Generate context-aware suggestion chips
+  generateContextualSuggestions(intent, userContext) {
+    const baseSuggestions = {
+      job_search: [
+        'Show me remote internships',
+        'What roles match my skills?',
+        'How do I use AI Recommendations?'
+      ],
+      career_advice: [
+        'What skills are in demand right now?',
+        'Suggest a career path for me',
+        'How to transition into tech?'
+      ],
+      application_help: [
+        'Analyze my resume',
+        'Predict my success for an internship',
+        'How to write a cover letter?'
+      ],
+      skill_development: [
+        'What skills should I learn next?',
+        'Show me Market Insights',
+        'How to build a portfolio?'
+      ],
+      platform_help: [
+        'How do I apply for internships?',
+        'How to use AI Recommendations?',
+        'How to message a company?'
+      ],
+      interview_prep: [
+        'Common technical interview questions',
+        'How to prepare for behavioral interviews?',
+        'Tips for virtual interviews'
+      ],
+      general: [
+        'Find internships for my skills',
+        'Analyze my resume',
+        'What skills are trending?',
+        'Guide me through the platform'
+      ]
+    };
+
+    const suggestions = baseSuggestions[intent.type] || baseSuggestions.general;
+
+    // Add profile-specific suggestions
+    if (!userContext.skills || userContext.skills.length === 0) {
+      suggestions.unshift('Help me add skills to my profile');
+    }
+    if (userContext.profileCompleteness && userContext.profileCompleteness < 60) {
+      suggestions.unshift('How to complete my profile?');
+    }
+
+    return suggestions.slice(0, 4);
+  }
+
+  // Generate proactive action buttons (navigable)
+  generateProactiveActions(intent, userContext) {
+    const actions = [];
+
+    if (intent.type === 'job_search') {
+      actions.push({ label: 'Browse Internships', route: '/internships', icon: 'search' });
+      actions.push({ label: 'AI Recommendations', route: '/ai', icon: 'auto_awesome' });
+    }
+    if (intent.type === 'application_help') {
+      actions.push({ label: 'Resume Analyzer', route: '/ai?tab=1', icon: 'assessment' });
+      actions.push({ label: 'My Applications', route: '/applications', icon: 'description' });
+    }
+    if (intent.type === 'skill_development') {
+      actions.push({ label: 'Market Insights', route: '/ai?tab=3', icon: 'trending_up' });
+      actions.push({ label: 'Update Skills', route: '/profile', icon: 'edit' });
+    }
+    if (intent.type === 'career_advice') {
+      actions.push({ label: 'Success Predictor', route: '/ai?tab=2', icon: 'psychology' });
+      actions.push({ label: 'AI Recommendations', route: '/ai', icon: 'auto_awesome' });
+    }
+    if (!userContext.skills || userContext.skills.length === 0) {
+      actions.push({ label: 'Complete Profile', route: '/profile', icon: 'person' });
+    }
+
+    return actions.slice(0, 3);
+  }
+
+  // Generate proactive guidance based on user state
+  generateUserGuidance(userContext) {
+    const tips = [];
+
+    if (!userContext.skills || userContext.skills.length === 0) {
+      tips.push({
+        priority: 'high',
+        message: 'Add your skills to your profile — this powers our AI matching and helps you get better recommendations.',
+        action: { label: 'Go to Profile', route: '/profile' }
+      });
+    }
+
+    if (userContext.profileCompleteness && userContext.profileCompleteness < 50) {
+      tips.push({
+        priority: 'high',
+        message: `Your profile is only ${userContext.profileCompleteness}% complete. A complete profile significantly increases your visibility to employers.`,
+        action: { label: 'Complete Profile', route: '/profile' }
+      });
+    }
+
+    if (userContext.applicationStats && userContext.applicationStats.total === 0) {
+      tips.push({
+        priority: 'medium',
+        message: "You haven't applied to any internships yet. Use AI Recommendations to find the best matches for your skills!",
+        action: { label: 'View Recommendations', route: '/ai' }
+      });
+    }
+
+    if (userContext.applicationStats && userContext.applicationStats.total > 5 && userContext.applicationStats.successRate < 20) {
+      tips.push({
+        priority: 'medium',
+        message: 'Your application success rate could be improved. Try using the Resume Analyzer to optimize your resume.',
+        action: { label: 'Analyze Resume', route: '/ai?tab=1' }
+      });
+    }
+
+    return tips.length > 0 ? tips[0] : null;
+  }
+
+  // Enhanced fallback when OpenAI API is unavailable
+  getEnhancedFallbackResponse(intent, message, userContext) {
+    const skillsText = userContext.skills?.length > 0
+      ? `Based on your skills (${userContext.skills.slice(0, 5).join(', ')}), `
+      : '';
+
+    const fallbacks = {
+      job_search: {
+        message: `${skillsText}here are steps to find the best internships for you:\n\n` +
+          `1. **Use AI Recommendations** — Go to the AI Dashboard for smart matches based on your profile\n` +
+          `2. **Browse & Filter** — Search internships by category, location, or skills\n` +
+          `3. **Check Success Predictor** — Before applying, see your match probability\n` +
+          `4. **Save to Wishlist** — Bookmark interesting positions to review later\n\n` +
+          `Would you like me to help refine your search?`,
+        type: 'job_search',
+        suggestions: ['Show remote internships', 'Roles matching my skills', 'How to use AI Recommendations?'],
+        actions: [
+          { label: 'AI Recommendations', route: '/ai', icon: 'auto_awesome' },
+          { label: 'Browse Internships', route: '/internships', icon: 'search' }
+        ]
+      },
+      career_advice: {
+        message: `${skillsText}here's a career development roadmap:\n\n` +
+          `1. **Assess Your Skills** — Upload your resume to the Resume Analyzer for a detailed skill breakdown\n` +
+          `2. **Explore Market Insights** — See which skills are most in-demand right now\n` +
+          `3. **Identify Gaps** — Compare your skills against trending requirements\n` +
+          `4. **Build Experience** — Apply to internships that develop your target skills\n\n` +
+          `The Market Insights tab has real-time data on skill demand and salary trends.`,
+        type: 'career_advice',
+        suggestions: ['What skills are trending?', 'Analyze my resume', 'Recommend a career path'],
+        actions: [
+          { label: 'Market Insights', route: '/ai?tab=3', icon: 'trending_up' },
+          { label: 'Resume Analyzer', route: '/ai?tab=1', icon: 'assessment' }
+        ]
+      },
+      application_help: {
+        message: `Here's how to strengthen your applications:\n\n` +
+          `1. **Analyze Your Resume** — Use our Resume Analyzer to get an AI-powered score and specific improvement tips\n` +
+          `2. **Check Success Probability** — The Success Predictor shows how well you match each role\n` +
+          `3. **Tailor Each Application** — Customize your resume keywords to match the job requirements\n` +
+          `4. **Track Progress** — Monitor all your applications in the Applications dashboard\n\n` +
+          `Start by uploading your resume for a detailed analysis!`,
+        type: 'application_help',
+        suggestions: ['Analyze my resume', 'Track my applications', 'Interview tips'],
+        actions: [
+          { label: 'Resume Analyzer', route: '/ai?tab=1', icon: 'assessment' },
+          { label: 'My Applications', route: '/applications', icon: 'description' }
+        ]
+      },
+      skill_development: {
+        message: `${skillsText}here's how to level up your skills:\n\n` +
+          `1. **Check Market Insights** — See which skills are most in-demand in your target field\n` +
+          `2. **Identify Skill Gaps** — Compare your current skills with top job requirements\n` +
+          `3. **Learn Strategically** — Focus on high-demand skills that align with your interests\n` +
+          `4. **Build Projects** — Apply new skills through hands-on projects for your portfolio\n\n` +
+          `Visit the Market Insights tab for real-time skill demand data!`,
+        type: 'skill_development',
+        suggestions: ['In-demand skills', 'Skill gap analysis', 'Learning resources'],
+        actions: [
+          { label: 'Market Insights', route: '/ai?tab=3', icon: 'trending_up' },
+          { label: 'Update Skills', route: '/profile', icon: 'edit' }
+        ]
+      },
+      platform_help: {
+        message: `Welcome to InternQuest! Here's a quick guide:\n\n` +
+          `1. **Complete Your Profile** — Add skills, education, and bio for better AI matching\n` +
+          `2. **Browse Internships** — Search and filter available positions\n` +
+          `3. **AI Dashboard** — Get smart recommendations, analyze your resume, and predict success\n` +
+          `4. **Apply** — Submit applications directly and track their status\n` +
+          `5. **Message Companies** — Communicate directly with employers\n\n` +
+          `Start by completing your profile, then check out AI Recommendations!`,
+        type: 'platform_help',
+        suggestions: ['How to apply?', 'Set up my profile', 'Use AI features'],
+        actions: [
+          { label: 'Complete Profile', route: '/profile', icon: 'person' },
+          { label: 'AI Dashboard', route: '/ai', icon: 'auto_awesome' }
+        ]
+      },
+      interview_prep: {
+        message: `Here's how to prepare for your internship interviews:\n\n` +
+          `1. **Research the Company** — Study their mission, products, and recent news\n` +
+          `2. **Review Common Questions** — Prepare for behavioral (STAR method) and technical questions\n` +
+          `3. **Practice Your Pitch** — Prepare a 60-second elevator pitch about your background\n` +
+          `4. **Prepare Questions** — Have 3-5 thoughtful questions ready for the interviewer\n` +
+          `5. **Technical Prep** — For tech roles, practice coding problems and system design\n\n` +
+          `Check the Success Predictor to see which areas to focus on before your interview!`,
+        type: 'interview_prep',
+        suggestions: ['Common interview questions', 'STAR method examples', 'Technical prep tips'],
+        actions: [
+          { label: 'Success Predictor', route: '/ai?tab=2', icon: 'psychology' }
+        ]
+      },
+      general: {
+        message: `I'm your InternQuest AI Career Assistant! Here's what I can help you with:\n\n` +
+          `🔍 **Find Internships** — Search roles matching your skills and interests\n` +
+          `📄 **Resume Help** — Get AI analysis and improvement suggestions\n` +
+          `📊 **Career Insights** — Explore in-demand skills and market trends\n` +
+          `🎯 **Application Strategy** — Predict success and optimize applications\n` +
+          `💡 **Career Advice** — Get personalized guidance for your career path\n\n` +
+          `Just type your question or pick a suggestion below!`,
+        type: 'general',
+        suggestions: ['Find internships for me', 'Analyze my resume', 'What skills should I learn?', 'Guide me through the platform'],
+        actions: [
+          { label: 'AI Dashboard', route: '/ai', icon: 'auto_awesome' },
+          { label: 'Browse Internships', route: '/internships', icon: 'search' }
+        ]
+      }
+    };
+
+    const fallback = fallbacks[intent.type] || fallbacks.general;
+    fallback.confidence = intent.confidence;
+    fallback.guidance = this.generateUserGuidance(userContext);
+    return fallback;
   }
 
   // 4. Predictive Analytics - Success rate predictions for applications
@@ -388,81 +700,113 @@ class AIService {
 
   analyzeIntent(message) {
     const messageLower = message.toLowerCase();
-    
-    if (messageLower.includes('job') || messageLower.includes('internship')) {
-      return { type: 'job_search', confidence: 0.8 };
+
+    // Weighted keyword scoring for accurate intent detection
+    const intentKeywords = {
+      job_search: {
+        strong: ['internship', 'job', 'position', 'vacancy', 'opening', 'opportunity', 'hire', 'hiring', 'role', 'work'],
+        moderate: ['find', 'search', 'browse', 'look for', 'available', 'remote', 'onsite', 'part-time', 'full-time', 'recommend', 'match', 'suitable'],
+        weak: ['company', 'employer', 'location', 'salary', 'stipend', 'apply']
+      },
+      career_advice: {
+        strong: ['career', 'career path', 'future', 'growth', 'transition', 'switch', 'roadmap'],
+        moderate: ['advice', 'guidance', 'direction', 'plan', 'strategy', 'goal', 'what should i do'],
+        weak: ['industry', 'field', 'sector', 'trend']
+      },
+      application_help: {
+        strong: ['resume', 'cv', 'cover letter', 'application', 'apply'],
+        moderate: ['submit', 'portfolio', 'tailor', 'customize', 'format', 'template'],
+        weak: ['deadline', 'status', 'track', 'follow up']
+      },
+      skill_development: {
+        strong: ['skill', 'learn', 'course', 'certification', 'training'],
+        moderate: ['improve', 'develop', 'study', 'practice', 'tutorial', 'resource', 'project', 'portfolio'],
+        weak: ['technology', 'framework', 'language', 'tool', 'trending']
+      },
+      platform_help: {
+        strong: ['how to use', 'how does', 'platform', 'feature', 'navigate', 'where is', 'how do i'],
+        moderate: ['help', 'guide', 'tutorial', 'explain', 'show me', 'walkthrough', 'get started'],
+        weak: ['dashboard', 'settings', 'account', 'profile setup']
+      },
+      interview_prep: {
+        strong: ['interview', 'behavioral', 'technical interview', 'coding interview'],
+        moderate: ['prepare', 'question', 'answer', 'practice', 'mock', 'star method'],
+        weak: ['nervous', 'confident', 'presentation', 'communication']
+      }
+    };
+
+    const scores = {};
+    for (const [intent, keywords] of Object.entries(intentKeywords)) {
+      let score = 0;
+      keywords.strong.forEach(kw => { if (messageLower.includes(kw)) score += 3; });
+      keywords.moderate.forEach(kw => { if (messageLower.includes(kw)) score += 2; });
+      keywords.weak.forEach(kw => { if (messageLower.includes(kw)) score += 1; });
+      scores[intent] = score;
     }
-    if (messageLower.includes('career') || messageLower.includes('advice')) {
-      return { type: 'career_advice', confidence: 0.7 };
+
+    const topIntent = Object.entries(scores)
+      .sort((a, b) => b[1] - a[1])[0];
+
+    if (topIntent[1] >= 2) {
+      const confidence = Math.min(0.5 + (topIntent[1] * 0.1), 0.95);
+      return { type: topIntent[0], confidence };
     }
-    if (messageLower.includes('application') || messageLower.includes('resume')) {
-      return { type: 'application_help', confidence: 0.8 };
+
+    // Greeting detection
+    const greetings = ['hello', 'hi', 'hey', 'good morning', 'good afternoon', 'good evening', 'sup', 'what\'s up'];
+    if (greetings.some(g => messageLower.includes(g))) {
+      return { type: 'general', confidence: 0.9 };
     }
-    if (messageLower.includes('skill') || messageLower.includes('learn')) {
-      return { type: 'skill_development', confidence: 0.7 };
-    }
-    
+
     return { type: 'general', confidence: 0.5 };
   }
 
-  async handleJobSearchIntent(message, userContext) {
-    const prompt = `Help with job search: "${message}". User: ${JSON.stringify(userContext)}. Provide specific advice.`;
-    
-    try {
-      const completion = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
-        messages: [{ role: "user", content: prompt }],
-        max_tokens: 200
-      });
-      
-      return {
-        message: completion.choices[0].message.content,
-        type: 'job_search',
-        suggestions: ['Browse internships', 'Update profile', 'Set job alerts']
-      };
-    } catch (error) {
-      return {
-        message: "I can help you find internships! Try browsing our available positions or updating your profile.",
-        type: 'job_search',
-        suggestions: ['Browse internships', 'Update profile', 'Set job alerts']
-      };
+  // Get proactive welcome guidance for a user (called on chatbot open)
+  getWelcomeGuidance(userContext) {
+    const tips = [];
+    const actions = [];
+
+    if (!userContext.skills || userContext.skills.length === 0) {
+      tips.push('🎯 **Start by adding your skills** — This powers our AI matching engine and helps you get personalized recommendations.');
+      actions.push({ label: 'Add Skills', route: '/profile', icon: 'edit' });
+    } else if (userContext.skills.length < 3) {
+      tips.push(`💡 You have ${userContext.skills.length} skill(s) listed. Adding more skills improves your match accuracy.`);
+      actions.push({ label: 'Update Skills', route: '/profile', icon: 'edit' });
     }
-  }
 
-  async handleCareerAdviceIntent(message, userContext) {
-    return {
-      message: "Career development is a journey! Focus on building relevant skills, gaining experience through internships, and networking with professionals in your field.",
-      type: 'career_advice',
-      suggestions: ['Explore career paths', 'Skill assessment', 'Connect with mentors']
-    };
-  }
+    if (userContext.profileCompleteness && userContext.profileCompleteness < 60) {
+      tips.push(`📋 Your profile is ${userContext.profileCompleteness}% complete. Complete profiles get 3x more visibility to employers.`);
+      actions.push({ label: 'Complete Profile', route: '/profile', icon: 'person' });
+    }
 
-  async handleApplicationHelpIntent(message, userContext) {
-    return {
-      message: "For successful applications, tailor your resume to each position, highlight relevant skills and experiences, and prepare thoughtful questions for interviews.",
-      type: 'application_help',
-      suggestions: ['Resume tips', 'Interview preparation', 'Application tracking']
-    };
-  }
+    if (!userContext.applicationStats || userContext.applicationStats.total === 0) {
+      tips.push('🚀 **Ready to apply?** Check out AI Recommendations to find internships perfectly matched to your profile.');
+      actions.push({ label: 'View Recommendations', route: '/ai', icon: 'auto_awesome' });
+    }
 
-  async handleSkillDevelopmentIntent(message, userContext) {
-    return {
-      message: "Focus on developing both technical and soft skills. Identify skills in demand for your target roles and practice through projects and courses.",
-      type: 'skill_development',
-      suggestions: ['Skill roadmap', 'Online courses', 'Practice projects']
-    };
-  }
+    if (userContext.applicationStats && userContext.applicationStats.total > 0 && userContext.applicationStats.successRate < 25) {
+      tips.push('📄 **Boost your success rate** — Use the Resume Analyzer to identify improvements and tailor your applications.');
+      actions.push({ label: 'Analyze Resume', route: '/ai?tab=1', icon: 'assessment' });
+    }
 
-  async handleGeneralIntent(message, userContext) {
+    const greeting = tips.length > 0
+      ? `👋 Welcome back! Here are some personalized tips to boost your internship search:\n\n${tips.join('\n\n')}\n\nHow can I help you today?`
+      : `👋 Welcome! I'm your AI Career Assistant. I can help you find internships, optimize your applications, develop skills, and plan your career. What would you like to explore?`;
+
     return {
-      message: "I'm here to help with your internship search and career development! You can ask me about finding jobs, career advice, application tips, or skill development.",
-      type: 'general',
+      message: greeting,
+      type: 'welcome',
       suggestions: [
-        'Find internships matching my skills',
-        'How to improve my resume?',
-        'What skills should I learn?',
-        'Career advice for my field'
-      ]
+        'Find internships for my skills',
+        'Analyze my resume',
+        'What skills are most in demand?',
+        'Guide me through the platform'
+      ],
+      actions: actions.length > 0 ? actions.slice(0, 3) : [
+        { label: 'AI Recommendations', route: '/ai', icon: 'auto_awesome' },
+        { label: 'Browse Internships', route: '/internships', icon: 'search' }
+      ],
+      guidance: this.generateUserGuidance(userContext)
     };
   }
 

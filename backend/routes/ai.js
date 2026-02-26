@@ -130,21 +130,49 @@ router.post('/analyze-resume', auth, upload.single('resume'), async (req, res) =
 // @access  Private
 router.post('/chatbot', auth, async (req, res) => {
   try {
-    const { message } = req.body;
+    const { message, conversationHistory = [] } = req.body;
 
     if (!message || !message.trim()) {
       return res.status(400).json({ message: 'Message is required' });
     }
 
     const user = await User.findById(req.user.id);
-    const userContext = {
-      role: user.role,
-      skills: user.studentProfile?.skills || [],
-      interests: user.studentProfile?.interests || [],
-      experienceLevel: user.studentProfile?.experienceLevel || 'entry'
+
+    // Get application stats for richer context
+    const applications = await Application.find({ applicant: req.user.id })
+      .select('status');
+    const applicationStats = {
+      total: applications.length,
+      pending: applications.filter(a => a.status === 'pending').length,
+      accepted: applications.filter(a => a.status === 'accepted').length,
+      rejected: applications.filter(a => a.status === 'rejected').length,
+      successRate: applications.length > 0
+        ? Math.round((applications.filter(a => a.status === 'accepted').length / applications.length) * 100)
+        : 0
     };
 
-    const response = await aiService.getChatbotResponse(message, userContext);
+    // Calculate profile completeness
+    const profile = user.studentProfile || {};
+    const fields = ['skills', 'interests', 'bio', 'university', 'degree', 'graduationYear'];
+    const completedFields = fields.filter(field => profile[field] &&
+      (Array.isArray(profile[field]) ? profile[field].length > 0 : profile[field].toString().trim() !== '')
+    );
+    const profileCompleteness = Math.round((completedFields.length / fields.length) * 100);
+
+    const userContext = {
+      role: user.role,
+      name: user.name,
+      skills: user.studentProfile?.skills || [],
+      interests: user.studentProfile?.interests || [],
+      experienceLevel: user.studentProfile?.experienceLevel || 'entry',
+      bio: user.studentProfile?.bio || '',
+      university: user.studentProfile?.university || '',
+      degree: user.studentProfile?.degree || '',
+      applicationStats,
+      profileCompleteness
+    };
+
+    const response = await aiService.getChatbotResponse(message, userContext, conversationHistory);
 
     res.json({
       success: true,
@@ -155,6 +183,59 @@ router.post('/chatbot', auth, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error processing chatbot request',
+      error: error.message
+    });
+  }
+});
+
+// @route   GET /api/ai/chatbot/welcome
+// @desc    Get proactive welcome guidance for the chatbot
+// @access  Private
+router.get('/chatbot/welcome', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+
+    // Get application stats
+    const applications = await Application.find({ applicant: req.user.id })
+      .select('status');
+    const applicationStats = {
+      total: applications.length,
+      pending: applications.filter(a => a.status === 'pending').length,
+      accepted: applications.filter(a => a.status === 'accepted').length,
+      rejected: applications.filter(a => a.status === 'rejected').length,
+      successRate: applications.length > 0
+        ? Math.round((applications.filter(a => a.status === 'accepted').length / applications.length) * 100)
+        : 0
+    };
+
+    const profile = user.studentProfile || {};
+    const fields = ['skills', 'interests', 'bio', 'university', 'degree', 'graduationYear'];
+    const completedFields = fields.filter(field => profile[field] &&
+      (Array.isArray(profile[field]) ? profile[field].length > 0 : profile[field].toString().trim() !== '')
+    );
+    const profileCompleteness = Math.round((completedFields.length / fields.length) * 100);
+
+    const userContext = {
+      role: user.role,
+      name: user.name,
+      skills: user.studentProfile?.skills || [],
+      interests: user.studentProfile?.interests || [],
+      experienceLevel: user.studentProfile?.experienceLevel || 'entry',
+      applicationStats,
+      profileCompleteness
+    };
+
+    const welcome = aiService.getWelcomeGuidance(userContext);
+
+    res.json({
+      success: true,
+      data: welcome
+    });
+  } catch (error) {
+    console.error('Error getting welcome guidance:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error generating welcome guidance',
       error: error.message
     });
   }
