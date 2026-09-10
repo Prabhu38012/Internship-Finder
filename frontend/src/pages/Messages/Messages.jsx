@@ -203,12 +203,31 @@ const Messages = () => {
         replyTo?._id,
       );
 
+      const rawMsg = response?.data || response;
+      const formattedSender =
+        rawMsg.sender && typeof rawMsg.sender === "object" && (rawMsg.sender._id || rawMsg.sender.id)
+          ? rawMsg.sender
+          : {
+              _id: user?.id || user?._id,
+              name: user?.name || "You",
+              email: user?.email,
+              avatar: user?.avatar || "",
+              role: user?.role || "student",
+            };
+
+      const finalMessage = {
+        ...rawMsg,
+        _id: rawMsg._id || rawMsg.id || `temp_${Date.now()}`,
+        sender: formattedSender,
+        createdAt: rawMsg.createdAt || new Date().toISOString(),
+      };
+
       setMessages((prev) => {
-        const newMsgId = String(response.data?._id || response.data?.id || "");
+        const newMsgId = String(finalMessage._id || finalMessage.id || "");
         if (newMsgId && prev.some((m) => String(m._id || m.id || "") === newMsgId)) {
           return prev;
         }
-        return [...prev, response.data];
+        return [...prev, finalMessage];
       });
       setNewMessage("");
       setAttachments([]);
@@ -218,10 +237,14 @@ const Messages = () => {
       setConversations((prev) =>
         prev.map((conv) =>
           conv._id === selectedConversation._id
-            ? { ...conv, lastMessage: response.data, lastActivity: new Date() }
+            ? { ...conv, lastMessage: finalMessage, lastActivity: new Date() }
             : conv,
         ),
       );
+
+      setTimeout(() => {
+        scrollToBottom();
+      }, 50);
     } catch (error) {
       toast.error("Failed to send message");
     } finally {
@@ -232,21 +255,19 @@ const Messages = () => {
   const handleNewMessage = (data) => {
     if (!data || !data.message) return;
 
-    // Ignore if sent by current user (since sender already adds it via HTTP response)
-    const senderId = String(data.message.sender?._id || data.message.sender || "");
-    const currentUserId = String(user.id || user._id || "");
-    if (senderId && currentUserId && senderId === currentUserId) {
-      return;
-    }
+    const incomingMsg = data.message;
+    const incomingId = String(incomingMsg._id || incomingMsg.id || "");
 
     if (data.conversationId === selectedConversationRef.current?._id) {
       setMessages((prev) => {
-        const incomingId = String(data.message._id || data.message.id || "");
         if (incomingId && prev.some((msg) => String(msg._id || msg.id || "") === incomingId)) {
           return prev;
         }
-        return [...prev, data.message];
+        return [...prev, incomingMsg];
       });
+      setTimeout(() => {
+        scrollToBottom();
+      }, 50);
     }
 
     // Update conversations list
@@ -411,7 +432,14 @@ const Messages = () => {
   });
 
   const formatMessageTime = (date) => {
-    return formatDistanceToNow(new Date(date), { addSuffix: true });
+    try {
+      if (!date) return "Just now";
+      const d = new Date(date);
+      if (isNaN(d.getTime())) return "Just now";
+      return formatDistanceToNow(d, { addSuffix: true });
+    } catch {
+      return "Just now";
+    }
   };
 
   const getOtherParticipant = (conversation) => {
@@ -658,21 +686,22 @@ const Messages = () => {
               {/* Messages */}
               <Box sx={{ flex: 1, overflow: "auto", p: 1 }}>
                 {messages.map((message) => {
-                  const isOwn =
-                    message.sender._id === user.id ||
-                    message.sender._id === user._id;
+                  const senderId = String(
+                    message.sender?._id ||
+                    message.sender?.id ||
+                    message.sender ||
+                    ""
+                  );
+                  const currentUserId = String(user?.id || user?._id || "");
+                  const isOwn = Boolean(
+                    senderId && currentUserId && senderId === currentUserId
+                  );
                   const isSystemMessage =
                     message.isSystemMessage || message.messageType === "system";
 
-                  // Debug logging
-                  console.log("Message:", {
-                    content: message.content,
-                    senderId: message.sender._id,
-                    userId: user.id,
-                    userIdAlt: user._id,
-                    isOwn,
-                    senderName: message.sender.name,
-                  });
+                  const senderDisplayName =
+                    message.sender?.name ||
+                    (isOwn ? user?.name || "You" : "User");
 
                   if (isSystemMessage) {
                     return (
@@ -782,7 +811,7 @@ const Messages = () => {
                               color: "primary.light",
                             }}
                           >
-                            {message.sender?.name}
+                            {senderDisplayName}
                           </Typography>
                         )}
                         <Typography

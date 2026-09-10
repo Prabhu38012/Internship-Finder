@@ -236,23 +236,40 @@ router.post('/conversations/:id/messages', protect, upload.array('attachments', 
     conversation.lastActivity = new Date();
     await conversation.save();
 
-    // Emit real-time event to other participants (sender already receives it in HTTP response)
+    // Prepare response message with populated sender
+    let responseMessage = message.toObject ? message.toObject() : { ...message };
+    if (!responseMessage.sender || typeof responseMessage.sender !== 'object' || !responseMessage.sender.name) {
+      responseMessage.sender = {
+        _id: req.user._id || req.user.id,
+        name: req.user.name || req.user.companyName || 'User',
+        email: req.user.email || req.user.companyEmail,
+        avatar: req.user.avatar || req.user.companyProfile?.logo || '',
+        role: req.user.role || 'user'
+      };
+    }
+
+    // Emit real-time event to conversation room and participants
     const io = req.app.get('io');
     if (io) {
+      // Emit to conversation room for active chat viewers
+      io.to(`conversation_${conversation._id}`).emit('new_message', {
+        conversationId: conversation._id,
+        message: responseMessage
+      });
+
+      // Also emit to all participants' individual user rooms
       conversation.participants.forEach(participantId => {
         const pId = participantId.toString();
-        if (pId !== req.user.id.toString()) {
-          io.to(`user_${pId}`).to(`user:${pId}`).to(pId).emit('new_message', {
-            conversationId: conversation._id,
-            message
-          });
-        }
+        io.to(`user_${pId}`).to(`user:${pId}`).to(pId).emit('new_message', {
+          conversationId: conversation._id,
+          message: responseMessage
+        });
       });
     }
 
     res.status(201).json({
       success: true,
-      data: message
+      data: responseMessage
     });
   } catch (error) {
     console.error('Send message error:', error);
