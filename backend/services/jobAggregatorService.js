@@ -29,13 +29,24 @@ class JobAggregatorService {
 
         console.log('✅ [JobAggregator] Daily scheduler initialized (runs at 2:00 AM IST)');
 
-        // Also run initial sync on startup (with delay to allow server to fully start)
-        setTimeout(() => {
-            console.log('🚀 [JobAggregator] Running initial sync on startup...');
-            this.syncAllPlatforms().catch(err => {
-                console.error('❌ [JobAggregator] Initial sync failed:', err.message);
-            });
-        }, 10000); // 10 second delay
+        // Check if sync is needed on startup (skip if jobs already exist and synced within 12 hours)
+        setTimeout(async () => {
+            try {
+                const count = await ExternalJob.countDocuments();
+                const latestJob = await ExternalJob.findOne().sort({ lastSyncedAt: -1 });
+                const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000);
+
+                if (count > 0 && latestJob && latestJob.lastSyncedAt && latestJob.lastSyncedAt > twelveHoursAgo) {
+                    console.log(`ℹ️ [JobAggregator] External jobs already cached and up to date (${count} jobs). Skipping startup sync.`);
+                    return;
+                }
+
+                console.log('🚀 [JobAggregator] Running initial sync...');
+                await this.syncAllPlatforms();
+            } catch (err) {
+                console.error('❌ [JobAggregator] Startup sync check failed:', err.message);
+            }
+        }, 5000);
     }
 
     /**

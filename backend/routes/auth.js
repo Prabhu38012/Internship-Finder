@@ -1,6 +1,7 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
+const Company = require('../models/Company');
 const { protect } = require('../middleware/auth');
 const { sendTokenResponse } = require('../utils/jwt');
 const { sendEmail, emailTemplates } = require('../utils/email');
@@ -90,9 +91,59 @@ router.post('/login', [
 
     const { email, password } = req.body;
 
-    // Check for user
-    const user = await User.findOne({ email }).select('+password');
+    // Check for user in User collection
+    let user = await User.findOne({ email }).select('+password');
+    let isCompanyUser = false;
+
+    // If not found in User collection, check Company collection
     if (!user) {
+      const company = await Company.findOne({ companyEmail: email }).select('+password');
+      if (company) {
+        if (company.accountStatus === 'suspended' || company.accountStatus === 'inactive') {
+          return res.status(401).json({
+            success: false,
+            message: 'Company account has been deactivated'
+          });
+        }
+
+        const isMatch = await company.comparePassword(password);
+        if (!isMatch) {
+          return res.status(401).json({
+            success: false,
+            message: 'Invalid credentials'
+          });
+        }
+
+        company.lastActive = new Date();
+        await company.save();
+
+        const jwt = require('jsonwebtoken');
+        const token = jwt.sign(
+          { id: company._id, type: 'company' },
+          process.env.JWT_SECRET,
+          { expiresIn: process.env.JWT_EXPIRE || '30d' }
+        );
+
+        const companyUser = {
+          _id: company._id,
+          id: company._id,
+          name: company.companyName,
+          companyName: company.companyName,
+          email: company.companyEmail,
+          role: 'company',
+          companyProfile: company.companyProfile,
+          verificationStatus: company.verification?.verificationStatus,
+          accountStatus: company.accountStatus,
+          subscription: company.subscription
+        };
+
+        return res.status(200).json({
+          success: true,
+          token,
+          user: companyUser
+        });
+      }
+
       console.log(`Login attempt failed: User not found for email ${email}`);
       return res.status(401).json({
         success: false,
@@ -140,8 +191,34 @@ router.post('/login', [
 // @access  Private
 router.get('/me', protect, async (req, res) => {
   try {
+    // If authenticated user is a company
+    if (req.user.role === 'company' || req.user.companyName) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          _id: req.user._id,
+          id: req.user._id,
+          name: req.user.companyName || req.user.name,
+          companyName: req.user.companyName || req.user.name,
+          email: req.user.companyEmail || req.user.email,
+          role: 'company',
+          companyProfile: req.user.companyProfile,
+          verificationStatus: req.user.verification?.verificationStatus,
+          accountStatus: req.user.accountStatus,
+          subscription: req.user.subscription
+        }
+      });
+    }
+
     const user = await User.findById(req.user.id)
       .populate('savedInternships', 'title companyName location.type status');
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
 
     res.status(200).json({
       success: true,

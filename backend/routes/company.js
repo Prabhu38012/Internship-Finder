@@ -151,10 +151,18 @@ router.post('/login', [
       });
     }
 
-    const { companyEmail, password } = req.body;
+    const targetEmail = req.body.companyEmail || req.body.email;
+    const { password } = req.body;
+
+    if (!targetEmail) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is required'
+      });
+    }
 
     // Find company and include password
-    const company = await Company.findOne({ companyEmail }).select('+password');
+    const company = await Company.findOne({ companyEmail: targetEmail }).select('+password');
     if (!company) {
       return res.status(401).json({
         success: false,
@@ -340,9 +348,10 @@ router.post('/upload-logo', protect, authorize('company'), upload.single('logo')
       });
     }
 
+    const logoUrl = `/uploads/logos/${req.file.filename}`;
     const company = await Company.findByIdAndUpdate(
       req.user.id,
-      { 'companyProfile.logo': req.file.path },
+      { 'companyProfile.logo': logoUrl },
       { new: true }
     );
 

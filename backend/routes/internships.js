@@ -2,6 +2,7 @@ const express = require('express');
 const { body, query, validationResult } = require('express-validator');
 const Internship = require('../models/Internship');
 const Application = require('../models/Application');
+const ExternalJob = require('../models/ExternalJob');
 const { protect, authorize, optionalAuth } = require('../middleware/auth');
 const RealtimeService = require('../services/realtimeService');
 const AnalyticsService = require('../services/analyticsService');
@@ -170,6 +171,83 @@ router.get('/', [
   }
 });
 
+// @desc    Get external internships statistics
+// @route   GET /api/internships/external/stats
+// @access  Public
+router.get('/external/stats', async (req, res) => {
+  try {
+    const stats = await ExternalJob.getStats();
+    res.status(200).json({
+      success: true,
+      data: stats
+    });
+  } catch (error) {
+    console.error('Get external stats error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve external statistics'
+    });
+  }
+});
+
+// @desc    Get external internships only
+// @route   GET /api/internships/external
+// @access  Public
+router.get('/external', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    let query = { isActive: true };
+
+    if (req.query.source) {
+      query.source = req.query.source;
+    }
+    if (req.query.category) {
+      query.category = req.query.category;
+    }
+    if (req.query.search) {
+      query.$or = [
+        { title: { $regex: req.query.search, $options: 'i' } },
+        { company: { $regex: req.query.search, $options: 'i' } },
+        { description: { $regex: req.query.search, $options: 'i' } }
+      ];
+    }
+    if (req.query.location) {
+      query['location.city'] = { $regex: req.query.location, $options: 'i' };
+    }
+    if (req.query.remote === 'true' || req.query.remote === true) {
+      query['location.type'] = 'remote';
+    }
+
+    const jobs = await ExternalJob.find(query)
+      .sort({ postedDate: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await ExternalJob.countDocuments(query);
+
+    res.status(200).json({
+      success: true,
+      count: jobs.length,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit)
+      },
+      data: jobs
+    });
+  } catch (error) {
+    console.error('Get external internships error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve external internships'
+    });
+  }
+});
+
 // @desc    Get single internship
 // @route   GET /api/internships/:id
 // @access  Public
@@ -226,11 +304,6 @@ router.get('/:id', optionalAuth, async (req, res) => {
       message: 'Server error'
     });
   }
-});
-
-// Test route to verify routing works
-router.post('/test', (req, res) => {
-  res.json({ success: true, message: 'Internship route is working!' });
 });
 
 // @desc    Create new internship (Real-time posting)

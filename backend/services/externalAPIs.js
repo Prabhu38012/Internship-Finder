@@ -1,7 +1,15 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 const NodeCache = require('node-cache');
+const crypto = require('crypto');
 const APIErrorHandler = require('./apiErrorHandler');
+
+// Generate stable deterministic ID based on source, title, and company
+function generateStableId(source, title, company) {
+  const clean = `${source}_${title || ''}_${company || ''}`.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const hash = crypto.createHash('md5').update(clean).digest('hex').slice(0, 16);
+  return `${source.toLowerCase()}_${hash}`;
+}
 
 // Cache for 30 minutes
 const cache = new NodeCache({ stdTTL: 1800 });
@@ -200,7 +208,7 @@ class LinkedInAPI {
 
           if (title && company) {
             jobs.push({
-              id: `linkedin_${Date.now()}_${index}`,
+              id: generateStableId('LinkedIn', title, company),
               title,
               company,
               description: `${title} position at ${company}`,
@@ -448,7 +456,7 @@ class IndeedAPI {
   generateIndeedFallbackData(query, filters) {
     return [
       {
-        id: `indeed_fallback_${Date.now()}_1`,
+        id: generateStableId('Indeed', `${query} Intern`, 'Tech Solutions India'),
         title: `${query} Intern`,
         company: 'Tech Solutions India',
         description: `Exciting ${query} internship with hands-on learning`,
@@ -458,10 +466,10 @@ class IndeedAPI {
         stipend: { amount: 15000, currency: 'INR', period: 'month' },
         applyUrl: 'https://in.indeed.com/jobs',
         source: 'Indeed',
-        postedDate: new Date()
+        postedDate: new Date('2026-01-01')
       },
       {
-        id: `indeed_fallback_${Date.now()}_2`,
+        id: generateStableId('Indeed', `${query} Development Trainee`, 'Innovation Hub'),
         title: `${query} Development Trainee`,
         company: 'Innovation Hub',
         description: `Learn ${query} development with mentorship`,
@@ -471,7 +479,7 @@ class IndeedAPI {
         stipend: { amount: 20000, currency: 'INR', period: 'month' },
         applyUrl: 'https://in.indeed.com/jobs',
         source: 'Indeed',
-        postedDate: new Date()
+        postedDate: new Date('2026-01-01')
       }
     ];
   }
@@ -646,7 +654,7 @@ class InternshalaAPI {
   generateInternshalaFallbackData(query, filters) {
     return [
       {
-        id: `internshala_fallback_${Date.now()}_1`,
+        id: generateStableId('Internshala', `${query} Intern`, 'StartupXYZ'),
         title: `${query} Intern`,
         company: 'StartupXYZ',
         description: `Hands-on ${query} internship with real projects`,
@@ -656,10 +664,10 @@ class InternshalaAPI {
         stipend: { amount: 12000, currency: 'INR', period: 'month' },
         applyUrl: 'https://internshala.com/internships',
         source: 'Internshala',
-        postedDate: new Date()
+        postedDate: new Date('2026-01-01')
       },
       {
-        id: `internshala_fallback_${Date.now()}_2`,
+        id: generateStableId('Internshala', `${query} Development Trainee`, 'TechStart India'),
         title: `${query} Development Trainee`,
         company: 'TechStart India',
         description: `Learn ${query} development from industry experts`,
@@ -669,7 +677,7 @@ class InternshalaAPI {
         stipend: { amount: 18000, currency: 'INR', period: 'month' },
         applyUrl: 'https://internshala.com/internships',
         source: 'Internshala',
-        postedDate: new Date()
+        postedDate: new Date('2026-01-01')
       }
     ];
   }
@@ -738,7 +746,7 @@ class GoogleJobsAPI {
       const response = await axios.request(options);
 
       return (response.data.data || response.data || []).slice(0, 20).map((job, index) => ({
-        id: `google_${job.job_id || Date.now()}_${index}`,
+        id: job.job_id ? `google_${job.job_id}` : generateStableId('Google', job.job_title || job.title, job.employer_name || job.company),
         title: job.job_title || job.title,
         company: job.employer_name || job.company,
         companyLogo: job.employer_logo || null,
@@ -753,7 +761,7 @@ class GoogleJobsAPI {
         stipend: this.parseSalary(job.job_salary || job.salary),
         applyUrl: job.job_apply_link || job.apply_link || 'https://www.google.com/search?q=internships',
         source: 'Google',
-        postedDate: job.job_posted_at_datetime_utc ? new Date(job.job_posted_at_datetime_utc) : new Date()
+        postedDate: job.job_posted_at_datetime_utc ? new Date(job.job_posted_at_datetime_utc) : new Date('2026-01-01')
       }));
     } catch (error) {
       console.error('Google Jobs RapidAPI error:', error.message);
@@ -764,7 +772,7 @@ class GoogleJobsAPI {
   generateGoogleFallbackData(query, filters) {
     return [
       {
-        id: `google_fallback_${Date.now()}_1`,
+        id: generateStableId('Google', `${query} Intern`, 'Global Tech Corp'),
         title: `${query} Intern`,
         company: 'Global Tech Corp',
         description: `Exciting ${query} internship opportunity with international exposure`,
@@ -774,10 +782,10 @@ class GoogleJobsAPI {
         stipend: { amount: 20000, currency: 'INR', period: 'month' },
         applyUrl: 'https://www.google.com/search?q=internships',
         source: 'Google',
-        postedDate: new Date()
+        postedDate: new Date('2026-01-01')
       },
       {
-        id: `google_fallback_${Date.now()}_2`,
+        id: generateStableId('Google', `${query} Trainee`, 'Innovation Labs'),
         title: `${query} Trainee`,
         company: 'Innovation Labs',
         description: `Learn ${query} from industry experts`,
@@ -787,7 +795,7 @@ class GoogleJobsAPI {
         stipend: { amount: 15000, currency: 'INR', period: 'month' },
         applyUrl: 'https://www.google.com/search?q=internships',
         source: 'Google',
-        postedDate: new Date()
+        postedDate: new Date('2026-01-01')
       }
     ];
   }

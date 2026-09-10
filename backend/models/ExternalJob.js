@@ -147,10 +147,21 @@ externalJobSchema.statics.getActiveJobs = function (filters = {}) {
     return this.find(query).sort({ postedDate: -1 });
 };
 
-// Static method to upsert jobs during aggregation
+// Static method to upsert jobs during aggregation (with deduplication)
 externalJobSchema.statics.upsertJob = async function (jobData) {
+    const filter = {
+        $or: [
+            { externalId: jobData.externalId },
+            {
+                title: jobData.title,
+                company: jobData.company,
+                source: jobData.source
+            }
+        ]
+    };
+
     return this.findOneAndUpdate(
-        { externalId: jobData.externalId },
+        filter,
         {
             ...jobData,
             lastSyncedAt: new Date(),

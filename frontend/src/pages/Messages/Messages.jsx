@@ -735,7 +735,7 @@ const Messages = () => {
                       mb: 1,
                     }}
                   >
-                    <Paper sx={{ p: 1, bgcolor: "grey.100", borderRadius: 2 }}>
+                    <Paper sx={{ p: 1, bgcolor: "rgba(255, 255, 255, 0.06)", borderRadius: 2, border: "1px solid rgba(255, 255, 255, 0.08)" }}>
                       <Typography
                         variant="body2"
                         color="text.secondary"
@@ -764,7 +764,7 @@ const Messages = () => {
                 <Box
                   sx={{
                     p: 1,
-                    bgcolor: "grey.50",
+                    bgcolor: "rgba(255, 255, 255, 0.04)",
                     borderTop: 1,
                     borderColor: "divider",
                   }}
@@ -783,7 +783,7 @@ const Messages = () => {
 
               {/* Attachments Preview */}
               {attachments.length > 0 && (
-                <Box sx={{ p: 1, bgcolor: "grey.50" }}>
+                <Box sx={{ p: 1, bgcolor: "rgba(255, 255, 255, 0.04)" }}>
                   <Typography variant="body2" gutterBottom>
                     Attachments ({attachments.length}):
                   </Typography>

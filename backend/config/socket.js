@@ -56,9 +56,21 @@ class SocketManager {
         }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const user = await User.findById(decoded.id).select('-password');
+        let user = null;
+
+        if (decoded.type === 'company') {
+          const Company = require('../models/Company');
+          user = await Company.findById(decoded.id).select('-password');
+          if (user) {
+            user.role = 'company';
+            user.name = user.companyName;
+            user.isActive = user.accountStatus !== 'suspended' && user.accountStatus !== 'inactive';
+          }
+        } else {
+          user = await User.findById(decoded.id).select('-password');
+        }
         
-        if (!user || !user.isActive) {
+        if (!user || user.isActive === false) {
           return next(new Error('Authentication error'));
         }
 
@@ -90,15 +102,28 @@ class SocketManager {
     this.io.on('connection', (socket) => {
       console.log(`User ${socket.user.name} connected (${socket.userId})`);
       
-      // Join user to their personal room
+      // Track connected user
+      this.connectedUsers.set(socket.userId, socket.id);
+      this.userSockets.set(socket.id, socket.user);
+
+      // Join user to all common room patterns
       socket.join(`user_${socket.userId}`);
+      socket.join(`user:${socket.userId}`);
+      socket.join(socket.userId);
+
+      // Join role room
+      if (socket.user.role) {
+        socket.join(`role:${socket.user.role}`);
+      }
       
       // Update user's online status
       this.updateUserStatus(socket.userId, true);
+      this.emitUserStatus(socket, true);
       
       // Handle disconnection
       socket.on('disconnect', () => {
         console.log(`User ${socket.user.name} disconnected (${socket.userId})`);
+        this.cleanupUserConnection(socket);
         this.updateUserStatus(socket.userId, false);
       });
       
@@ -227,11 +252,34 @@ class SocketManager {
     }
   }
 
+  // Method to emit to all connected sockets
+  emitToAll(event, data) {
+    if (this.io) {
+      this.io.emit(event, data);
+      return true;
+    }
+    return false;
+  }
+
   // Method to emit to specific user
   emitToUser(userId, event, data) {
-    if (this.io) {
-      this.io.to(`user:${userId}`).emit(event, data);
+    if (this.io && userId) {
+      const uId = userId.toString();
+      this.io.to(`user_${uId}`).to(`user:${uId}`).to(uId).emit(event, data);
+      return true;
     }
+    return false;
+  }
+
+  // Get list of connected user IDs
+  getConnectedUsers() {
+    return Array.from(this.connectedUsers.keys());
+  }
+
+  // Check if specific user is currently online
+  isUserOnline(userId) {
+    if (!userId) return false;
+    return this.connectedUsers.has(userId.toString());
   }
 
   // Handle room join

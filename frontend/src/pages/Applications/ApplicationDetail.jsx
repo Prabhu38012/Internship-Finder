@@ -132,7 +132,12 @@ const ApplicationDetail = () => {
   }
 
   const isCompany = user?.role === "company";
-  const canUpdateStatus = isCompany && application.company._id === user._id;
+  const canUpdateStatus =
+    isCompany &&
+    (application.company?._id === user?._id ||
+      application.company?._id === user?.id ||
+      application.company === user?._id ||
+      application.company === user?.id);
 
   return (
     <>
@@ -166,7 +171,7 @@ const ApplicationDetail = () => {
                       gutterBottom
                       fontWeight="bold"
                     >
-                      {application.internship.title}
+                      {application.internship?.title || "Internship"}
                     </Typography>
                     <Box
                       sx={{
@@ -178,7 +183,7 @@ const ApplicationDetail = () => {
                     >
                       <Business color="action" />
                       <Typography variant="h6" color="text.secondary">
-                        {application.internship.companyName}
+                        {application.internship?.companyName || "Company"}
                       </Typography>
                     </Box>
                     <Chip

@@ -30,9 +30,7 @@ export const useSocket = (token) => {
 
     return () => {
       clearTimeout(connectionTimer);
-      if (token) {
-        socketService.disconnect();
-      }
+      // Keep singleton socket connected across route transitions
     };
   }, [token]);
 

@@ -5,10 +5,16 @@ const sentiment = require('sentiment');
 const keywordExtractor = require('keyword-extractor');
 const NodeCache = require('node-cache');
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+// Initialize AI client (Configured for Groq LPU inference, with OpenAI fallback)
+const isGroq = Boolean(process.env.GROQ_API_KEY) || !process.env.OPENAI_API_KEY;
+const aiApiKey = process.env.GROQ_API_KEY || process.env.OPENAI_API_KEY || '';
+
+const aiClient = new OpenAI({
+  apiKey: aiApiKey || 'dummy_key',
+  baseURL: isGroq ? 'https://api.groq.com/openai/v1' : undefined,
 });
+
+const AI_MODEL = isGroq ? (process.env.GROQ_MODEL || 'qwen/qwen3.8-27b') : 'gpt-3.5-turbo';
 
 // Cache for AI responses (1 hour TTL)
 const aiCache = new NodeCache({ stdTTL: 3600 });
@@ -34,7 +40,8 @@ class AIService {
 
       // Score each internship
       const scoredInternships = internships.map(internship => {
-        const skillMatch = this.calculateSkillMatch(userSkills, internship.requirements.skills);
+        const internshipSkills = internship.requirements?.skills || internship.skills || [];
+        const skillMatch = this.calculateSkillMatch(userSkills, internshipSkills);
         const categoryMatch = this.calculateCategoryMatch(userInterests, internship.category);
         const locationPreference = this.calculateLocationPreference(userProfile, internship);
         const experienceMatch = this.calculateExperienceMatch(userProfile, internship);
@@ -114,13 +121,15 @@ class AIService {
 
       let response;
       try {
-        const completion = await openai.chat.completions.create({
-          model: 'gpt-3.5-turbo',
+        if (!aiApiKey) {
+          throw new Error('No GROQ_API_KEY configured');
+        }
+
+        const completion = await aiClient.chat.completions.create({
+          model: AI_MODEL,
           messages,
           max_tokens: 500,
           temperature: 0.7,
-          presence_penalty: 0.3,
-          frequency_penalty: 0.3
         });
         
         const aiReply = completion.choices[0].message.content;
@@ -134,7 +143,7 @@ class AIService {
           guidance: this.generateUserGuidance(userContext)
         };
       } catch (apiError) {
-        console.warn('OpenAI API error, using enhanced fallback:', apiError.message);
+        console.warn('AI API error, using enhanced fallback:', apiError.message);
         response = this.getEnhancedFallbackResponse(intent, message, userContext);
       }
 
@@ -679,12 +688,16 @@ INSTRUCTIONS:
 
   async generateResumeSuggestions(resumeText) {
     try {
+      if (!aiApiKey) {
+        throw new Error('No GROQ_API_KEY configured');
+      }
+
       const prompt = `Analyze this resume and provide 3-5 specific improvement suggestions: ${resumeText.slice(0, 1000)}`;
       
-      const completion = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
+      const completion = await aiClient.chat.completions.create({
+        model: AI_MODEL,
         messages: [{ role: "user", content: prompt }],
-        max_tokens: 200
+        max_tokens: 250
       });
       
       return completion.choices[0].message.content.split('\n').filter(s => s.trim());
@@ -974,12 +987,16 @@ INSTRUCTIONS:
 
   async generateAITags(fullText) {
     try {
+      if (!aiApiKey) {
+        throw new Error('No GROQ_API_KEY configured');
+      }
+
       const prompt = `Generate 5 relevant tags for this internship: ${fullText.slice(0, 500)}`;
       
-      const completion = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
+      const completion = await aiClient.chat.completions.create({
+        model: AI_MODEL,
         messages: [{ role: "user", content: prompt }],
-        max_tokens: 50
+        max_tokens: 60
       });
       
       return completion.choices[0].message.content.split(',').map(tag => tag.trim());

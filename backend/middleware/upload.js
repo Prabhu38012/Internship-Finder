@@ -3,27 +3,27 @@ const path = require('path');
 const fs = require('fs');
 
 // Ensure upload directory exists
-const uploadDir = 'uploads';
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
+const baseUploadDir = path.join(__dirname, '..', 'uploads');
+if (!fs.existsSync(baseUploadDir)) {
+  fs.mkdirSync(baseUploadDir, { recursive: true });
 }
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    let uploadPath = 'uploads/';
+    let uploadPath = baseUploadDir;
     
     // Create different folders based on file type
     if (file.fieldname === 'resume') {
-      uploadPath += 'resumes/';
+      uploadPath = path.join(baseUploadDir, 'resumes');
     } else if (file.fieldname === 'avatar') {
-      uploadPath += 'avatars/';
+      uploadPath = path.join(baseUploadDir, 'avatars');
     } else if (file.fieldname === 'logo') {
-      uploadPath += 'logos/';
-    } else if (file.fieldname === 'documents') {
-      uploadPath += 'documents/';
+      uploadPath = path.join(baseUploadDir, 'logos');
+    } else if (file.fieldname === 'documents' || file.fieldname === 'additionalDocuments') {
+      uploadPath = path.join(baseUploadDir, 'documents');
     } else {
-      uploadPath += 'misc/';
+      uploadPath = path.join(baseUploadDir, 'misc');
     }
 
     // Create directory if it doesn't exist
@@ -47,7 +47,8 @@ const fileFilter = (req, file, cb) => {
     resume: ['.pdf', '.doc', '.docx'],
     avatar: ['.jpg', '.jpeg', '.png', '.gif'],
     logo: ['.jpg', '.jpeg', '.png', '.gif', '.svg'],
-    documents: ['.pdf', '.doc', '.docx', '.txt', '.jpg', '.jpeg', '.png']
+    documents: ['.pdf', '.doc', '.docx', '.txt', '.jpg', '.jpeg', '.png'],
+    additionalDocuments: ['.pdf', '.doc', '.docx', '.txt', '.jpg', '.jpeg', '.png']
   };
 
   const fileExtension = path.extname(file.originalname).toLowerCase();

@@ -29,9 +29,6 @@ const Applications = lazy(() => import("./pages/Applications/Applications"));
 const ApplicationDetail = lazy(
   () => import("./pages/Applications/ApplicationDetail"),
 );
-const CreateInternship = lazy(
-  () => import("./pages/Internships/CreateInternship"),
-);
 const EditInternship = lazy(() => import("./pages/Internships/EditInternship"));
 const CompanyDashboard = lazy(() => import("./pages/Company/CompanyDashboard"));
 const ApplicationManagement = lazy(
@@ -126,6 +123,13 @@ function App() {
               }
             />
 
+            <Route
+              path="company/register"
+              element={
+                user ? <Navigate to="/dashboard" replace /> : <CompanyRegistration />
+              }
+            />
+
             {/* Protected Routes */}
             <Route element={<ProtectedRoute />}>
               {/* Common Protected Routes */}
@@ -152,10 +156,6 @@ function App() {
                 <Route
                   path="company/applications"
                   element={<ApplicationManagement />}
-                />
-                <Route
-                  path="company/register"
-                  element={<CompanyRegistration />}
                 />
                 <Route path="internships/create" element={<PostInternship />} />
                 <Route

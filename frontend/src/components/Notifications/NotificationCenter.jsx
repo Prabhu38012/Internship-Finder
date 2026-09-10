@@ -217,7 +217,13 @@ const NotificationCenter = ({ open, onClose, onNavigate }) => {
   };
 
   const renderFilters = () => (
-    <Box sx={{ p: 2, bgcolor: "grey.50" }}>
+    <Box
+      sx={{
+        p: 2,
+        bgcolor: "rgba(255, 255, 255, 0.03)",
+        borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+      }}
+    >
       <Stack direction="row" spacing={2} alignItems="center">
         <FormControl size="small" sx={{ minWidth: 120 }}>
           <InputLabel>Type</InputLabel>

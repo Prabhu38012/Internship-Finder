@@ -77,7 +77,7 @@ router.get('/search', protect, async (req, res) => {
     }
 
     const users = await User.find(searchFilter)
-      .select('name email role profilePicture')
+      .select('name email role avatar')
       .limit(parseInt(limit))
       .sort({ name: 1 });
 
@@ -212,7 +212,7 @@ router.post('/resume', protect, upload.single('resume'), handleMulterError, asyn
     // Check if Cloudinary is configured
     if (!process.env.CLOUDINARY_CLOUD_NAME || process.env.CLOUDINARY_CLOUD_NAME === 'demo') {
       // Fallback: store file locally and return local URL
-      const localUrl = `/uploads/${req.file.filename}`;
+      const localUrl = `/uploads/resumes/${req.file.filename}`;
       
       // Update user profile with local file path based on role
       const updateField = req.user.role === 'student' ? 'studentProfile.resume' : 'companyProfile.documents';

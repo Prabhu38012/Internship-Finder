@@ -119,8 +119,16 @@ const WishlistDialog = ({
 
       <DialogContent>
         {(internship || item?.internship) && (
-          <Box mb={3} p={2} bgcolor="grey.50" borderRadius={1}>
-            <Typography variant="h6">
+          <Box
+            sx={{
+              mb: 3,
+              p: 2,
+              bgcolor: "rgba(255, 255, 255, 0.04)",
+              borderRadius: 2,
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+            }}
+          >
+            <Typography variant="h6" color="text.primary">
               {internship?.title || item?.internship?.title}
             </Typography>
             <Typography variant="subtitle2" color="text.secondary">

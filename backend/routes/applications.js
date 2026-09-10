@@ -120,24 +120,47 @@ router.post('/', protect, authorize('student'), trackApplicationSubmitted, uploa
       });
     }
 
+    // Safely extract company ID
+    const companyId = internship.company?._id || internship.company;
+    if (!companyId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid company for this internship'
+      });
+    }
+
+    // Safely parse answers
+    let parsedAnswers = [];
+    if (answers) {
+      if (Array.isArray(answers)) {
+        parsedAnswers = answers;
+      } else if (typeof answers === 'string') {
+        try {
+          parsedAnswers = JSON.parse(answers);
+        } catch (e) {
+          parsedAnswers = [];
+        }
+      }
+    }
+
     // Create application
     const application = await Application.create({
       internship: internshipId,
       applicant: req.user._id,
-      company: internship.company._id,
+      company: companyId,
       coverLetter,
       resume: resumeUrl,
       additionalDocuments,
-      answers: answers ? JSON.parse(answers) : []
+      answers: parsedAnswers
     });
 
     // Update internship applications count
-    internship.applicationsCount += 1;
+    internship.applicationsCount = (internship.applicationsCount || 0) + 1;
     await internship.save();
 
     // Create notification for company
     await Notification.createNotification({
-      recipient: internship.company._id,
+      recipient: companyId,
       sender: req.user._id,
       type: 'application_received',
       title: 'New Application Received',
@@ -154,7 +177,7 @@ router.post('/', protect, authorize('student'), trackApplicationSubmitted, uploa
     if (io) {
       io.emit('new_application', {
         applicationId: application._id,
-        companyId: internship.company._id,
+        companyId: companyId,
         applicantId: req.user._id,
         applicantName: req.user.name,
         internshipId: internship._id,
@@ -168,42 +191,23 @@ router.post('/', protect, authorize('student'), trackApplicationSubmitted, uploa
     const Message = require('../models/Message');
     
     let conversation = await Conversation.findOne({
-      participants: { $all: [req.user._id, internship.company._id] },
+      participants: { $all: [req.user._id, companyId] },
       type: 'direct'
     });
 
     if (!conversation) {
       conversation = await Conversation.create({
-        participants: [req.user._id, internship.company._id],
+        participants: [req.user._id, companyId],
         type: 'direct',
         createdBy: req.user._id
       });
-    }
 
-    // Send automatic message about application
-    const automaticMessage = await Message.create({
-      conversation: conversation._id,
-      sender: req.user._id,
-      content: `I have applied for the position: ${internship.title}. Looking forward to hearing from you!`,
-      messageType: 'application',
-      applicationData: {
-        applicationId: application._id,
-        internshipId: internship._id,
-        internshipTitle: internship.title,
-        status: 'applied'
-      }
-    });
-
-    // Send real-time message notification
-    if (io) {
-      io.to(`user_${internship.company._id}`).emit('application_notification', {
-        conversationId: conversation._id,
-        message: `New application received for ${internship.title}`,
-        applicationData: {
-          applicationId: application._id,
-          internshipTitle: internship.title,
-          applicantName: req.user.name
-        }
+      // Send initial system message
+      await Message.create({
+        conversation: conversation._id,
+        sender: req.user._id,
+        content: `Applied for ${internship.title}`,
+        messageType: 'system'
       });
     }
 
@@ -218,20 +222,35 @@ router.post('/', protect, authorize('student'), trackApplicationSubmitted, uploa
 
     // Send email notification to company
     try {
-      const emailContent = emailTemplates.applicationReceived(req.user.name, internship.title);
-      await sendEmail({
-        email: internship.company.email,
-        subject: emailContent.subject,
-        html: emailContent.html
-      });
+      const Company = require('../models/Company');
+      let targetCompanyEmail = '';
+      const companyDoc = await Company.findById(companyId);
+      if (companyDoc) {
+        targetCompanyEmail = companyDoc.companyEmail;
+      } else {
+        const User = require('../models/User');
+        const userCompany = await User.findById(companyId);
+        targetCompanyEmail = userCompany?.email;
+      }
+
+      if (targetCompanyEmail) {
+        const emailContent = emailTemplates.applicationReceived(req.user.name, internship.title);
+        await sendEmail({
+          email: targetCompanyEmail,
+          subject: emailContent.subject,
+          html: emailContent.html
+        });
+      }
     } catch (emailError) {
       console.error('Application notification email failed:', emailError);
     }
 
-    // Emit real-time notification
+    // Emit real-time notification to company rooms
     if (req.io) {
-      req.io.to(internship.company._id.toString()).emit('newApplication', {
-        application: await application.populate('applicant', 'name avatar'),
+      const companyRoom = companyId.toString();
+      const populatedApp = await application.populate('applicant', 'name avatar');
+      req.io.to(companyRoom).to(`user_${companyRoom}`).to(`user:${companyRoom}`).emit('newApplication', {
+        application: populatedApp,
         internship: { title: internship.title, _id: internship._id }
       });
     }

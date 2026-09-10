@@ -21,13 +21,24 @@ const trackActivity = (activityType) => {
           userAgent: req.get('User-Agent')
         }
 
+        let parsedData = null;
+        if (typeof data === 'object' && data !== null) {
+          parsedData = data;
+        } else if (typeof data === 'string') {
+          try {
+            parsedData = JSON.parse(data);
+          } catch (e) {
+            parsedData = null;
+          }
+        }
+
         // Add specific data based on activity type
         switch (activityType) {
           case 'internship_created':
-            activity.details = { internshipId: JSON.parse(data).data?._id }
+            activity.details = { internshipId: parsedData?.data?._id }
             break
           case 'application_submitted':
-            activity.details = { applicationId: JSON.parse(data).data?._id }
+            activity.details = { applicationId: parsedData?.data?._id }
             break
           case 'application_status_updated':
             activity.details = { 

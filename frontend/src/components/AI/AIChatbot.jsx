@@ -529,8 +529,7 @@ const AIChatbot = ({ isOpen, onClose, isMinimized, onToggleMinimize }) => {
 
                       <Typography
                         variant="caption"
-                        color="text.secondary"
-                        sx={{ mt: 0.5, display: "block", fontSize: "0.65rem" }}
+                        sx={{ mt: 0.5, display: "block", fontSize: "0.65rem", color: "#64748b" }}
                       >
                         {message.timestamp.toLocaleTimeString([], {
                           hour: "2-digit",
@@ -631,6 +630,26 @@ const AIChatbot = ({ isOpen, onClose, isMinimized, onToggleMinimize }) => {
                     "& .MuiOutlinedInput-root": {
                       borderRadius: 2.5,
                       fontSize: "0.875rem",
+                      bgcolor: "#ffffff",
+                      color: "#1e293b",
+                      "& fieldset": {
+                        borderColor: "#cbd5e1",
+                      },
+                      "&:hover fieldset": {
+                        borderColor: "#3b82f6",
+                      },
+                      "&.Mui-focused fieldset": {
+                        borderColor: "#3b82f6",
+                      },
+                    },
+                    "& .MuiInputBase-input": {
+                      color: "#0f172a !important",
+                      WebkitTextFillColor: "#0f172a !important",
+                    },
+                    "& .MuiInputBase-input::placeholder": {
+                      color: "#64748b !important",
+                      opacity: "1 !important",
+                      WebkitTextFillColor: "#64748b !important",
                     },
                   }}
                 />

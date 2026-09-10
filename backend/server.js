@@ -29,8 +29,6 @@ const messageRoutes = require('./routes/messages');
 const app = express();
 const server = createServer(app);
 
-// Make io available to routes
-app.set('io', null);
 
 // Initialize Socket.IO with security options
 const io = socketManager.initialize(server, {
@@ -94,7 +92,10 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Serve static files from uploads directory
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+  maxAge: '1d',
+  etag: true
+}));
 
 // Conditional logging
 if (process.env.NODE_ENV === 'development') {
@@ -165,22 +166,6 @@ app.get('/api/placeholder/:width/:height', (req, res) => {
   res.send(svg);
 });
 
-// Secure file serving
-app.use('/uploads', express.static('uploads', {
-  maxAge: '1d',
-  etag: true
-}));
-
-// Enhanced health check endpoint
-app.get('/api/health', (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: 'Server is running',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV,
-    mongoConnection: mongoose.connection.readyState === 1
-  });
-});
 
 // Improved error handling middleware
 app.use((err, req, res, next) => {
@@ -262,6 +247,7 @@ process.on('uncaughtException', (error) => {
 
 // Initialize notification service
 const notificationService = require('./services/notificationService');
+app.set('notificationService', notificationService);
 
 // Initialize job aggregator service for external internship sync
 const jobAggregatorService = require('./services/jobAggregatorService');

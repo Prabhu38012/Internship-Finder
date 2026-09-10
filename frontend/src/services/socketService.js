@@ -13,6 +13,7 @@ class SocketService {
     this.connectionTimeout = null;
     this.lastConnectionAttempt = null;
     this.pendingEvents = new Map();
+    this.queuedListeners = new Map();
   }
   getConnectionStatus() {
     return this.isConnected;
@@ -45,7 +46,11 @@ class SocketService {
     }
     this.lastConnectionAttempt = now;
 
-    const serverUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+    const serverUrl =
+      import.meta.env.VITE_SOCKET_URL ||
+      (import.meta.env.VITE_API_URL
+        ? import.meta.env.VITE_API_URL.replace(/\/api\/?$/, "")
+        : "http://localhost:5000");
 
     try {
       this.socket = io(serverUrl, {
@@ -88,7 +93,12 @@ class SocketService {
       this.reconnectAttempts = 0;
       this.processPendingEvents();
 
-      // Silently connect without toast notifications
+      // Attach all queued listeners
+      this.queuedListeners.forEach((callbacks, event) => {
+        callbacks.forEach((cb) => {
+          this.socket.on(event, cb);
+        });
+      });
     });
 
     this.socket.on("disconnect", (reason) => {
@@ -192,16 +202,27 @@ class SocketService {
     }
   }
 
-  // Add event listener method
+  // Add event listener method with queueing
   on(event, callback) {
+    if (!this.queuedListeners.has(event)) {
+      this.queuedListeners.set(event, new Set());
+    }
+    this.queuedListeners.get(event).add(callback);
+
     if (this.socket) {
       this.socket.on(event, callback);
     }
-    // Silently skip if socket not available
   }
 
   // Remove event listener method
   off(event, callback) {
+    if (this.queuedListeners.has(event)) {
+      if (callback) {
+        this.queuedListeners.get(event).delete(callback);
+      } else {
+        this.queuedListeners.delete(event);
+      }
+    }
     if (this.socket) {
       this.socket.off(event, callback);
     }

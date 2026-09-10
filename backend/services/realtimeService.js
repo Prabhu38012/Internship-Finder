@@ -80,7 +80,7 @@ class RealtimeService {
       
       // Send notification to students
       this.sendNotificationToRole('student', {
-        type: 'internship',
+        type: 'new_internship_match',
         title: 'New Internship Posted!',
         message: `${internship.title} at ${internship.companyName}`,
         data: { internshipId: internship._id }
@@ -208,14 +208,14 @@ class RealtimeService {
       
       // Also save as notification for all users
       await this.sendNotificationToRole('student', {
-        type: 'system',
+        type: 'system_update',
         title: 'System Announcement',
         message: announcement.message,
         data: announcement
       })
 
       await this.sendNotificationToRole('company', {
-        type: 'system',
+        type: 'system_update',
         title: 'System Announcement', 
         message: announcement.message,
         data: announcement

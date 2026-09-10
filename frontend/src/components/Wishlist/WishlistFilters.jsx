@@ -1,6 +1,7 @@
 import React from "react";
 import {
   Box,
+  Paper,
   FormControl,
   InputLabel,
   Select,
@@ -37,7 +38,16 @@ const WishlistFilters = ({
   };
 
   return (
-    <Box sx={{ mb: 3, p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
+    <Paper
+      elevation={0}
+      sx={{
+        mb: 3,
+        p: 2.5,
+        bgcolor: "#1a1a2e",
+        border: "1px solid rgba(255, 255, 255, 0.08)",
+        borderRadius: 3,
+      }}
+    >
       <Box
         display="flex"
         alignItems="center"
@@ -229,7 +239,7 @@ const WishlistFilters = ({
           />
         </Stack>
       </Box>
-    </Box>
+    </Paper>
   );
 };
 
