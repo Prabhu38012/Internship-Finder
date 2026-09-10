@@ -30,18 +30,8 @@ const app = express();
 const server = createServer(app);
 
 
-// Initialize Socket.IO with security options
-const io = socketManager.initialize(server, {
-  pingTimeout: 60000,
-  cors: {
-    origin: [
-      "http://localhost:5173",
-      "http://localhost:5175",
-      process.env.CLIENT_URL
-    ].filter(Boolean),
-    credentials: true
-  }
-});
+// Initialize Socket.IO with full CORS support
+const io = socketManager.initialize(server);
 
 // Set io instance for routes
 app.set('io', io);

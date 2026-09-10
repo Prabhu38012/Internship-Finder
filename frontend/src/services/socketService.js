@@ -29,22 +29,23 @@ class SocketService {
     };
   }
   connect(token) {
-    if (this.socket?.connected) {
+    if (!token) {
+      token = localStorage.getItem("token");
+    }
+    if (!token || token === "null" || token === "undefined") {
+      return null;
+    }
+
+    if (this.socket) {
+      if (this.socket.connected) {
+        return this.socket;
+      }
+      if (this.socket.auth?.token !== token) {
+        this.socket.auth = { token };
+      }
+      this.socket.connect();
       return this.socket;
     }
-
-    if (!token) {
-      // Silently skip connection without token
-      return null;
-    }
-
-    // Prevent connection spam
-    const now = Date.now();
-    if (this.lastConnectionAttempt && now - this.lastConnectionAttempt < 2000) {
-      // Silently throttle connection attempts
-      return null;
-    }
-    this.lastConnectionAttempt = now;
 
     const serverUrl =
       import.meta.env.VITE_SOCKET_URL ||
@@ -55,60 +56,59 @@ class SocketService {
     try {
       this.socket = io(serverUrl, {
         auth: { token },
-        transports: ["polling", "websocket"], // Try polling first to avoid WebSocket errors
-        timeout: 10000,
+        transports: ["websocket", "polling"],
+        timeout: 20000,
         reconnection: true,
-        reconnectionDelay: 2000,
-        reconnectionAttempts: 10, // Generous attempts for cloud waking
-        reconnectionDelayMax: 10000,
+        reconnectionDelay: 1000,
+        reconnectionAttempts: Infinity,
+        reconnectionDelayMax: 5000,
         autoConnect: true,
+        withCredentials: true,
         query: {
           clientVersion: import.meta.env.VITE_APP_VERSION || "1.0.0",
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         },
       });
     } catch (error) {
-      // Silently handle connection errors
+      console.error("Socket initialization error:", error);
       return null;
     }
 
     this.setupEventListeners();
-    // Skip connection timeout setup to avoid warnings
-
     return this.socket;
   }
 
   setupConnectionTimeout() {
-    // Disabled to prevent console warnings during development
-    // Connection will be handled by socket.io's built-in reconnection logic
     return;
   }
 
   setupEventListeners() {
     if (!this.socket) return;
 
-    // Enhanced connection events
     this.socket.on("connect", () => {
       this.isConnected = true;
       this.reconnectAttempts = 0;
       this.processPendingEvents();
 
-      // Attach all queued listeners
+      // Attach all queued listeners without duplicates
       this.queuedListeners.forEach((callbacks, event) => {
         callbacks.forEach((cb) => {
+          this.socket.off(event, cb);
           this.socket.on(event, cb);
         });
       });
+
+      // Re-join active conversation room if one was active
+      if (this.activeConversationId) {
+        this.emit("join_conversation", this.activeConversationId);
+      }
     });
 
     this.socket.on("disconnect", (reason) => {
       this.isConnected = false;
-
-      // Silently handle disconnects without toast notifications
       if (reason === "io server disconnect") {
-        // Server initiated disconnect, don't reconnect automatically
+        this.socket.connect();
       } else if (reason !== "io client disconnect") {
-        // Don't show toast for intentional client disconnects
         this.socket.connect();
       }
     });
@@ -210,6 +210,7 @@ class SocketService {
     this.queuedListeners.get(event).add(callback);
 
     if (this.socket) {
+      this.socket.off(event, callback);
       this.socket.on(event, callback);
     }
   }
@@ -230,12 +231,20 @@ class SocketService {
 
   // Join conversation room
   joinConversation(conversationId) {
-    this.emit("join_conversation", conversationId);
+    if (!conversationId) return;
+    const cId = typeof conversationId === "object" ? (conversationId._id || conversationId.id) : conversationId;
+    this.activeConversationId = String(cId);
+    this.emit("join_conversation", String(cId));
   }
 
   // Leave conversation room
   leaveConversation(conversationId) {
-    this.emit("leave_conversation", conversationId);
+    if (!conversationId) return;
+    const cId = typeof conversationId === "object" ? (conversationId._id || conversationId.id) : conversationId;
+    if (this.activeConversationId === String(cId)) {
+      this.activeConversationId = null;
+    }
+    this.emit("leave_conversation", String(cId));
   }
 
   // Send typing indicator

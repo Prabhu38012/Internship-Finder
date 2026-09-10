@@ -75,6 +75,12 @@ const Messages = () => {
   }, [selectedConversation]);
 
   useEffect(() => {
+    // Ensure real-time socket connection is active
+    const token = localStorage.getItem("token");
+    if (token) {
+      socketService.connect(token);
+    }
+
     fetchConversations();
     fetchAvailableUsers();
     fetchOnlineUsers();
@@ -152,6 +158,8 @@ const Messages = () => {
       const newConversation = response.data;
       setConversations((prev) => [newConversation, ...prev]);
       setSelectedConversation(newConversation);
+      selectedConversationRef.current = newConversation;
+      socketService.joinConversation(newConversation._id);
       setNewConversationOpen(false);
       setUserSearchQuery("");
       toast.success(`Started conversation with ${selectedUser.name}`);
@@ -180,6 +188,7 @@ const Messages = () => {
     }
 
     setSelectedConversation(conversation);
+    selectedConversationRef.current = conversation;
     setMessages([]);
     setTypingUsers({});
     fetchMessages(conversation._id);
@@ -257,8 +266,17 @@ const Messages = () => {
 
     const incomingMsg = data.message;
     const incomingId = String(incomingMsg._id || incomingMsg.id || "");
+    const incomingConvId = String(
+      data.conversationId?._id ||
+      data.conversationId ||
+      incomingMsg.conversation?._id ||
+      incomingMsg.conversation ||
+      ""
+    );
+    const activeConvId = String(selectedConversationRef.current?._id || "");
 
-    if (data.conversationId === selectedConversationRef.current?._id) {
+    // If viewing this conversation, immediately render the incoming message
+    if (incomingConvId && activeConvId && incomingConvId === activeConvId) {
       setMessages((prev) => {
         if (incomingId && prev.some((msg) => String(msg._id || msg.id || "") === incomingId)) {
           return prev;
@@ -268,19 +286,26 @@ const Messages = () => {
       setTimeout(() => {
         scrollToBottom();
       }, 50);
+    } else if (incomingConvId && activeConvId && incomingConvId !== activeConvId) {
+      // User is in Messages page but viewing a different conversation
+      const senderName = incomingMsg.sender?.name || "New message";
+      toast(`${senderName}: ${incomingMsg.content.substring(0, 40)}`, {
+        icon: "💬",
+        id: `msg_${incomingId}`,
+      });
     }
 
-    // Update conversations list
+    // Update conversations list in real-time
     setConversations((prev) => {
-      const exists = prev.some((conv) => conv._id === data.conversationId);
+      const exists = prev.some((conv) => String(conv._id) === incomingConvId);
       if (!exists) {
         fetchConversations();
         return prev;
       }
       return prev
         .map((conv) =>
-          conv._id === data.conversationId
-            ? { ...conv, lastMessage: data.message, lastActivity: new Date() }
+          String(conv._id) === incomingConvId
+            ? { ...conv, lastMessage: incomingMsg, lastActivity: new Date() }
             : conv,
         )
         .sort((a, b) => new Date(b.lastActivity) - new Date(a.lastActivity));
@@ -288,16 +313,24 @@ const Messages = () => {
   };
 
   const handleMessageDeleted = (data) => {
-    if (data.conversationId === selectedConversationRef.current?._id) {
-      setMessages((prev) => prev.filter((msg) => msg._id !== data.messageId));
+    const deletedConvId = String(data.conversationId?._id || data.conversationId || "");
+    const activeConvId = String(selectedConversationRef.current?._id || "");
+    if (deletedConvId && activeConvId && deletedConvId === activeConvId) {
+      setMessages((prev) => prev.filter((msg) => String(msg._id || msg.id) !== String(data.messageId)));
     }
   };
 
   const handleUserTyping = (data) => {
+    const typingConvId = String(data.conversationId?._id || data.conversationId || "");
+    const activeConvId = String(selectedConversationRef.current?._id || "");
+    const currentUserId = String(user?.id || user?._id || "");
+    const typingUserId = String(data.userId || "");
+
     if (
-      data.conversationId === selectedConversationRef.current?._id &&
-      data.userId !== user.id &&
-      data.userId !== user._id
+      typingConvId &&
+      activeConvId &&
+      typingConvId === activeConvId &&
+      typingUserId !== currentUserId
     ) {
       setTypingUsers((prev) => ({
         ...prev,

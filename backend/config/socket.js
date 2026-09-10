@@ -166,14 +166,18 @@ class SocketManager {
       
       // Handle joining conversation rooms
       socket.on('join_conversation', (conversationId) => {
-        socket.join(`conversation_${conversationId}`);
-        console.log(`User ${socket.userId} joined conversation ${conversationId}`);
+        if (!conversationId) return;
+        const cId = typeof conversationId === 'object' ? (conversationId._id || conversationId.id) : conversationId;
+        socket.join(`conversation_${cId}`);
+        console.log(`User ${socket.userId} joined conversation ${cId}`);
       });
       
       // Handle leaving conversation rooms
       socket.on('leave_conversation', (conversationId) => {
-        socket.leave(`conversation_${conversationId}`);
-        console.log(`User ${socket.userId} left conversation ${conversationId}`);
+        if (!conversationId) return;
+        const cId = typeof conversationId === 'object' ? (conversationId._id || conversationId.id) : conversationId;
+        socket.leave(`conversation_${cId}`);
+        console.log(`User ${socket.userId} left conversation ${cId}`);
       });
       
       // Handle joining rooms (for notifications)

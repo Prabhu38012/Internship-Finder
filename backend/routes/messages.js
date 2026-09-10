@@ -251,9 +251,10 @@ router.post('/conversations/:id/messages', protect, upload.array('attachments', 
     // Emit real-time event to conversation room and participants
     const io = req.app.get('io');
     if (io) {
+      const convId = conversation._id.toString();
       // Emit to conversation room for active chat viewers
-      io.to(`conversation_${conversation._id}`).emit('new_message', {
-        conversationId: conversation._id,
+      io.to(`conversation_${convId}`).emit('new_message', {
+        conversationId: convId,
         message: responseMessage
       });
 
@@ -261,7 +262,7 @@ router.post('/conversations/:id/messages', protect, upload.array('attachments', 
       conversation.participants.forEach(participantId => {
         const pId = participantId.toString();
         io.to(`user_${pId}`).to(`user:${pId}`).to(pId).emit('new_message', {
-          conversationId: conversation._id,
+          conversationId: convId,
           message: responseMessage
         });
       });
