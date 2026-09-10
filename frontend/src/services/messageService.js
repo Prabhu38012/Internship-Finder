@@ -145,6 +145,35 @@ class MessageService {
       throw error.response?.data || error.message;
     }
   }
+
+  // Get currently online user IDs
+  async getOnlineUsers() {
+    try {
+      const response = await axios.get(`${API_URL}/messages/online-users`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      return response.data;
+    } catch (error) {
+      return { success: false, data: [] };
+    }
+  }
+
+  // Search users for new conversation
+  async searchUsers(query = "", limit = 20) {
+    try {
+      const response = await axios.get(`${API_URL}/users/search`, {
+        params: { query, limit },
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  }
 }
 
 export default new MessageService();

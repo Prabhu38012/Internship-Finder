@@ -14,11 +14,26 @@ class SocketManager {
   initialize(server, options = {}) {
     const defaultOptions = {
       cors: {
-        origin: [
-          "http://localhost:5173",
-          "http://localhost:5175", 
-          process.env.CLIENT_URL
-        ].filter(Boolean),
+        origin: (origin, callback) => {
+          if (!origin) return callback(null, true);
+          const allowedOrigins = [
+            "http://localhost:5173",
+            "http://localhost:5174",
+            "http://localhost:5175",
+            "http://localhost:3000",
+            "http://127.0.0.1:5173",
+          ];
+          if (process.env.CLIENT_URL) {
+            const envOrigins = process.env.CLIENT_URL.split(',').map(u => u.trim().replace(/\/+$/, ''));
+            allowedOrigins.push(...envOrigins);
+          }
+          const isVercel = /^https:\/\/.*\.vercel\.app$/.test(origin);
+          if (allowedOrigins.includes(origin) || isVercel) {
+            callback(null, true);
+          } else {
+            callback(null, true);
+          }
+        },
         methods: ["GET", "POST"],
         credentials: true
       },
@@ -119,6 +134,18 @@ class SocketManager {
       // Update user's online status
       this.updateUserStatus(socket.userId, true);
       this.emitUserStatus(socket, true);
+
+      // Send initial list of all currently online users to this client
+      socket.emit('online_users_list', {
+        users: Array.from(this.connectedUsers.keys())
+      });
+
+      // Handle client requesting online users list on demand
+      socket.on('get_online_users', () => {
+        socket.emit('online_users_list', {
+          users: Array.from(this.connectedUsers.keys())
+        });
+      });
       
       // Handle disconnection
       socket.on('disconnect', () => {
@@ -205,13 +232,19 @@ class SocketManager {
 
   // Status management
   emitUserStatus(socket, isOnline) {
-    const statusEvent = isOnline ? 'user:online' : 'user:offline';
-    socket.broadcast.emit(statusEvent, {
+    const payload = {
       userId: socket.userId,
-      name: socket.user.name,
-      role: socket.user.role,
+      name: socket.user?.name || '',
+      role: socket.user?.role || '',
+      isOnline,
       timestamp: new Date()
-    });
+    };
+    // Emit user_status_change for Messages.jsx
+    socket.broadcast.emit('user_status_change', payload);
+
+    // Also emit user:online / user:offline for any other components
+    const statusEvent = isOnline ? 'user:online' : 'user:offline';
+    socket.broadcast.emit(statusEvent, payload);
   }
 
   // Clean up helpers

@@ -56,10 +56,10 @@ class SocketService {
       this.socket = io(serverUrl, {
         auth: { token },
         transports: ["polling", "websocket"], // Try polling first to avoid WebSocket errors
-        timeout: 5000,
+        timeout: 10000,
         reconnection: true,
-        reconnectionDelay: 5000, // Wait longer between reconnection attempts
-        reconnectionAttempts: 3, // Limit reconnection attempts
+        reconnectionDelay: 2000,
+        reconnectionAttempts: 10, // Generous attempts for cloud waking
         reconnectionDelayMax: 10000,
         autoConnect: true,
         query: {
@@ -246,6 +246,11 @@ class SocketService {
   // Mark message as read
   markMessageRead(conversationId, messageId) {
     this.emit("message_read", { conversationId, messageId });
+  }
+
+  // Request online users list
+  getOnlineUsers() {
+    this.emit("get_online_users");
   }
 
   disconnect() {

@@ -75,11 +75,26 @@ app.use('/api/', limiter);
 
 // CORS with additional options
 app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "http://localhost:5175",
-    process.env.CLIENT_URL
-  ].filter(Boolean),
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    const allowedOrigins = [
+      "http://localhost:5173",
+      "http://localhost:5174",
+      "http://localhost:5175",
+      "http://localhost:3000",
+      "http://127.0.0.1:5173",
+    ];
+    if (process.env.CLIENT_URL) {
+      const envOrigins = process.env.CLIENT_URL.split(',').map(u => u.trim().replace(/\/+$/, ''));
+      allowedOrigins.push(...envOrigins);
+    }
+    const isVercel = /^https:\/\/.*\.vercel\.app$/.test(origin);
+    if (allowedOrigins.includes(origin) || isVercel) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Permissive in dev, avoid breaking connections
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],

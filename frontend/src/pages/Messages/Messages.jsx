@@ -68,16 +68,25 @@ const Messages = () => {
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+  const selectedConversationRef = useRef(selectedConversation);
+
+  useEffect(() => {
+    selectedConversationRef.current = selectedConversation;
+  }, [selectedConversation]);
 
   useEffect(() => {
     fetchConversations();
     fetchAvailableUsers();
+    fetchOnlineUsers();
 
     // Setup socket listeners
     socketService.on("new_message", handleNewMessage);
     socketService.on("message_deleted", handleMessageDeleted);
     socketService.on("user_typing", handleUserTyping);
     socketService.on("user_status_change", handleUserStatusChange);
+    socketService.on("user:online", (d) => handleUserStatusChange({ ...d, isOnline: true }));
+    socketService.on("user:offline", (d) => handleUserStatusChange({ ...d, isOnline: false }));
+    socketService.on("online_users_list", handleOnlineUsersList);
     socketService.on("application_notification", handleApplicationNotification);
 
     return () => {
@@ -85,6 +94,7 @@ const Messages = () => {
       socketService.off("message_deleted", handleMessageDeleted);
       socketService.off("user_typing", handleUserTyping);
       socketService.off("user_status_change", handleUserStatusChange);
+      socketService.off("online_users_list", handleOnlineUsersList);
       socketService.off(
         "application_notification",
         handleApplicationNotification,
@@ -108,25 +118,25 @@ const Messages = () => {
     }
   };
 
+  const fetchOnlineUsers = async () => {
+    try {
+      const response = await messageService.getOnlineUsers();
+      if (response && response.success && Array.isArray(response.data)) {
+        setOnlineUsers(new Set(response.data));
+      }
+    } catch (error) {
+      console.error("Error fetching online users:", error);
+    }
+    socketService.getOnlineUsers();
+  };
+
   const fetchAvailableUsers = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch("/api/users/search", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      if (data.success) {
-        setAvailableUsers(data.data.filter((u) => u._id !== user.id));
-      } else {
-        throw new Error(data.message || "Failed to fetch users");
+      const response = await messageService.searchUsers();
+      if (response && response.success) {
+        setAvailableUsers(
+          response.data.filter((u) => u._id !== user.id && u._id !== user._id),
+        );
       }
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -193,7 +203,13 @@ const Messages = () => {
         replyTo?._id,
       );
 
-      setMessages((prev) => [...prev, response.data]);
+      setMessages((prev) => {
+        const newMsgId = String(response.data?._id || response.data?.id || "");
+        if (newMsgId && prev.some((m) => String(m._id || m.id || "") === newMsgId)) {
+          return prev;
+        }
+        return [...prev, response.data];
+      });
       setNewMessage("");
       setAttachments([]);
       setReplyTo(null);
@@ -214,30 +230,53 @@ const Messages = () => {
   };
 
   const handleNewMessage = (data) => {
-    if (data.conversationId === selectedConversation?._id) {
-      setMessages((prev) => [...prev, data.message]);
+    if (!data || !data.message) return;
+
+    // Ignore if sent by current user (since sender already adds it via HTTP response)
+    const senderId = String(data.message.sender?._id || data.message.sender || "");
+    const currentUserId = String(user.id || user._id || "");
+    if (senderId && currentUserId && senderId === currentUserId) {
+      return;
+    }
+
+    if (data.conversationId === selectedConversationRef.current?._id) {
+      setMessages((prev) => {
+        const incomingId = String(data.message._id || data.message.id || "");
+        if (incomingId && prev.some((msg) => String(msg._id || msg.id || "") === incomingId)) {
+          return prev;
+        }
+        return [...prev, data.message];
+      });
     }
 
     // Update conversations list
-    setConversations((prev) =>
-      prev.map((conv) =>
-        conv._id === data.conversationId
-          ? { ...conv, lastMessage: data.message, lastActivity: new Date() }
-          : conv,
-      ),
-    );
+    setConversations((prev) => {
+      const exists = prev.some((conv) => conv._id === data.conversationId);
+      if (!exists) {
+        fetchConversations();
+        return prev;
+      }
+      return prev
+        .map((conv) =>
+          conv._id === data.conversationId
+            ? { ...conv, lastMessage: data.message, lastActivity: new Date() }
+            : conv,
+        )
+        .sort((a, b) => new Date(b.lastActivity) - new Date(a.lastActivity));
+    });
   };
 
   const handleMessageDeleted = (data) => {
-    if (data.conversationId === selectedConversation?._id) {
+    if (data.conversationId === selectedConversationRef.current?._id) {
       setMessages((prev) => prev.filter((msg) => msg._id !== data.messageId));
     }
   };
 
   const handleUserTyping = (data) => {
     if (
-      data.conversationId === selectedConversation?._id &&
-      data.userId !== user.id
+      data.conversationId === selectedConversationRef.current?._id &&
+      data.userId !== user.id &&
+      data.userId !== user._id
     ) {
       setTypingUsers((prev) => ({
         ...prev,
@@ -260,7 +299,14 @@ const Messages = () => {
     }
   };
 
+  const handleOnlineUsersList = (data) => {
+    if (data && Array.isArray(data.users)) {
+      setOnlineUsers(new Set(data.users));
+    }
+  };
+
   const handleUserStatusChange = (data) => {
+    if (!data || !data.userId) return;
     setOnlineUsers((prev) => {
       const updated = new Set(prev);
       if (data.isOnline) {
@@ -545,12 +591,66 @@ const Messages = () => {
                     {getOtherParticipant(selectedConversation)?.name?.charAt(0)}
                   </Avatar>
                   <Box sx={{ flex: 1 }}>
-                    <Typography variant="h6">
+                    <Typography variant="h6" fontWeight={600}>
                       {getOtherParticipant(selectedConversation)?.name}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {getOtherParticipant(selectedConversation)?.role}
-                    </Typography>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        mt: 0.25,
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 0.5,
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            width: 8,
+                            height: 8,
+                            borderRadius: "50%",
+                            bgcolor: onlineUsers.has(
+                              getOtherParticipant(selectedConversation)?._id,
+                            )
+                              ? "#22c55e"
+                              : "#94a3b8",
+                            boxShadow: onlineUsers.has(
+                              getOtherParticipant(selectedConversation)?._id,
+                            )
+                              ? "0 0 6px #22c55e"
+                              : "none",
+                          }}
+                        />
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: onlineUsers.has(
+                              getOtherParticipant(selectedConversation)?._id,
+                            )
+                              ? "#22c55e"
+                              : "text.secondary",
+                            fontWeight: 500,
+                          }}
+                        >
+                          {onlineUsers.has(
+                            getOtherParticipant(selectedConversation)?._id,
+                          )
+                            ? "Online"
+                            : "Offline"}
+                        </Typography>
+                      </Box>
+                      <Typography variant="caption" color="text.secondary">
+                        •
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {getOtherParticipant(selectedConversation)?.role}
+                      </Typography>
+                    </Box>
                   </Box>
                 </Box>
               </Paper>
@@ -634,16 +734,20 @@ const Messages = () => {
                       }}
                     >
                       <Paper
+                        elevation={0}
                         sx={{
                           p: 1.5,
                           maxWidth: "70%",
-                          bgcolor: isOwn ? "primary.main" : "grey.100",
-                          color: isOwn ? "white" : "text.primary",
+                          bgcolor: isOwn ? "primary.main" : "rgba(255, 255, 255, 0.08)",
+                          color: isOwn ? "#ffffff" : "#f8fafc",
+                          border: isOwn ? "none" : "1px solid rgba(255, 255, 255, 0.12)",
                           position: "relative",
                           borderRadius: isOwn
                             ? "18px 18px 4px 18px"
                             : "18px 18px 18px 4px",
-                          boxShadow: 1,
+                          boxShadow: isOwn
+                            ? "0 2px 10px rgba(59, 130, 246, 0.3)"
+                            : "0 2px 10px rgba(0, 0, 0, 0.2)",
                         }}
                       >
                         {message.replyTo && (
@@ -651,13 +755,18 @@ const Messages = () => {
                             sx={{
                               p: 1,
                               mb: 1,
-                              bgcolor: "rgba(0,0,0,0.1)",
+                              bgcolor: isOwn
+                                ? "rgba(0,0,0,0.15)"
+                                : "rgba(255,255,255,0.06)",
                               borderRadius: 1,
                               borderLeft: 3,
-                              borderColor: "primary.light",
+                              borderColor: isOwn ? "white" : "primary.main",
                             }}
                           >
-                            <Typography variant="caption" sx={{ opacity: 0.8 }}>
+                            <Typography
+                              variant="caption"
+                              sx={{ opacity: 0.85, color: "inherit" }}
+                            >
                               Replying to: {message.replyTo.content}
                             </Typography>
                           </Box>
@@ -669,14 +778,21 @@ const Messages = () => {
                             sx={{
                               display: "block",
                               mb: 0.5,
-                              fontWeight: 500,
-                              opacity: 0.8,
+                              fontWeight: 600,
+                              color: "primary.light",
                             }}
                           >
-                            {message.sender.name}
+                            {message.sender?.name}
                           </Typography>
                         )}
-                        <Typography variant="body1">
+                        <Typography
+                          variant="body1"
+                          sx={{
+                            color: isOwn ? "#ffffff" : "#f8fafc",
+                            wordBreak: "break-word",
+                            lineHeight: 1.5,
+                          }}
+                        >
                           {message.content}
                         </Typography>
 
@@ -704,7 +820,16 @@ const Messages = () => {
                             mt: 0.5,
                           }}
                         >
-                          <Typography variant="caption" sx={{ opacity: 0.7 }}>
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              opacity: 0.75,
+                              color: isOwn
+                                ? "rgba(255, 255, 255, 0.85)"
+                                : "rgba(248, 250, 252, 0.65)",
+                              fontSize: "0.7rem",
+                            }}
+                          >
                             {formatMessageTime(message.createdAt)}
                           </Typography>
 

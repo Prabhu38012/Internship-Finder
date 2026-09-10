@@ -6,6 +6,26 @@ const Conversation = require('../models/Conversation');
 const User = require('../models/User');
 const { upload } = require('../middleware/upload');
 
+// @desc    Get currently online user IDs
+// @route   GET /api/messages/online-users
+// @access  Private
+router.get('/online-users', protect, (req, res) => {
+  try {
+    const socketManager = require('../config/socket');
+    const onlineUsers = socketManager.getConnectedUsers();
+    res.json({
+      success: true,
+      data: onlineUsers
+    });
+  } catch (error) {
+    console.error('Error fetching online users:', error);
+    res.json({
+      success: true,
+      data: []
+    });
+  }
+});
+
 // @desc    Get user's conversations
 // @route   GET /api/messages/conversations
 // @access  Private
@@ -216,13 +236,13 @@ router.post('/conversations/:id/messages', protect, upload.array('attachments', 
     conversation.lastActivity = new Date();
     await conversation.save();
 
-    // Emit real-time event
+    // Emit real-time event to other participants (sender already receives it in HTTP response)
     const io = req.app.get('io');
     if (io) {
-      // Send to all participants except sender
       conversation.participants.forEach(participantId => {
-        if (participantId.toString() !== req.user.id) {
-          io.to(`user_${participantId}`).emit('new_message', {
+        const pId = participantId.toString();
+        if (pId !== req.user.id.toString()) {
+          io.to(`user_${pId}`).to(`user:${pId}`).to(pId).emit('new_message', {
             conversationId: conversation._id,
             message
           });
