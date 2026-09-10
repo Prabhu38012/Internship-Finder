@@ -22,6 +22,8 @@ const storage = multer.diskStorage({
       uploadPath = path.join(baseUploadDir, 'logos');
     } else if (file.fieldname === 'documents' || file.fieldname === 'additionalDocuments') {
       uploadPath = path.join(baseUploadDir, 'documents');
+    } else if (file.fieldname === 'attachments') {
+      uploadPath = path.join(baseUploadDir, 'attachments');
     } else {
       uploadPath = path.join(baseUploadDir, 'misc');
     }
@@ -48,7 +50,8 @@ const fileFilter = (req, file, cb) => {
     avatar: ['.jpg', '.jpeg', '.png', '.gif'],
     logo: ['.jpg', '.jpeg', '.png', '.gif', '.svg'],
     documents: ['.pdf', '.doc', '.docx', '.txt', '.jpg', '.jpeg', '.png'],
-    additionalDocuments: ['.pdf', '.doc', '.docx', '.txt', '.jpg', '.jpeg', '.png']
+    additionalDocuments: ['.pdf', '.doc', '.docx', '.txt', '.jpg', '.jpeg', '.png'],
+    attachments: ['.pdf', '.doc', '.docx', '.txt', '.jpg', '.jpeg', '.png', '.gif', '.zip', '.csv', '.xlsx', '.xls']
   };
 
   const fileExtension = path.extname(file.originalname).toLowerCase();

@@ -34,6 +34,9 @@ import {
   Close,
   Add,
   PersonAdd,
+  PictureAsPdf,
+  InsertDriveFile,
+  Download,
 } from "@mui/icons-material";
 import { useSelector } from "react-redux";
 import { formatDistanceToNow } from "date-fns";
@@ -197,6 +200,18 @@ const Messages = () => {
     socketService.joinConversation(conversation._id);
   };
 
+  const getAttachmentUrl = (url) => {
+    if (!url) return "";
+    if (url.startsWith("http://") || url.startsWith("https://")) {
+      return url;
+    }
+    const backendBase =
+      import.meta.env.VITE_API_URL
+        ? import.meta.env.VITE_API_URL.replace(/\/api\/?$/, "")
+        : (import.meta.env.VITE_SOCKET_URL || "http://localhost:5000");
+    return `${backendBase}${url.startsWith("/") ? "" : "/"}${url}`;
+  };
+
   const handleSendMessage = async () => {
     if (!newMessage.trim() && attachments.length === 0) return;
     if (!selectedConversation) return;
@@ -204,10 +219,17 @@ const Messages = () => {
     try {
       setSendingMessage(true);
 
+      const hasPdf = attachments.some(
+        (f) =>
+          f.type === "application/pdf" ||
+          f.name?.toLowerCase().endsWith(".pdf"),
+      );
+      const effectiveMessageType = attachments.length > 0 ? (hasPdf ? "file" : "file") : "text";
+
       const response = await messageService.sendMessage(
         selectedConversation._id,
-        newMessage,
-        "text",
+        newMessage.trim(),
+        effectiveMessageType,
         attachments,
         replyTo?._id,
       );
@@ -859,18 +881,68 @@ const Messages = () => {
                         </Typography>
 
                         {message.attachments?.length > 0 && (
-                          <Box sx={{ mt: 1 }}>
-                            {message.attachments.map((attachment, index) => (
-                              <Chip
-                                key={index}
-                                label={attachment.originalName}
-                                size="small"
-                                onClick={() =>
-                                  window.open(attachment.url, "_blank")
-                                }
-                                sx={{ mr: 0.5, mb: 0.5 }}
-                              />
-                            ))}
+                          <Box sx={{ mt: 1, display: "flex", flexDirection: "column", gap: 0.75 }}>
+                            {message.attachments.map((attachment, index) => {
+                              const fullUrl = getAttachmentUrl(attachment.url);
+                              const isPdf =
+                                attachment.originalName?.toLowerCase().endsWith(".pdf") ||
+                                attachment.mimetype === "application/pdf";
+                              return (
+                                <Paper
+                                  key={index}
+                                  elevation={0}
+                                  onClick={() => window.open(fullUrl, "_blank")}
+                                  sx={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: 1,
+                                    p: 1,
+                                    cursor: "pointer",
+                                    bgcolor: isOwn
+                                      ? "rgba(0, 0, 0, 0.2)"
+                                      : "rgba(255, 255, 255, 0.08)",
+                                    borderRadius: 2,
+                                    border: "1px solid",
+                                    borderColor: isOwn
+                                      ? "rgba(255, 255, 255, 0.3)"
+                                      : "rgba(255, 255, 255, 0.15)",
+                                    color: "inherit",
+                                    transition: "all 0.2s ease",
+                                    "&:hover": {
+                                      bgcolor: isOwn
+                                        ? "rgba(0, 0, 0, 0.3)"
+                                        : "rgba(255, 255, 255, 0.15)",
+                                      transform: "translateY(-1px)",
+                                    },
+                                  }}
+                                >
+                                  {isPdf ? (
+                                    <PictureAsPdf sx={{ color: "#ef4444", fontSize: 24, flexShrink: 0 }} />
+                                  ) : (
+                                    <InsertDriveFile sx={{ color: "primary.light", fontSize: 24, flexShrink: 0 }} />
+                                  )}
+                                  <Box sx={{ minWidth: 0, mr: 1, flex: 1 }}>
+                                    <Typography
+                                      variant="body2"
+                                      sx={{
+                                        fontWeight: 600,
+                                        fontSize: "0.85rem",
+                                        wordBreak: "break-all",
+                                        lineHeight: 1.2,
+                                      }}
+                                    >
+                                      {attachment.originalName}
+                                    </Typography>
+                                    {attachment.size && (
+                                      <Typography variant="caption" sx={{ opacity: 0.75, fontSize: "0.7rem", display: "block", mt: 0.25 }}>
+                                        {(attachment.size / (1024 * 1024)).toFixed(2)} MB • Click to open/download
+                                      </Typography>
+                                    )}
+                                  </Box>
+                                  <Download fontSize="small" sx={{ opacity: 0.8, ml: "auto", flexShrink: 0 }} />
+                                </Paper>
+                              );
+                            })}
                           </Box>
                         )}
 
@@ -978,6 +1050,11 @@ const Messages = () => {
                     {attachments.map((file, index) => (
                       <Chip
                         key={index}
+                        icon={
+                          file.name.toLowerCase().endsWith(".pdf") ? (
+                            <PictureAsPdf style={{ color: "#ef4444" }} />
+                          ) : undefined
+                        }
                         label={file.name}
                         onDelete={() => removeAttachment(index)}
                         size="small"
@@ -995,6 +1072,7 @@ const Messages = () => {
                     ref={fileInputRef}
                     onChange={handleFileSelect}
                     multiple
+                    accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg"
                     style={{ display: "none" }}
                   />
 

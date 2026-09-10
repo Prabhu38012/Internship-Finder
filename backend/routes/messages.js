@@ -215,15 +215,22 @@ router.post('/conversations/:id/messages', protect, upload.array('attachments', 
       originalName: file.originalname,
       mimetype: file.mimetype,
       size: file.size,
-      url: `/uploads/${file.filename}`
+      url: `/uploads/attachments/${file.filename}`
     })) : [];
+
+    // Determine message type if files are attached
+    let effectiveMessageType = messageType;
+    if (attachments.length > 0 && messageType === 'text') {
+      const hasImage = attachments.some(a => a.mimetype.startsWith('image/'));
+      effectiveMessageType = hasImage ? 'image' : 'file';
+    }
 
     // Create message
     const message = new Message({
       conversation: req.params.id,
       sender: req.user.id,
-      content: content || '',
-      messageType,
+      content: content ? content.trim() : '',
+      messageType: effectiveMessageType,
       attachments,
       ...(replyTo && { replyTo })
     });
